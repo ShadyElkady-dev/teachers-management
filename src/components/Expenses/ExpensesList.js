@@ -9,11 +9,18 @@ const ExpensesList = ({
 }) => {
   const [viewMode, setViewMode] = useState('cards'); // cards, table
 
-  // عرض البطاقات
+  const renderEmptyState = () => (
+    <div className="text-center py-16 bg-white rounded-2xl shadow-lg">
+      <div className="text-6xl mb-4">💸</div>
+      <div className="text-2xl font-bold text-gray-700 mb-2">لا توجد مصروفات</div>
+      <div className="text-gray-500 text-lg">لم يتم العثور على أي مصروفات مطابقة</div>
+    </div>
+  );
+
   const renderCardsView = () => (
-    <div className="grid-mobile">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
       {expenses.map(expense => (
-        <ExpenseCard
+        <ExpenseCardEnhanced
           key={expense.id}
           expense={expense}
           onEdit={onEdit}
@@ -23,141 +30,131 @@ const ExpensesList = ({
     </div>
   );
 
-  // عرض الجدول
   const renderTableView = () => (
-    <div className="table-responsive">
-      <table className="table-mobile">
-        <thead>
-          <tr>
-            <th>النوع</th>
-            <th>الوصف</th>
-            <th>المبلغ</th>
-            <th>التاريخ</th>
-            <th>الملاحظات</th>
-            <th>الإجراءات</th>
-          </tr>
-        </thead>
-        <tbody>
-          {expenses.map(expense => {
-            const expenseType = EXPENSE_TYPES.find(type => type.value === expense.type);
-            
-            return (
-              <tr key={expense.id}>
-                <td>
-                  <div className="flex items-center gap-2">
-                    <div className={`w-3 h-3 rounded-full ${expenseType?.color?.replace('bg-', 'bg-') || 'bg-gray-200'}`}></div>
-                    <span className="font-medium">{expenseType?.label || expense.type}</span>
-                  </div>
-                </td>
-                
-                <td>
-                  <div className="max-w-xs">
-                    <div className="font-medium text-gray-900 truncate">{expense.description}</div>
-                    <div className="text-sm text-gray-500">{timeAgo(expense.expenseDate)}</div>
-                  </div>
-                </td>
-                
-                <td>
-                  <div className="font-bold text-red-600">
-                    {formatCurrency(expense.amount)}
-                  </div>
-                </td>
-                
-                <td>
-                  <div className="text-center">
-                    <div className="text-sm">{formatDate(expense.expenseDate)}</div>
-                  </div>
-                </td>
-                
-                <td>
-                  <div className="max-w-xs">
-                    {expense.notes ? (
-                      <span className="text-sm text-gray-600 truncate block">
-                        {expense.notes}
-                      </span>
-                    ) : (
-                      <span className="text-gray-400">-</span>
-                    )}
-                  </div>
-                </td>
-                
-                <td>
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => onEdit(expense)}
-                      className="btn btn-secondary btn-sm"
-                      title="تعديل"
-                    >
-                      ✏️
-                    </button>
-                    
-                    <button
-                      onClick={() => onDelete(expense)}
-                      className="btn btn-error btn-sm"
-                      title="حذف"
-                    >
-                      🗑️
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+    <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+      <div className="overflow-x-auto">
+        <table className="min-w-full">
+          <thead className="bg-gray-50 border-b-2 border-gray-200">
+            <tr>
+              <th className="px-6 py-4 text-right text-sm font-bold text-gray-700">التاريخ</th>
+              <th className="px-6 py-4 text-right text-sm font-bold text-gray-700">النوع</th>
+              <th className="px-6 py-4 text-right text-sm font-bold text-gray-700">الوصف</th>
+              <th className="px-6 py-4 text-center text-sm font-bold text-gray-700">المبلغ</th>
+              <th className="px-6 py-4 text-right text-sm font-bold text-gray-700">الملاحظات</th>
+              <th className="px-6 py-4 text-center text-sm font-bold text-gray-700">الإجراءات</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200">
+            {expenses.map(expense => (
+              <ExpenseTableRow
+                key={expense.id}
+                expense={expense}
+                onEdit={onEdit}
+                onDelete={onDelete}
+              />
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* ملخص الجدول */}
+      {expenses.length > 0 && (
+        <div className="bg-gray-50 px-6 py-4 border-t-2 border-gray-200">
+          <div className="flex items-center justify-between text-sm">
+            <div className="text-gray-600 font-medium">
+              عرض {expenses.length} مصروف
+            </div>
+            <div className="flex items-center gap-6 text-gray-700">
+              <div className="bg-red-100 px-3 py-1 rounded-full">
+                <span className="font-medium text-red-800">إجمالي المصروفات: </span>
+                <span className="font-bold text-red-900">
+                  {formatCurrency(expenses.reduce((sum, expense) => sum + (expense.amount || 0), 0))}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 
   return (
     <div>
       {/* شريط التحكم في العرض */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium text-gray-700">عرض:</span>
-          <div className="flex border border-gray-300 rounded-lg overflow-hidden">
+          <div className="flex border-2 border-gray-300 rounded-lg overflow-hidden">
             <button
               onClick={() => setViewMode('cards')}
-              className={`px-3 py-1 text-sm ${
+              className={`px-4 py-2 text-sm font-medium transition-colors ${
                 viewMode === 'cards' 
                   ? 'bg-blue-500 text-white' 
                   : 'bg-white text-gray-700 hover:bg-gray-50'
               }`}
               title="عرض البطاقات"
             >
-              ⊞
+              ⊞ بطاقات
             </button>
             <button
               onClick={() => setViewMode('table')}
-              className={`px-3 py-1 text-sm border-r border-gray-300 ${
+              className={`px-4 py-2 text-sm font-medium border-r-2 border-gray-300 transition-colors ${
                 viewMode === 'table' 
                   ? 'bg-blue-500 text-white' 
                   : 'bg-white text-gray-700 hover:bg-gray-50'
               }`}
               title="عرض الجدول"
             >
-              ☰
+              ☰ جدول
             </button>
           </div>
         </div>
         
-        <div className="text-sm text-gray-600">
+        <div className="text-sm text-gray-600 font-medium">
           عرض {expenses.length} مصروف
         </div>
       </div>
 
       {/* المحتوى حسب نوع العرض */}
-      {viewMode === 'cards' && renderCardsView()}
-      {viewMode === 'table' && renderTableView()}
+      {expenses.length === 0 ? renderEmptyState() : (
+        viewMode === 'cards' ? renderCardsView() : renderTableView()
+      )}
     </div>
   );
 };
 
-// مكون بطاقة المصروف
-const ExpenseCard = ({ expense, onEdit, onDelete }) => {
+// مكون بطاقة المصروف المحسنة
+const ExpenseCardEnhanced = ({ expense, onEdit, onDelete }) => {
   const [showMenu, setShowMenu] = useState(false);
   
   // الحصول على نوع المصروف
   const expenseType = EXPENSE_TYPES.find(type => type.value === expense.type);
+
+  const getExpenseIcon = () => {
+    switch (expense.type) {
+      case 'paper': return '📄';
+      case 'ink': return '🖋️';
+      case 'toner': return '🖨️';
+      case 'maintenance': return '🔧';
+      case 'electricity': return '⚡';
+      case 'rent': return '🏢';
+      case 'supplies': return '📦';
+      default: return '💸';
+    }
+  };
+
+  const getCardColor = () => {
+    switch (expense.type) {
+      case 'paper': return 'from-blue-500 to-blue-600';
+      case 'ink': return 'from-purple-500 to-purple-600';
+      case 'toner': return 'from-gray-500 to-gray-600';
+      case 'maintenance': return 'from-red-500 to-red-600';
+      case 'electricity': return 'from-yellow-500 to-yellow-600';
+      case 'rent': return 'from-green-500 to-green-600';
+      case 'supplies': return 'from-indigo-500 to-indigo-600';
+      default: return 'from-gray-500 to-gray-600';
+    }
+  };
 
   const handleMenuClick = (action) => {
     setShowMenu(false);
@@ -172,127 +169,248 @@ const ExpenseCard = ({ expense, onEdit, onDelete }) => {
   };
 
   return (
-    <div className="card-mobile border-l-4 border-red-400 hover:shadow-lg transition-all duration-200">
+    <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border-2 border-gray-100">
       
-      {/* رأس البطاقة */}
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex items-center gap-3">
-          {/* أيقونة نوع المصروف */}
-          <div className={`w-12 h-12 ${expenseType?.color || 'bg-gray-100'} rounded-lg flex items-center justify-center`}>
-            <span className="text-2xl">
-              {expense.type === 'paper' ? '📄' :
-               expense.type === 'ink' ? '🖋️' :
-               expense.type === 'toner' ? '🖨️' :
-               expense.type === 'maintenance' ? '🔧' :
-               expense.type === 'electricity' ? '⚡' :
-               expense.type === 'rent' ? '🏢' :
-               expense.type === 'supplies' ? '📦' : '💸'}
-            </span>
+      {/* رأس البطاقة مع الخلفية المتدرجة */}
+      <div className={`bg-gradient-to-r ${getCardColor()} p-6 text-white relative`}>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center shadow-lg">
+              <span className="text-white text-3xl">
+                {getExpenseIcon()}
+              </span>
+            </div>
+            
+            <div>
+              <h3 className="font-bold text-xl leading-tight mb-1">
+                {expenseType?.label || expense.type}
+              </h3>
+              <p className="text-sm opacity-90 mb-1">
+                📅 {formatDate(expense.expenseDate)}
+              </p>
+              <p className="text-xs opacity-80">
+                {timeAgo(expense.expenseDate)}
+              </p>
+            </div>
           </div>
-          
-          {/* معلومات أساسية */}
-          <div>
-            <h3 className="font-semibold text-gray-900 text-lg leading-tight">
-              {expenseType?.label || expense.type}
-            </h3>
-            <p className="text-sm text-gray-600 mt-1">
-              📅 {formatDate(expense.expenseDate)}
-            </p>
-            <p className="text-xs text-gray-500 mt-1">
-              {timeAgo(expense.expenseDate)}
-            </p>
-          </div>
-        </div>
 
-        {/* المبلغ */}
-        <div className="text-center">
-          <div className="text-2xl font-bold text-red-600">
-            {formatCurrency(expense.amount)}
-          </div>
-          <div className="text-xs text-gray-500">
-            مصروف
+          <div className="text-center">
+            <div className="text-2xl font-bold">
+              {formatCurrency(expense.amount)}
+            </div>
+            <div className="text-xs opacity-90">
+              مصروف
+            </div>
           </div>
         </div>
       </div>
 
-      {/* وصف المصروف */}
-      <div className="mb-4">
-        <p className="text-gray-700 leading-relaxed">
-          {expense.description}
-        </p>
-      </div>
-
-      {/* الملاحظات */}
-      {expense.notes && (
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 mb-4">
-          <div className="text-sm text-gray-600">
-            <span className="font-medium text-gray-700">ملاحظات: </span>
-            {expense.notes}
+      {/* محتوى البطاقة */}
+      <div className="p-6">
+        
+        {/* وصف المصروف */}
+        <div className="mb-6">
+          <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
+            <p className="text-gray-800 leading-relaxed font-medium">
+              {expense.description}
+            </p>
           </div>
         </div>
-      )}
 
-      {/* أزرار التحكم */}
-      <div className="flex items-center gap-2">
-        <button
-          onClick={() => onEdit(expense)}
-          className="flex-1 btn btn-secondary btn-sm"
-        >
-          <span className="ml-1">✏️</span>
-          تعديل
-        </button>
+        {/* الملاحظات إن وجدت */}
+        {expense.notes && (
+          <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-lg">📝</span>
+              <span className="font-medium text-yellow-900">ملاحظات</span>
+            </div>
+            <p className="text-yellow-800 text-sm leading-relaxed">
+              {expense.notes.length > 100 
+                ? `${expense.notes.substring(0, 100)}...` 
+                : expense.notes
+              }
+            </p>
+          </div>
+        )}
 
-        {/* قائمة الخيارات */}
-        <div className="relative">
+        {/* أزرار التحكم */}
+        <div className="flex gap-3">
           <button
-            onClick={() => setShowMenu(!showMenu)}
-            className="btn btn-secondary btn-sm px-3"
-            title="المزيد"
+            onClick={() => onEdit(expense)}
+            className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold rounded-xl transition-all duration-200 shadow-md hover:shadow-lg"
           >
-            ⋮
+            <span className="text-lg ml-1">✏️</span>
+            تعديل
           </button>
 
-          {showMenu && (
-            <>
-              {/* خلفية لإغلاق القائمة */}
-              <div 
-                className="fixed inset-0 z-10"
-                onClick={() => setShowMenu(false)}
-              />
-              
-              {/* القائمة المنسدلة */}
-              <div className="absolute left-0 mt-1 w-32 bg-white border border-gray-200 rounded-lg shadow-lg z-20">
-                <button
-                  onClick={() => handleMenuClick('edit')}
-                  className="w-full text-right px-4 py-3 text-sm hover:bg-gray-50 flex items-center gap-2 rounded-t-lg"
-                >
-                  <span>✏️</span>
-                  تعديل
-                </button>
+          {/* قائمة الخيارات */}
+          <div className="relative">
+            <button
+              onClick={() => setShowMenu(!showMenu)}
+              className="px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold rounded-xl transition-all duration-200"
+              title="المزيد"
+            >
+              <span className="text-lg">⋮</span>
+            </button>
+
+            {showMenu && (
+              <>
+                {/* خلفية لإغلاق القائمة */}
+                <div 
+                  className="fixed inset-0 z-10"
+                  onClick={() => setShowMenu(false)}
+                />
                 
-                <div className="border-t border-gray-200"></div>
-                
-                <button
-                  onClick={() => handleMenuClick('delete')}
-                  className="w-full text-right px-4 py-3 text-sm hover:bg-red-50 text-red-600 flex items-center gap-2 rounded-b-lg"
-                >
-                  <span>🗑️</span>
-                  حذف
-                </button>
-              </div>
-            </>
-          )}
+                {/* القائمة المنسدلة */}
+                <div className="absolute left-0 mt-2 w-48 bg-white border-2 border-gray-200 rounded-2xl shadow-xl z-20">
+                  <button
+                    onClick={() => handleMenuClick('edit')}
+                    className="w-full text-right px-4 py-3 text-sm hover:bg-blue-50 flex items-center gap-3 font-medium text-blue-700 rounded-t-2xl transition-colors"
+                  >
+                    <span className="text-lg">✏️</span>
+                    تعديل المصروف
+                  </button>
+                  
+                  <div className="border-t border-gray-200"></div>
+                  
+                  <button
+                    onClick={() => handleMenuClick('delete')}
+                    className="w-full text-right px-4 py-3 text-sm hover:bg-red-50 text-red-600 flex items-center gap-3 font-medium rounded-b-2xl transition-colors"
+                  >
+                    <span className="text-lg">🗑️</span>
+                    حذف المصروف
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
       {/* مؤشر المبلغ العالي */}
       {expense.amount > 500 && (
-        <div className="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full">
+        <div className="absolute top-3 right-3 bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold animate-pulse">
           مبلغ عالي
         </div>
       )}
     </div>
   );
+};
+
+// مكون صف جدول المصروف المحسن
+const ExpenseTableRow = ({ expense, onEdit, onDelete }) => {
+  const [showActions, setShowActions] = useState(false);
+  const expenseType = EXPENSE_TYPES.find(t => t.value === expense.type);
+
+  const getExpenseIcon = () => {
+    switch (expense.type) {
+      case 'paper': return '📄';
+      case 'ink': return '🖋️';
+      case 'toner': return '🖨️';
+      case 'maintenance': return '🔧';
+      case 'electricity': return '⚡';
+      case 'rent': return '🏢';
+      case 'supplies': return '📦';
+      default: return '💸';
+    }
+  };
+
+  return (
+    <tr className="hover:bg-gray-50 transition-colors">
+      {/* التاريخ */}
+      <td className="px-6 py-4 whitespace-nowrap">
+        <div className="text-sm font-medium text-gray-900">
+          {formatDate(expense.expenseDate)}
+        </div>
+        <div className="text-xs text-gray-500">
+          {timeAgo(expense.expenseDate)}
+        </div>
+      </td>
+      
+      {/* النوع */}
+      <td className="px-6 py-4 whitespace-nowrap">
+        <div className="flex items-center">
+          <span className="text-lg ml-2">{getExpenseIcon()}</span>
+          <div>
+            <span className="text-sm font-medium text-gray-900">
+              {expenseType?.label || expense.type}
+            </span>
+            <div className={`inline-block w-3 h-3 rounded-full ml-2 ${
+              getTypeColorClass(expense.type)
+            }`}></div>
+          </div>
+        </div>
+      </td>
+      
+      {/* الوصف */}
+      <td className="px-6 py-4 max-w-xs">
+        <div className="text-sm text-gray-900">
+          <div className="line-clamp-2" title={expense.description}>
+            {expense.description}
+          </div>
+        </div>
+      </td>
+      
+      {/* المبلغ */}
+      <td className="px-6 py-4 whitespace-nowrap text-center">
+        <div className="bg-red-100 rounded-full px-3 py-1 inline-block">
+          <span className="text-sm font-bold text-red-800">
+            {formatCurrency(expense.amount || 0)}
+          </span>
+        </div>
+      </td>
+      
+      {/* الملاحظات */}
+      <td className="px-6 py-4 max-w-xs">
+        {expense.notes ? (
+          <span className="text-sm text-gray-600 truncate block" title={expense.notes}>
+            {expense.notes.length > 30 
+              ? `${expense.notes.substring(0, 30)}...` 
+              : expense.notes
+            }
+          </span>
+        ) : (
+          <span className="text-gray-400">-</span>
+        )}
+      </td>
+      
+      {/* الإجراءات */}
+      <td className="px-6 py-4 whitespace-nowrap text-center">
+        <div className="flex items-center justify-center gap-2">
+          <button
+            onClick={() => onEdit(expense)}
+            className="px-3 py-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold rounded-lg transition-all duration-200 shadow-md hover:shadow-lg"
+            title="تعديل"
+          >
+            ✏️ تعديل
+          </button>
+          
+          <button
+            onClick={() => onDelete(expense)}
+            className="px-3 py-2 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-bold rounded-lg transition-all duration-200 shadow-md hover:shadow-lg"
+            title="حذف"
+          >
+            🗑️ حذف
+          </button>
+        </div>
+      </td>
+    </tr>
+  );
+};
+
+// دالة مساعدة للحصول على كلاس لون النوع
+const getTypeColorClass = (type) => {
+  const colors = {
+    paper: 'bg-blue-500',
+    ink: 'bg-purple-500',
+    toner: 'bg-gray-500',
+    maintenance: 'bg-red-500',
+    electricity: 'bg-yellow-500',
+    rent: 'bg-green-500',
+    supplies: 'bg-indigo-500',
+    other: 'bg-gray-400'
+  };
+  return colors[type] || 'bg-gray-400';
 };
 
 export default ExpensesList;
