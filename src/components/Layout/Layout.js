@@ -50,9 +50,17 @@ const Layout = ({ children }) => {
     setSidebarOpen(!sidebarOpen);
   };
 
+  // الحصول على ارتفاع الهيدر بناء على الشاشة
+  const getHeaderHeight = () => {
+    if (isMobile) {
+      return '128px'; // هيدر + شريط الإحصائيات للموبايل
+    }
+    return '112px'; // هيدر عادي + شريط المستخدم
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* الهيدر */}
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      {/* الهيدر المحسن */}
       <Header 
         onMenuClick={toggleSidebar}
         isMobile={isMobile}
@@ -61,7 +69,13 @@ const Layout = ({ children }) => {
       <div className="flex">
         {/* الشريط الجانبي للشاشات الكبيرة */}
         {!isMobile && (
-          <div className="fixed top-20 right-0 h-[calc(100vh-5rem)] w-64 bg-white border-l border-gray-200 shadow-sm overflow-y-auto z-30">
+          <div 
+            className="fixed right-0 w-72 bg-white shadow-2xl overflow-y-auto z-30 border-l-2 border-gray-200"
+            style={{ 
+              top: getHeaderHeight(), 
+              height: `calc(100vh - ${getHeaderHeight()})` 
+            }}
+          >
             <Navigation />
           </div>
         )}
@@ -70,10 +84,10 @@ const Layout = ({ children }) => {
         <main 
           className={`
             flex-1 transition-all duration-300 ease-in-out
-            ${!isMobile ? 'mr-64' : 'mr-0'}
-            pt-20
+            ${!isMobile ? 'mr-72' : 'mr-0'}
             min-h-screen
           `}
+          style={{ paddingTop: getHeaderHeight() }}
         >
           <div className="container-mobile p-4 sm:p-6 lg:p-8">
             {children}
@@ -83,63 +97,91 @@ const Layout = ({ children }) => {
         {/* الشريط الجانبي المنبثق للهواتف المحمولة */}
         {isMobile && (
           <>
-            {/* الخلفية المظللة */}
+            {/* الخلفية المظللة المحسنة */}
             {sidebarOpen && (
               <div 
-                className="fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity duration-300"
+                className="fixed inset-0 bg-black bg-opacity-60 z-40 transition-all duration-300 backdrop-blur-sm"
                 onClick={() => setSidebarOpen(false)}
               />
             )}
 
-            {/* الشريط الجانبي */}
+            {/* الشريط الجانبي المحسن */}
             <div 
               className={`
-                fixed top-20 right-0 h-[calc(100vh-5rem)] w-80 max-w-[85vw] 
-                bg-white shadow-xl z-50 transition-transform duration-300 ease-in-out
+                fixed w-80 max-w-[90vw] bg-white shadow-2xl z-50 
+                transition-all duration-300 ease-in-out border-l-2 border-gray-200
                 ${sidebarOpen ? 'transform translate-x-0' : 'transform translate-x-full'}
                 overflow-y-auto
               `}
+              style={{ 
+                top: getHeaderHeight(), 
+                right: 0,
+                height: `calc(100vh - ${getHeaderHeight()})` 
+              }}
             >
+              {/* عنوان الشريط الجانبي للموبايل */}
+              <div className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-4 border-b-2 border-blue-300">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">📱</span>
+                    <h3 className="text-lg font-bold">قائمة التنقل</h3>
+                  </div>
+                  <button
+                    onClick={() => setSidebarOpen(false)}
+                    className="p-2 hover:bg-white hover:bg-opacity-20 rounded-lg transition-colors"
+                  >
+                    <span className="text-xl">✕</span>
+                  </button>
+                </div>
+              </div>
+              
               <Navigation onNavigate={() => setSidebarOpen(false)} />
             </div>
           </>
         )}
       </div>
 
-      {/* الملاحة السفلية للهواتف المحمولة */}
+      {/* الملاحة السفلية المحسنة للهواتف المحمولة */}
       {isMobile && (
-        <div className="bottom-navigation">
-          <div className="flex justify-around items-center px-4">
-            <BottomNavItem 
-              icon="📊" 
-              label="الرئيسية" 
-              path="/dashboard"
-              active={location.pathname === '/dashboard'}
-            />
-            <BottomNavItem 
-              icon="👨‍🏫" 
-              label="المدرسين" 
-              path="/teachers"
-              active={location.pathname === '/teachers'}
-            />
-            <BottomNavItem 
-              icon="📝" 
-              label="العمليات" 
-              path="/operations"
-              active={location.pathname === '/operations'}
-            />
-            <BottomNavItem 
-              icon="💰" 
-              label="الحسابات" 
-              path="/accounts"
-              active={location.pathname === '/accounts'}
-            />
-            <BottomNavItem 
-              icon="☰" 
-              label="القائمة" 
-              onClick={toggleSidebar}
-              active={sidebarOpen}
-            />
+        <div className="bottom-navigation-enhanced">
+          <div className="bg-white border-t-2 border-gray-200 shadow-2xl">
+            <div className="flex justify-around items-center px-2 py-2">
+              <BottomNavItem 
+                icon="📊" 
+                label="الرئيسية" 
+                path="/dashboard"
+                active={location.pathname === '/dashboard'}
+                color="blue"
+              />
+              <BottomNavItem 
+                icon="👨‍🏫" 
+                label="المدرسين" 
+                path="/teachers"
+                active={location.pathname === '/teachers'}
+                color="indigo"
+              />
+              <BottomNavItem 
+                icon="📝" 
+                label="العمليات" 
+                path="/operations"
+                active={location.pathname === '/operations'}
+                color="green"
+              />
+              <BottomNavItem 
+                icon="💰" 
+                label="الحسابات" 
+                path="/accounts"
+                active={location.pathname === '/accounts'}
+                color="purple"
+              />
+              <BottomNavItem 
+                icon="☰" 
+                label="القائمة" 
+                onClick={toggleSidebar}
+                active={sidebarOpen}
+                color="gray"
+              />
+            </div>
           </div>
         </div>
       )}
@@ -147,8 +189,8 @@ const Layout = ({ children }) => {
   );
 };
 
-// مكون عنصر الملاحة السفلية
-const BottomNavItem = ({ icon, label, path, onClick, active }) => {
+// مكون عنصر الملاحة السفلية المحسن
+const BottomNavItem = ({ icon, label, path, onClick, active, color }) => {
   const navigate = useNavigate();
   
   const handleClick = () => {
@@ -159,13 +201,53 @@ const BottomNavItem = ({ icon, label, path, onClick, active }) => {
     }
   };
 
+  const getColorClasses = () => {
+    const colors = {
+      blue: {
+        active: 'bg-blue-100 text-blue-600 border-blue-300',
+        inactive: 'text-gray-600 hover:bg-blue-50 hover:text-blue-600'
+      },
+      indigo: {
+        active: 'bg-indigo-100 text-indigo-600 border-indigo-300',
+        inactive: 'text-gray-600 hover:bg-indigo-50 hover:text-indigo-600'
+      },
+      green: {
+        active: 'bg-green-100 text-green-600 border-green-300',
+        inactive: 'text-gray-600 hover:bg-green-50 hover:text-green-600'
+      },
+      purple: {
+        active: 'bg-purple-100 text-purple-600 border-purple-300',
+        inactive: 'text-gray-600 hover:bg-purple-50 hover:text-purple-600'
+      },
+      gray: {
+        active: 'bg-gray-100 text-gray-700 border-gray-300',
+        inactive: 'text-gray-600 hover:bg-gray-50 hover:text-gray-700'
+      }
+    };
+    return colors[color] || colors.gray;
+  };
+
+  const colorClasses = getColorClasses();
+
   return (
     <button
       onClick={handleClick}
-      className={`nav-item ${active ? 'active' : ''}`}
+      className={`
+        nav-item-enhanced flex flex-col items-center justify-center p-3 rounded-2xl 
+        transition-all duration-200 min-w-16 min-h-16 border-2 shadow-md
+        ${active 
+          ? `${colorClasses.active} shadow-lg transform scale-105` 
+          : `border-transparent ${colorClasses.inactive} hover:shadow-md hover:transform hover:scale-105`
+        }
+      `}
     >
-      <div className="nav-icon emoji">{icon}</div>
-      <div className="nav-label">{label}</div>
+      <div className="nav-icon-enhanced text-2xl mb-1">{icon}</div>
+      <div className="nav-label-enhanced text-xs font-bold">{label}</div>
+      
+      {/* مؤشر النشاط */}
+      {active && (
+        <div className="w-1 h-1 bg-current rounded-full mt-1 animate-pulse"></div>
+      )}
     </button>
   );
 };

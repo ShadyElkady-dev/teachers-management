@@ -22,30 +22,28 @@ const Header = ({ onMenuClick, isMobile }) => {
     return () => clearInterval(timer);
   }, []);
 
-  // الحصول على عنوان الصفحة الحالية
-  const getPageTitle = () => {
+  // الحصول على عنوان الصفحة الحالية مع الأيقونة واللون
+  const getPageInfo = () => {
     switch (location.pathname) {
       case '/dashboard':
-        return 'لوحة التحكم';
+        return { title: 'لوحة التحكم', icon: '📊', color: 'from-blue-500 to-blue-600' };
       case '/teachers':
-        return 'إدارة المدرسين';
+        return { title: 'إدارة المدرسين', icon: '👨‍🏫', color: 'from-indigo-500 to-indigo-600' };
       case '/operations':
-        return 'إدارة العمليات';
+        return { title: 'إدارة العمليات', icon: '📝', color: 'from-green-500 to-green-600' };
       case '/accounts':
-        return 'إدارة الحسابات';
+        return { title: 'إدارة الحسابات', icon: '💰', color: 'from-purple-500 to-purple-600' };
       case '/expenses':
-        return 'المصروفات الخاصة';
+        return { title: 'المصروفات الخاصة', icon: '💸', color: 'from-red-500 to-red-600' };
       default:
-        return 'نظام إدارة المطبعة';
+        return { title: 'نظام إدارة المطبعة', icon: '🖨️', color: 'from-gray-500 to-gray-600' };
     }
   };
 
   // حساب الإحصائيات السريعة (مع مراعاة الصلاحيات)
   const stats = {
     totalTeachers: state.teachers.length,
-    // إظهار الأرباح فقط للأدمن
     totalProfit: hasPermission(PERMISSIONS.VIEW_FINANCIAL_DATA) ? calculateTotalProfit() : 0,
-    // إظهار الديون فقط للأدمن
     totalDebts: hasPermission(PERMISSIONS.VIEW_FINANCIAL_DATA) ? state.teachers.reduce((total, teacher) => {
       return total + Math.max(0, state.operations
         .filter(op => op.teacherId === teacher.id)
@@ -56,181 +54,189 @@ const Header = ({ onMenuClick, isMobile }) => {
     }, 0) : 0
   };
 
+  const pageInfo = getPageInfo();
+
   return (
-    <header className="header-mobile bg-white border-b border-gray-200 shadow-sm fixed top-0 left-0 right-0 z-40">
-      <div className="flex items-center justify-between h-16 px-4">
-        
-        {/* الجهة اليمنى - العنوان والشعار */}
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">🖨️</span>
+    <header className="fixed top-0 left-0 right-0 z-40 shadow-lg">
+      {/* الهيدر الرئيسي بخلفية متدرجة */}
+      <div className={`bg-gradient-to-r ${pageInfo.color} text-white`}>
+        <div className="flex items-center justify-between h-16 px-4">
+          
+          {/* الجهة اليمنى - العنوان والشعار */}
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-white bg-opacity-20 rounded-2xl flex items-center justify-center shadow-lg backdrop-blur-sm">
+                <span className="text-white text-2xl">{pageInfo.icon}</span>
+              </div>
+              {!isMobile && (
+                <div>
+                  <h1 className="text-lg font-bold text-white">{APP_CONFIG.NAME}</h1>
+                  <p className="text-xs text-white opacity-80">الإصدار {APP_CONFIG.VERSION}</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* الوسط - عنوان الصفحة */}
+          <div className="flex-1 text-center">
+            <div className="flex items-center justify-center gap-2">
+              <span className="text-2xl">{pageInfo.icon}</span>
+              <h2 className="text-base md:text-xl font-bold text-white">
+                {pageInfo.title}
+              </h2>
             </div>
             {!isMobile && (
-              <div>
-                <h1 className="text-lg font-bold text-gray-900">{APP_CONFIG.NAME}</h1>
-                <p className="text-xs text-gray-500">الإصدار {APP_CONFIG.VERSION}</p>
+              <p className="text-sm text-white opacity-80 mt-1">
+                {formatDate(currentTime, 'yyyy/MM/dd')} - {currentTime.toLocaleTimeString('ar-EG', { 
+                  hour: '2-digit', 
+                  minute: '2-digit' 
+                })}
+              </p>
+            )}
+          </div>
+
+          {/* الجهة اليسرى - الإحصائيات والقائمة */}
+          <div className="flex items-center gap-2">
+            
+            {/* الإحصائيات السريعة للشاشات الكبيرة */}
+            {!isMobile && (
+              <div className="flex items-center gap-4 mr-4">
+                <div className="text-center bg-white bg-opacity-20 rounded-xl px-3 py-2 backdrop-blur-sm">
+                  <div className="text-sm font-bold text-white">
+                    {stats.totalTeachers}
+                  </div>
+                  <div className="text-xs text-white opacity-80">مدرس</div>
+                </div>
+                
+                <PermissionGate permission={PERMISSIONS.VIEW_FINANCIAL_DATA}>
+                  <div className="text-center bg-white bg-opacity-20 rounded-xl px-3 py-2 backdrop-blur-sm">
+                    <div className="text-sm font-bold text-white">
+                      {formatCurrency(stats.totalProfit)}
+                    </div>
+                    <div className="text-xs text-white opacity-80">أرباح</div>
+                  </div>
+                  
+                  <div className="text-center bg-white bg-opacity-20 rounded-xl px-3 py-2 backdrop-blur-sm">
+                    <div className="text-sm font-bold text-white">
+                      {formatCurrency(stats.totalDebts)}
+                    </div>
+                    <div className="text-xs text-white opacity-80">ديون</div>
+                  </div>
+                </PermissionGate>
               </div>
+            )}
+
+            {/* أيقونة الإشعارات */}
+            <PermissionGate permission={PERMISSIONS.VIEW_FINANCIAL_DATA}>
+              <button className="relative p-3 text-white hover:bg-white hover:bg-opacity-20 rounded-xl transition-all duration-200 backdrop-blur-sm">
+                <span className="text-xl">🔔</span>
+                {stats.totalDebts > 0 && (
+                  <span className="absolute -top-1 -left-1 w-4 h-4 bg-red-500 rounded-full animate-pulse flex items-center justify-center">
+                    <span className="text-xs text-white font-bold">!</span>
+                  </span>
+                )}
+              </button>
+            </PermissionGate>
+
+            {/* ملف المستخدم */}
+            <div className="bg-white bg-opacity-20 rounded-xl backdrop-blur-sm">
+              <UserProfile />
+            </div>
+
+            {/* زر القائمة للهواتف المحمولة */}
+            {isMobile && (
+              <button
+                onClick={onMenuClick}
+                className="p-3 text-white hover:bg-white hover:bg-opacity-20 rounded-xl transition-all duration-200 backdrop-blur-sm"
+                aria-label="فتح القائمة"
+              >
+                <span className="text-xl">☰</span>
+              </button>
+            )}
+
+            {/* قائمة الإعدادات للشاشات الكبيرة */}
+            {!isMobile && (
+              <PermissionGate permission={PERMISSIONS.VIEW_SYSTEM_SETTINGS}>
+                <div className="bg-white bg-opacity-20 rounded-xl backdrop-blur-sm">
+                  <SettingsDropdown />
+                </div>
+              </PermissionGate>
             )}
           </div>
         </div>
 
-        {/* الوسط - عنوان الصفحة */}
-        <div className="flex-1 text-center">
-          <h2 className="text-base md:text-lg font-semibold text-gray-800">
-            {getPageTitle()}
-          </h2>
-          {!isMobile && (
-            <p className="text-sm text-gray-500">
-              {formatDate(currentTime, 'yyyy/MM/dd')} - {currentTime.toLocaleTimeString('ar-EG', { 
-                hour: '2-digit', 
-                minute: '2-digit' 
-              })}
-            </p>
-          )}
-        </div>
-
-        {/* الجهة اليسرى - الإحصائيات والقائمة */}
-        <div className="flex items-center gap-2">
-          
-          {/* الإحصائيات السريعة للشاشات الكبيرة - مع مراعاة الصلاحيات */}
-          {!isMobile && (
-            <div className="flex items-center gap-4 mr-4">
+        {/* شريط الإحصائيات للهواتف المحمولة */}
+        {isMobile && (
+          <div className="bg-black bg-opacity-20 backdrop-blur-sm px-4 py-3 border-t border-white border-opacity-20">
+            <div className="flex justify-around items-center">
               <div className="text-center">
-                <div className="text-sm font-semibold text-blue-600">
+                <div className="text-sm font-bold text-white">
                   {stats.totalTeachers}
                 </div>
-                <div className="text-xs text-gray-500">مدرس</div>
+                <div className="text-xs text-white opacity-80">مدرس</div>
               </div>
               
-              <div className="w-px h-8 bg-gray-300"></div>
-              
-              {/* إظهار الأرباح فقط للأدمن */}
-              <PermissionGate permission={PERMISSIONS.VIEW_FINANCIAL_DATA}>
+              <PermissionGate 
+                permission={PERMISSIONS.VIEW_FINANCIAL_DATA}
+                fallback={
+                  <>
+                    <div className="text-center">
+                      <div className="text-sm font-bold text-white opacity-50">---</div>
+                      <div className="text-xs text-white opacity-50">أرباح</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-sm font-bold text-white opacity-50">---</div>
+                      <div className="text-xs text-white opacity-50">ديون</div>
+                    </div>
+                  </>
+                }
+              >
                 <div className="text-center">
-                  <div className="text-sm font-semibold text-green-600">
+                  <div className="text-sm font-bold text-white">
                     {formatCurrency(stats.totalProfit)}
                   </div>
-                  <div className="text-xs text-gray-500">الأرباح</div>
+                  <div className="text-xs text-white opacity-80">أرباح</div>
                 </div>
-                
-                <div className="w-px h-8 bg-gray-300"></div>
                 
                 <div className="text-center">
-                  <div className="text-sm font-semibold text-red-600">
+                  <div className="text-sm font-bold text-white">
                     {formatCurrency(stats.totalDebts)}
                   </div>
-                  <div className="text-xs text-gray-500">الديون</div>
+                  <div className="text-xs text-white opacity-80">ديون</div>
                 </div>
               </PermissionGate>
-            </div>
-          )}
-
-          {/* أيقونة الإشعارات - مع مراعاة الصلاحيات */}
-          <PermissionGate permission={PERMISSIONS.VIEW_FINANCIAL_DATA}>
-            <button className="relative p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors">
-              <span className="text-xl">🔔</span>
-              {stats.totalDebts > 0 && (
-                <span className="absolute -top-1 -left-1 w-3 h-3 bg-red-500 rounded-full animate-pulse"></span>
-              )}
-            </button>
-          </PermissionGate>
-
-          {/* ملف المستخدم */}
-          <UserProfile />
-
-          {/* زر القائمة للهواتف المحمولة */}
-          {isMobile && (
-            <button
-              onClick={onMenuClick}
-              className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
-              aria-label="فتح القائمة"
-            >
-              <span className="text-xl">☰</span>
-            </button>
-          )}
-
-          {/* قائمة الإعدادات للشاشات الكبيرة - للأدمن فقط */}
-          {!isMobile && (
-            <PermissionGate permission={PERMISSIONS.VIEW_SYSTEM_SETTINGS}>
-              <SettingsDropdown />
-            </PermissionGate>
-          )}
-        </div>
-      </div>
-
-      {/* شريط الإحصائيات للهواتف المحمولة */}
-      {isMobile && (
-        <div className="bg-gray-50 border-t border-gray-200 px-4 py-2">
-          <div className="flex justify-around items-center">
-            <div className="text-center">
-              <div className="text-sm font-semibold text-blue-600">
-                {stats.totalTeachers}
-              </div>
-              <div className="text-xs text-gray-500">مدرس</div>
-            </div>
-            
-            {/* إظهار البيانات المالية فقط للأدمن */}
-            <PermissionGate 
-              permission={PERMISSIONS.VIEW_FINANCIAL_DATA}
-              fallback={
-                <>
-                  <div className="text-center">
-                    <div className="text-sm font-semibold text-gray-400">---</div>
-                    <div className="text-xs text-gray-400">أرباح</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-sm font-semibold text-gray-400">---</div>
-                    <div className="text-xs text-gray-400">ديون</div>
-                  </div>
-                </>
-              }
-            >
-              <div className="text-center">
-                <div className="text-sm font-semibold text-green-600">
-                  {formatCurrency(stats.totalProfit)}
-                </div>
-                <div className="text-xs text-gray-500">أرباح</div>
-              </div>
               
               <div className="text-center">
-                <div className="text-sm font-semibold text-red-600">
-                  {formatCurrency(stats.totalDebts)}
+                <div className="text-sm font-bold text-white">
+                  {currentTime.toLocaleTimeString('ar-EG', { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                  })}
                 </div>
-                <div className="text-xs text-gray-500">ديون</div>
+                <div className="text-xs text-white opacity-80">الوقت</div>
               </div>
-            </PermissionGate>
-            
-            <div className="text-center">
-              <div className="text-sm font-semibold text-gray-600">
-                {currentTime.toLocaleTimeString('ar-EG', { 
-                  hour: '2-digit', 
-                  minute: '2-digit' 
-                })}
-              </div>
-              <div className="text-xs text-gray-500">الوقت</div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* شريط معلومات المستخدم الحالي */}
-      {!isMobile && (
-        <div className="bg-blue-50 border-t border-blue-200 px-4 py-1">
-          <div className="flex items-center justify-between text-xs">
-            <div className="flex items-center gap-2 text-blue-700">
-              <span>{user?.role === 'admin' ? '👑' : '📝'}</span>
-              <span>مرحباً، {user?.name}</span>
-              <span className="text-blue-500">
-                ({user?.role === 'admin' ? 'مدير النظام' : 'سكرتارية'})
-              </span>
-            </div>
-            <div className="text-blue-600">
-              {formatDate(currentTime, 'yyyy/MM/dd')}
+        {/* شريط معلومات المستخدم الحالي */}
+        {!isMobile && (
+          <div className="bg-black bg-opacity-20 backdrop-blur-sm px-4 py-2 border-t border-white border-opacity-20">
+            <div className="flex items-center justify-between text-xs">
+              <div className="flex items-center gap-2 text-white">
+                <span className="text-lg">{user?.role === 'admin' ? '👑' : '📝'}</span>
+                <span className="font-medium">مرحباً، {user?.name}</span>
+                <span className="text-white opacity-70">
+                  ({user?.role === 'admin' ? 'مدير النظام' : 'سكرتارية'})
+                </span>
+              </div>
+              <div className="text-white opacity-80 font-medium">
+                {formatDate(currentTime, 'yyyy/MM/dd')}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </header>
   );
 };
@@ -272,7 +278,7 @@ const SettingsDropdown = () => {
     <div className="relative">
       <button
         onClick={toggleDropdown}
-        className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+        className="p-2 text-white hover:bg-white hover:bg-opacity-20 rounded-lg transition-colors"
         aria-label="الإعدادات"
       >
         <span className="text-xl">⚙️</span>

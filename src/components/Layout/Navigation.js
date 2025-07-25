@@ -10,7 +10,7 @@ const Navigation = ({ onNavigate }) => {
   const { state, calculateTotalProfit, calculateTeacherDebt } = useAppContext();
   const { user, hasPermission } = useAuth();
 
-  // الأقسام الرئيسية مع الصلاحيات
+  // الأقسام الرئيسية مع الصلاحيات والألوان المحدثة
   const mainSections = [
     {
       id: 'dashboard',
@@ -18,8 +18,13 @@ const Navigation = ({ onNavigate }) => {
       icon: '📊',
       path: '/dashboard',
       description: 'نظرة شاملة على النظام',
-      permission: null, // متاح للجميع
-      color: 'blue'
+      permission: null,
+      color: 'blue',
+      gradient: 'from-blue-500 to-blue-600',
+      bgColor: 'bg-blue-50',
+      borderColor: 'border-blue-200',
+      textColor: 'text-blue-700',
+      hoverBg: 'hover:bg-blue-100'
     },
     {
       id: 'teachers',
@@ -28,7 +33,12 @@ const Navigation = ({ onNavigate }) => {
       path: '/teachers',
       description: 'إدارة المدرسين',
       permission: PERMISSIONS.VIEW_TEACHERS,
-      color: 'indigo'
+      color: 'indigo',
+      gradient: 'from-indigo-500 to-indigo-600',
+      bgColor: 'bg-indigo-50',
+      borderColor: 'border-indigo-200',
+      textColor: 'text-indigo-700',
+      hoverBg: 'hover:bg-indigo-100'
     },
     {
       id: 'operations',
@@ -37,7 +47,12 @@ const Navigation = ({ onNavigate }) => {
       path: '/operations',
       description: 'إدارة العمليات',
       permission: PERMISSIONS.VIEW_OPERATIONS,
-      color: 'green'
+      color: 'green',
+      gradient: 'from-green-500 to-green-600',
+      bgColor: 'bg-green-50',
+      borderColor: 'border-green-200',
+      textColor: 'text-green-700',
+      hoverBg: 'hover:bg-green-100'
     },
     {
       id: 'accounts',
@@ -46,7 +61,12 @@ const Navigation = ({ onNavigate }) => {
       path: '/accounts',
       description: 'المدفوعات والديون',
       permission: PERMISSIONS.VIEW_PAYMENTS,
-      color: 'purple'
+      color: 'purple',
+      gradient: 'from-purple-500 to-purple-600',
+      bgColor: 'bg-purple-50',
+      borderColor: 'border-purple-200',
+      textColor: 'text-purple-700',
+      hoverBg: 'hover:bg-purple-100'
     },
     {
       id: 'expenses',
@@ -55,7 +75,12 @@ const Navigation = ({ onNavigate }) => {
       path: '/expenses',
       description: 'المصروفات الخاصة',
       permission: PERMISSIONS.VIEW_EXPENSES,
-      color: 'red'
+      color: 'red',
+      gradient: 'from-red-500 to-red-600',
+      bgColor: 'bg-red-50',
+      borderColor: 'border-red-200',
+      textColor: 'text-red-700',
+      hoverBg: 'hover:bg-red-100'
     }
   ];
 
@@ -137,29 +162,40 @@ const Navigation = ({ onNavigate }) => {
   };
 
   return (
-    <nav className="h-full bg-white">
+    <nav className="h-full bg-gradient-to-b from-gray-50 to-white">
       <div className="p-6">
         
-        {/* معلومات المستخدم */}
-        <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-md">
-              <span className="text-white font-bold text-lg">
-                {user?.name?.charAt(0) || '👤'}
-              </span>
+        {/* معلومات المستخدم المحسنة */}
+        <div className="mb-6 relative overflow-hidden">
+          <div className={`bg-gradient-to-r ${user?.role === 'admin' ? 'from-purple-500 to-indigo-600' : 'from-blue-500 to-cyan-600'} rounded-2xl p-6 text-white shadow-lg`}>
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 bg-white bg-opacity-20 rounded-2xl flex items-center justify-center shadow-lg backdrop-blur-sm">
+                <span className="text-white font-bold text-2xl">
+                  {user?.name?.charAt(0) || '👤'}
+                </span>
+              </div>
+              <div>
+                <h3 className="font-bold text-xl text-white mb-1">{user?.name}</h3>
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">{user?.role === 'admin' ? '👑' : '📝'}</span>
+                  <p className="text-white opacity-90 font-medium">
+                    {user?.role === 'admin' ? 'مدير النظام' : 'سكرتارية'}
+                  </p>
+                </div>
+              </div>
             </div>
-            <div>
-              <h3 className="font-semibold text-blue-900">{user?.name}</h3>
-              <p className="text-sm text-blue-700">
-                {user?.role === 'admin' ? '👑 مدير النظام' : '📝 سكرتارية'}
-              </p>
-            </div>
+            {/* تأثير بصري */}
+            <div className="absolute -top-4 -right-4 w-24 h-24 bg-white bg-opacity-10 rounded-full"></div>
+            <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-white bg-opacity-5 rounded-full"></div>
           </div>
         </div>
 
         {/* الأقسام الرئيسية */}
         <div className="mb-8">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">الأقسام الرئيسية</h3>
+          <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <span className="text-2xl">🏠</span>
+            الأقسام الرئيسية
+          </h3>
           
           <div className="space-y-2">
             {availableSections.map((section) => {
@@ -173,38 +209,48 @@ const Navigation = ({ onNavigate }) => {
                   to={section.path}
                   onClick={onNavigate}
                   className={`
-                    group block p-4 rounded-xl transition-all duration-200 border-2
+                    group block p-4 rounded-2xl transition-all duration-300 border-2 shadow-md hover:shadow-lg transform hover:scale-105
                     ${isActive 
-                      ? `bg-${section.color}-50 border-${section.color}-200 text-${section.color}-700` 
-                      : 'hover:bg-gray-50 border-transparent text-gray-700 hover:text-gray-900 hover:border-gray-200'
+                      ? `bg-gradient-to-r ${section.gradient} border-transparent text-white shadow-lg` 
+                      : `${section.bgColor} ${section.borderColor} ${section.textColor} ${section.hoverBg} hover:border-opacity-70`
                     }
                   `}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className={`
-                        w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-200
+                        w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-200 shadow-md
                         ${isActive 
-                          ? `bg-${section.color}-100` 
-                          : 'bg-gray-100 group-hover:bg-gray-200'
+                          ? 'bg-white bg-opacity-20 backdrop-blur-sm' 
+                          : 'bg-white shadow-lg'
                         }
                       `}>
-                        <span className="text-2xl">{section.icon}</span>
+                        <span className={`text-2xl ${isActive ? 'text-white' : ''}`}>
+                          {section.icon}
+                        </span>
                       </div>
                       <div>
-                        <div className="font-semibold">{section.name}</div>
-                        <div className="text-sm opacity-75">{section.description}</div>
+                        <div className={`font-bold text-lg ${isActive ? 'text-white' : section.textColor}`}>
+                          {section.name}
+                        </div>
+                        <div className={`text-sm ${isActive ? 'text-white opacity-90' : 'text-gray-600'}`}>
+                          {section.description}
+                        </div>
                       </div>
                     </div>
                     
                     <div className="text-left">
                       {alertCount && (
-                        <div className="bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center mb-1">
+                        <div className="bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center mb-2 animate-pulse">
                           {alertCount}
                         </div>
                       )}
-                      <div className="text-sm font-semibold">{stats.count}</div>
-                      <div className="text-xs opacity-75">{stats.info}</div>
+                      <div className={`text-sm font-bold ${isActive ? 'text-white' : section.textColor}`}>
+                        {stats.count}
+                      </div>
+                      <div className={`text-xs ${isActive ? 'text-white opacity-80' : 'text-gray-500'}`}>
+                        {stats.info}
+                      </div>
                     </div>
                   </div>
                 </Link>
@@ -215,20 +261,23 @@ const Navigation = ({ onNavigate }) => {
 
         {/* الإجراءات السريعة */}
         <div className="mb-8">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">إجراءات سريعة</h3>
+          <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <span className="text-2xl">⚡</span>
+            إجراءات سريعة
+          </h3>
           
-          <div className="space-y-2">
+          <div className="space-y-3">
             {/* إضافة مدرس - للأدمن فقط */}
             <PermissionGate permission={PERMISSIONS.ADD_TEACHER}>
               <Link
                 to="/teachers?action=add"
                 onClick={onNavigate}
-                className="group flex items-center gap-3 p-3 hover:bg-blue-50 rounded-lg transition-colors"
+                className="group flex items-center gap-3 p-4 bg-gradient-to-r from-blue-100 to-blue-200 hover:from-blue-200 hover:to-blue-300 rounded-2xl transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105"
               >
-                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-blue-200 transition-colors">
-                  <span className="text-lg">👨‍🏫</span>
+                <div className="w-12 h-12 bg-blue-500 rounded-2xl flex items-center justify-center shadow-lg">
+                  <span className="text-lg text-white">👨‍🏫</span>
                 </div>
-                <span className="font-medium text-gray-700 group-hover:text-blue-900">إضافة مدرس جديد</span>
+                <span className="font-bold text-blue-900 text-lg">إضافة مدرس جديد</span>
               </Link>
             </PermissionGate>
             
@@ -237,12 +286,12 @@ const Navigation = ({ onNavigate }) => {
               <Link
                 to="/operations?action=add"
                 onClick={onNavigate}
-                className="group flex items-center gap-3 p-3 hover:bg-green-50 rounded-lg transition-colors"
+                className="group flex items-center gap-3 p-4 bg-gradient-to-r from-green-100 to-green-200 hover:from-green-200 hover:to-green-300 rounded-2xl transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105"
               >
-                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center group-hover:bg-green-200 transition-colors">
-                  <span className="text-lg">📝</span>
+                <div className="w-12 h-12 bg-green-500 rounded-2xl flex items-center justify-center shadow-lg">
+                  <span className="text-lg text-white">📝</span>
                 </div>
-                <span className="font-medium text-gray-700 group-hover:text-green-900">إضافة عملية جديدة</span>
+                <span className="font-bold text-green-900 text-lg">إضافة عملية جديدة</span>
               </Link>
             </PermissionGate>
             
@@ -251,12 +300,12 @@ const Navigation = ({ onNavigate }) => {
               <Link
                 to="/accounts?action=payment"
                 onClick={onNavigate}
-                className="group flex items-center gap-3 p-3 hover:bg-purple-50 rounded-lg transition-colors"
+                className="group flex items-center gap-3 p-4 bg-gradient-to-r from-purple-100 to-purple-200 hover:from-purple-200 hover:to-purple-300 rounded-2xl transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105"
               >
-                <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center group-hover:bg-purple-200 transition-colors">
-                  <span className="text-lg">💳</span>
+                <div className="w-12 h-12 bg-purple-500 rounded-2xl flex items-center justify-center shadow-lg">
+                  <span className="text-lg text-white">💳</span>
                 </div>
-                <span className="font-medium text-gray-700 group-hover:text-purple-900">تسجيل دفعة سريعة</span>
+                <span className="font-bold text-purple-900 text-lg">تسجيل دفعة سريعة</span>
               </Link>
             </PermissionGate>
             
@@ -265,12 +314,12 @@ const Navigation = ({ onNavigate }) => {
               <Link
                 to="/expenses?action=add"
                 onClick={onNavigate}
-                className="group flex items-center gap-3 p-3 hover:bg-red-50 rounded-lg transition-colors"
+                className="group flex items-center gap-3 p-4 bg-gradient-to-r from-red-100 to-red-200 hover:from-red-200 hover:to-red-300 rounded-2xl transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105"
               >
-                <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center group-hover:bg-red-200 transition-colors">
-                  <span className="text-lg">💸</span>
+                <div className="w-12 h-12 bg-red-500 rounded-2xl flex items-center justify-center shadow-lg">
+                  <span className="text-lg text-white">💸</span>
                 </div>
-                <span className="font-medium text-gray-700 group-hover:text-red-900">إضافة مصروف</span>
+                <span className="font-bold text-red-900 text-lg">إضافة مصروف</span>
               </Link>
             </PermissionGate>
 
@@ -280,10 +329,10 @@ const Navigation = ({ onNavigate }) => {
               fallback={null}
             >
               {!hasPermission(PERMISSIONS.VIEW_FINANCIAL_DATA) && (
-                <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                  <div className="flex items-center gap-2">
-                    <span className="text-yellow-500">💡</span>
-                    <span className="text-sm text-yellow-800 font-medium">
+                <div className="p-4 bg-gradient-to-r from-yellow-100 to-amber-200 border-2 border-yellow-300 rounded-2xl shadow-md">
+                  <div className="flex items-center gap-3">
+                    <span className="text-yellow-600 text-2xl">💡</span>
+                    <span className="text-sm text-yellow-800 font-bold">
                       يمكنك إضافة العمليات من صفحة العمليات
                     </span>
                   </div>
@@ -296,28 +345,31 @@ const Navigation = ({ onNavigate }) => {
         {/* الملخص المالي - للأدمن فقط */}
         <PermissionGate permission={PERMISSIONS.VIEW_FINANCIAL_DATA}>
           <div className="mb-8">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">الملخص المالي</h3>
+            <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <span className="text-2xl">💰</span>
+              الملخص المالي
+            </h3>
             
-            <div className="space-y-3">
-              <div className="bg-gradient-to-r from-green-50 to-green-100 p-4 rounded-lg border border-green-200">
+            <div className="space-y-4">
+              <div className="bg-gradient-to-r from-green-500 to-emerald-600 p-4 rounded-2xl border border-green-300 shadow-lg">
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="text-sm text-green-600 font-medium">صافي الأرباح</div>
-                    <div className="text-xl font-bold text-green-900">{formatCurrency(calculateTotalProfit())}</div>
+                    <div className="text-sm text-white font-medium opacity-90">صافي الأرباح</div>
+                    <div className="text-2xl font-bold text-white">{formatCurrency(calculateTotalProfit())}</div>
                   </div>
-                  <div className="text-2xl">📈</div>
+                  <div className="text-3xl text-white opacity-80">📈</div>
                 </div>
               </div>
               
-              <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-4 rounded-lg border border-blue-200">
+              <div className="bg-gradient-to-r from-blue-500 to-cyan-600 p-4 rounded-2xl border border-blue-300 shadow-lg">
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="text-sm text-blue-600 font-medium">إجمالي الإيرادات</div>
-                    <div className="text-xl font-bold text-blue-900">
+                    <div className="text-sm text-white font-medium opacity-90">إجمالي الإيرادات</div>
+                    <div className="text-xl font-bold text-white">
                       {formatCurrency(state.payments.reduce((sum, payment) => sum + (payment.amount || 0), 0))}
                     </div>
                   </div>
-                  <div className="text-2xl">💰</div>
+                  <div className="text-3xl text-white opacity-80">💰</div>
                 </div>
               </div>
             </div>
@@ -325,15 +377,29 @@ const Navigation = ({ onNavigate }) => {
         </PermissionGate>
 
         {/* معلومات النظام */}
-        <div className="border-t border-gray-200 pt-6">
-          <div className="text-center text-sm text-gray-500">
-            <div className="mb-2">نظام إدارة المطبعة</div>
-            <div className="mb-2">الإصدار 2.0.0</div>
-            <div className="text-xs">
+        <div className="border-t-2 border-gray-200 pt-6">
+          <div className="bg-gradient-to-r from-gray-100 to-gray-200 rounded-2xl p-4 text-center">
+            <div className="text-lg font-bold text-gray-800 mb-2 flex items-center justify-center gap-2">
+              <span>🖨️</span>
+              نظام إدارة المطبعة
+            </div>
+            <div className="text-sm text-gray-600 mb-2">الإصدار 2.0.0</div>
+            <div className="text-xs text-gray-500 mb-3">
               تحديث: {new Date().toLocaleDateString('ar-EG')}
             </div>
-            <div className="text-xs mt-2 text-blue-600">
-              المستخدم: {user?.name} ({user?.role === 'admin' ? 'مدير' : 'سكرتارية'})
+            <div className="bg-white rounded-xl p-3 shadow-md">
+              <div className="text-xs font-bold text-gray-700 mb-1">
+                المستخدم الحالي
+              </div>
+              <div className="flex items-center justify-center gap-2">
+                <span className="text-lg">{user?.role === 'admin' ? '👑' : '📝'}</span>
+                <div className="text-sm">
+                  <div className="font-bold text-gray-800">{user?.name}</div>
+                  <div className="text-gray-600">
+                    {user?.role === 'admin' ? 'مدير النظام' : 'سكرتارية'}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>

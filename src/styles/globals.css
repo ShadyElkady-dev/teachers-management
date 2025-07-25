@@ -822,3 +822,299 @@ a:hover {
     transform: translateY(-2px);
   }
 }
+/* تأثيرات متقدمة للهيدر */
+.header-enhanced {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  background: rgba(255, 255, 255, 0.95);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* تأثيرات الخلفية المتدرجة */
+.gradient-overlay {
+  position: relative;
+  overflow: hidden;
+}
+
+.gradient-overlay::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+  pointer-events: none;
+}
+
+/* تحسينات النافيجيشن */
+.nav-enhanced {
+  background: linear-gradient(to bottom, #f8fafc, #ffffff);
+  box-shadow: 
+    0 10px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* تأثيرات الأزرار المحسنة */
+.btn-enhanced-3d {
+  position: relative;
+  transform-style: preserve-3d;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.btn-enhanced-3d:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 
+    0 15px 35px rgba(0, 0, 0, 0.1),
+    0 5px 15px rgba(0, 0, 0, 0.07);
+}
+
+.btn-enhanced-3d:active {
+  transform: translateY(0) scale(0.98);
+  box-shadow: 
+    0 5px 10px rgba(0, 0, 0, 0.1),
+    0 2px 5px rgba(0, 0, 0, 0.07);
+}
+
+/* تأثيرات البطاقات المحسنة */
+.card-enhanced-3d {
+  position: relative;
+  background: white;
+  border-radius: 20px;
+  box-shadow: 
+    0 10px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  overflow: hidden;
+}
+
+.card-enhanced-3d::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ef4444, #10b981);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.card-enhanced-3d:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 
+    0 25px 50px -10px rgba(0, 0, 0, 0.15),
+    0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.card-enhanced-3d:hover::before {
+  opacity: 1;
+}
+
+/* تأثيرات الأيقونات */
+.icon-bounce {
+  animation: iconBounce 2s ease-in-out infinite;
+}
+
+@keyframes iconBounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  40% {
+    transform: translateY(-8px) scale(1.1);
+  }
+  60% {
+    transform: translateY(-4px) scale(1.05);
+  }
+}
+
+/* تأثيرات النص المتدرج */
+.text-gradient {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-gradient-blue {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-gradient-green {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* تحسينات الملاحة السفلية */
+.bottom-navigation-enhanced {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  padding-bottom: env(safe-area-inset-bottom);
+  background: linear-gradient(to top, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.98));
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.nav-item-enhanced {
+  position: relative;
+  overflow: hidden;
+}
+
+.nav-item-enhanced::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.2) 0%, transparent 70%);
+  transition: all 0.3s ease;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.nav-item-enhanced:active::before {
+  width: 100px;
+  height: 100px;
+}
+
+/* تأثيرات الشحن والتحميل */
+.loading-enhanced {
+  position: relative;
+  overflow: hidden;
+}
+
+.loading-enhanced::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.4),
+    transparent
+  );
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+/* تحسينات الاستجابة للهواتف المحمولة */
+@media (max-width: 768px) {
+  .card-enhanced-3d:hover {
+    transform: translateY(-4px) scale(1.01);
+  }
+  
+  .btn-enhanced-3d:hover {
+    transform: translateY(-1px) scale(1.01);
+  }
+  
+  /* تحسين التفاعل باللمس */
+  .touch-target {
+    min-height: 48px;
+    min-width: 48px;
+  }
+  
+  /* تحسين الخطوط للهواتف */
+  .mobile-text-sm {
+    font-size: 14px;
+    line-height: 1.4;
+  }
+  
+  .mobile-text-base {
+    font-size: 16px;
+    line-height: 1.5;
+  }
+  
+  .mobile-text-lg {
+    font-size: 18px;
+    line-height: 1.4;
+  }
+}
+
+/* تحسينات إضافية للأداء */
+.gpu-optimized {
+  transform: translateZ(0);
+  will-change: transform;
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* تأثيرات الظلال المتدرجة */
+.shadow-soft {
+  box-shadow: 
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.shadow-medium {
+  box-shadow: 
+    0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.shadow-large {
+  box-shadow: 
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.shadow-colored-blue {
+  box-shadow: 
+    0 10px 25px -5px rgba(59, 130, 246, 0.2),
+    0 10px 10px -5px rgba(59, 130, 246, 0.1);
+}
+
+.shadow-colored-green {
+  box-shadow: 
+    0 10px 25px -5px rgba(16, 185, 129, 0.2),
+    0 10px 10px -5px rgba(16, 185, 129, 0.1);
+}
+
+.shadow-colored-red {
+  box-shadow: 
+    0 10px 25px -5px rgba(239, 68, 68, 0.2),
+    0 10px 10px -5px rgba(239, 68, 68, 0.1);
+}
+
+/* تأثيرات الانتقالات السلسة */
+.transition-enhanced {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.transition-bounce {
+  transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* تحسينات للوضع المظلم (إضافي) */
+@media (prefers-color-scheme: dark) {
+  .dark-mode-support {
+    background: linear-gradient(to bottom, #1f2937, #111827);
+    color: #f9fafb;
+  }
+  
+  .card-enhanced-3d {
+    background: #374151;
+    border: 1px solid #4b5563;
+  }
+  
+  .shadow-soft {
+    box-shadow: 
+      0 4px 6px -1px rgba(0, 0, 0, 0.3),
+      0 2px 4px -1px rgba(0, 0, 0, 0.2);
+  }
+}
