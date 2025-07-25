@@ -65,8 +65,7 @@ function AppContent() {
         <div className="text-center">
           <LoadingSpinner size="large" />
           <h2 className="mt-4 text-xl font-semibold text-gray-900">
-            إدارة حسابات المدرسين
-          </h2>
+ادارة حسابات المدرسين</h2>
           <p className="mt-2 text-gray-600">
             يرجى الانتظار قليلاً
           </p>
@@ -98,18 +97,8 @@ function AppContent() {
 
         <Layout>
           <Routes>
-            {/* الصفحة الرئيسية - توجيه إلى المدرسين بدلاً من لوحة التحكم */}
-            <Route path="/" element={<Navigate to="/teachers" replace />} />
-            
-            {/* صفحة المدرسين - الصفحة الرئيسية الجديدة */}
-            <Route 
-              path="/teachers" 
-              element={
-                <ProtectedRoute requiredPermission={PERMISSIONS.VIEW_TEACHERS}>
-                  <TeachersPage />
-                </ProtectedRoute>
-              } 
-            />
+            {/* الصفحة الرئيسية - لوحة التحكم */}
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
             
             {/* لوحة التحكم - متاحة للجميع */}
             <Route 
@@ -117,6 +106,16 @@ function AppContent() {
               element={
                 <ProtectedRoute>
                   <DashboardPage />
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* صفحة المدرسين - متاحة للجميع */}
+            <Route 
+              path="/teachers" 
+              element={
+                <ProtectedRoute requiredPermission={PERMISSIONS.VIEW_TEACHERS}>
+                  <TeachersPage />
                 </ProtectedRoute>
               } 
             />

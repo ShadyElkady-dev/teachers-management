@@ -62,21 +62,28 @@ const Header = ({ onMenuClick, isMobile }) => {
       <div className={`bg-gradient-to-r ${pageInfo.color} text-white`}>
         <div className="flex items-center justify-between h-16 px-4">
           
-          {/* الجهة اليمنى - العنوان والشعار */}
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-white bg-opacity-20 rounded-2xl flex items-center justify-center shadow-lg backdrop-blur-sm">
-                <span className="text-white text-2xl">{pageInfo.icon}</span>
-              </div>
-              {!isMobile && (
-                <div>
-                  <h1 className="text-lg font-bold text-white">{APP_CONFIG.NAME}</h1>
-                  <p className="text-xs text-white opacity-80">الإصدار {APP_CONFIG.VERSION}</p>
-                </div>
-              )}
-            </div>
-          </div>
+        {/* الجهة اليمنى - العنوان والشعار */}
+<div className="flex items-center gap-3">
+  <div className="flex items-center gap-3">
+    <div className="w-12 h-12 bg-white bg-opacity-20 rounded-2xl flex items-center justify-center shadow-lg backdrop-blur-sm overflow-hidden">
+      {/* Replace icon with image */}
+      <img
+        src="https://i.postimg.cc/G3KMTwC4/logo.png" // Replace with your logo path
+        alt="Logo"
+        className="w-8 h-8 object-contain"
+      />
+    </div>
 
+    {!isMobile && (
+      <div>
+        <h1 className="text-lg font-bold text-white">{APP_CONFIG.NAME}</h1>
+        <p className="text-xs text-white opacity-80">
+          الاصدار الثانى
+        </p>
+      </div>
+    )}
+  </div>
+</div>
           {/* الوسط - عنوان الصفحة */}
           <div className="flex-1 text-center">
             <div className="flex items-center justify-center gap-2">
