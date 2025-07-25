@@ -44,7 +44,7 @@ export const PERMISSIONS = {
   VIEW_SYSTEM_SETTINGS: 'view_system_settings'
 };
 
-// إعداد الصلاحيات لكل دور
+// إعداد الصلاحيات لكل دور - تم تحديث صلاحيات السكرتارية
 const ROLE_PERMISSIONS = {
   [USER_ROLES.ADMIN]: [
     // جميع الصلاحيات للأدمن
@@ -72,11 +72,15 @@ const ROLE_PERMISSIONS = {
     PERMISSIONS.VIEW_SYSTEM_SETTINGS
   ],
   [USER_ROLES.SECRETARY]: [
-    // صلاحيات محدودة للسكرتارية
-    PERMISSIONS.VIEW_TEACHERS,
-    PERMISSIONS.VIEW_OPERATIONS,
-    PERMISSIONS.ADD_OPERATION, // فقط إضافة العمليات
-    // لا يمكن رؤية الأسعار أو المدفوعات أو المصروفات
+    // صلاحيات محدودة جداً للسكرتارية
+    PERMISSIONS.VIEW_TEACHERS,        // عرض المدرسين فقط
+    PERMISSIONS.VIEW_OPERATIONS,      // عرض العمليات فقط
+    PERMISSIONS.ADD_OPERATION,        // إضافة العمليات فقط
+    // لا يمكن للسكرتارية:
+    // - إضافة أو تعديل أو حذف المدرسين
+    // - تعديل أو حذف العمليات
+    // - رؤية الأسعار والمبالغ
+    // - الوصول للمدفوعات أو المصروفات أو التقارير المالية
   ]
 };
 
@@ -87,7 +91,7 @@ const PREDEFINED_USERS = [
     username: 'admin',
     password: 'admin123', // في التطبيق الحقيقي يجب تشفير كلمة المرور
     role: USER_ROLES.ADMIN,
-    name: 'شادى الادمن',
+    name: 'شادى الأدمن',
   },
   {
     id: 'secretary_001',

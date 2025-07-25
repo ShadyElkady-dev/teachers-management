@@ -92,9 +92,9 @@ export const MESSAGES = {
 
 // إعدادات التطبيق
 export const APP_CONFIG = {
-  NAME: 'نظام إدارة مكتب الطباعة',
+  NAME: 'إدارة حسابات المدرسين',
   VERSION: '2.0.0',
-  AUTHOR: 'نظام الطباعة المتطور',
+  AUTHOR: 'شادي القاضى',
   CURRENCY: 'جنيه مصري',
   CURRENCY_SYMBOL: 'ج.م',
   LANGUAGE: 'ar',
