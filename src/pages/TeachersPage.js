@@ -31,7 +31,7 @@ const TeachersPage = () => {
   const [showTeacherDetails, setShowTeacherDetails] = useState(false);
   const [editingTeacher, setEditingTeacher] = useState(null);
   const [editingOperation, setEditingOperation] = useState(null);
-  const [viewMode, setViewMode] = useState('list'); // cards, list
+  const [viewMode, setViewMode] = useState('cards');
   const [isMobile, setIsMobile] = useState(isSmallScreen());
 
   // مراقبة تغيير حجم الشاشة
@@ -217,314 +217,549 @@ const TeachersPage = () => {
   }
 
   return (
-    <div className="section-mobile">
-      
-      {/* رأس الصفحة */}
-      <div className="mb-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">إدارة المدرسين</h1>
-            <p className="text-gray-600 mt-1">
-              عرض وإدارة المدرسين وتسجيل عملياتهم
-            </p>
-          </div>
-          
-          <PermissionGate permission={PERMISSIONS.ADD_TEACHER}>
-            <button
-              onClick={handleAddTeacher}
-              className="btn-mobile btn-primary"
-            >
-              <span className="text-lg">👨‍🏫</span>
-              إضافة مدرس جديد
-            </button>
-          </PermissionGate>
-        </div>
-      </div>
-
-      {/* الإحصائيات السريعة */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-4 rounded-lg border border-blue-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-sm text-blue-600 font-medium">إجمالي المدرسين</div>
-              <div className="text-2xl font-bold text-blue-900">{statistics.totalTeachers}</div>
-            </div>
-            <div className="text-2xl">👥</div>
-          </div>
-        </div>
+    <div className="min-h-screen bg-gray-50 pb-24">
+      <div className="container mx-auto px-4 py-6 max-w-7xl">
         
-        <div className="bg-gradient-to-r from-green-50 to-green-100 p-4 rounded-lg border border-green-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-sm text-green-600 font-medium">المدرسين النشطين</div>
-              <div className="text-2xl font-bold text-green-900">{statistics.activeTeachers}</div>
+        {/* رأس الصفحة */}
+        <div className="mb-8">
+          <div className="flex flex-col gap-4">
+            <div className="text-center">
+              <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">👨‍🏫 إدارة المدرسين</h1>
+              <p className="text-gray-600 text-lg">
+                عرض وإدارة المدرسين وتسجيل عملياتهم
+              </p>
             </div>
-            <div className="text-2xl">✅</div>
-          </div>
-        </div>
-        
-        <PermissionGate 
-          permission={PERMISSIONS.VIEW_FINANCIAL_DATA}
-          fallback={
-            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-sm text-gray-400 font-medium">لديهم ديون</div>
-                  <div className="text-2xl font-bold text-gray-400">---</div>
-                </div>
-                <div className="text-2xl">🔒</div>
-              </div>
-            </div>
-          }
-        >
-          <div className="bg-gradient-to-r from-red-50 to-red-100 p-4 rounded-lg border border-red-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-sm text-red-600 font-medium">لديهم ديون</div>
-                <div className="text-2xl font-bold text-red-900">{statistics.teachersWithDebts}</div>
-              </div>
-              <div className="text-2xl">⚠️</div>
-            </div>
-          </div>
-        </PermissionGate>
-        
-        <div className="bg-gradient-to-r from-purple-50 to-purple-100 p-4 rounded-lg border border-purple-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-sm text-purple-600 font-medium">متوسط العمليات</div>
-              <div className="text-2xl font-bold text-purple-900">{statistics.averageOperations}</div>
-            </div>
-            <div className="text-2xl">📊</div>
-          </div>
-        </div>
-      </div>
-
-      {/* أدوات البحث والتحكم */}
-      <div className="mb-6 space-y-4">
-        
-        {/* شريط البحث */}
-        <SearchBar
-          value={searchTerm}
-          onChange={setSearchTerm}
-          placeholder="البحث في المدرسين (الاسم، الهاتف، المدرسة...)"
-        />
-
-        {/* أدوات التحكم في العرض */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-gray-700">عرض:</span>
-            <div className="flex border border-gray-300 rounded-lg overflow-hidden">
-              <button
-                onClick={() => setViewMode('cards')}
-                className={`px-3 py-1 text-sm ${
-                  viewMode === 'cards' 
-                    ? 'bg-blue-500 text-white' 
-                    : 'bg-white text-gray-700 hover:bg-gray-50'
-                }`}
-                title="عرض البطاقات"
-              >
-                ⊞ بطاقات
-              </button>
-              <button
-                onClick={() => setViewMode('list')}
-                className={`px-3 py-1 text-sm border-r border-gray-300 ${
-                  viewMode === 'list' 
-                    ? 'bg-blue-500 text-white' 
-                    : 'bg-white text-gray-700 hover:bg-gray-50'
-                }`}
-                title="عرض القائمة"
-              >
-                ☰ قائمة
-              </button>
-            </div>
-          </div>
-          
-          <div className="text-sm text-gray-600">
-            عرض {filteredTeachers.length} مدرس
-          </div>
-        </div>
-      </div>
-
-      {/* قائمة المدرسين */}
-      <div className="mb-6">
-        {filteredTeachers.length === 0 && searchTerm ? (
-          <div className="empty-state">
-            <div className="empty-icon">🔍</div>
-            <div className="empty-title">لا توجد نتائج</div>
-            <div className="empty-description">
-              لم يتم العثور على مدرسين مطابقين لكلمة البحث "{searchTerm}"
-            </div>
-          </div>
-        ) : filteredTeachers.length === 0 ? (
-          <div className="empty-state">
-            <div className="empty-icon">👨‍🏫</div>
-            <div className="empty-title">لا يوجد مدرسين</div>
-            <div className="empty-description">
-              ابدأ بإضافة مدرس جديد لبدء استخدام النظام
-            </div>
+            
             <PermissionGate permission={PERMISSIONS.ADD_TEACHER}>
               <button
                 onClick={handleAddTeacher}
-                className="btn btn-primary mt-4"
+                className="w-full md:w-auto mx-auto px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold rounded-2xl shadow-lg hover:shadow-xl transition-all duration-200 text-lg"
               >
+                <span className="text-2xl ml-2">👨‍🏫</span>
                 إضافة مدرس جديد
               </button>
             </PermissionGate>
           </div>
-        ) : viewMode === 'cards' ? (
-          <div className="grid-mobile">
-            {filteredTeachers.map(teacher => (
-              <TeacherCard
-                key={teacher.id}
-                teacher={teacher}
-                onEdit={handleEditTeacher}
-                onDelete={handleDeleteTeacher}
-                onAddOperation={handleAddOperation}
-                onViewDetails={handleViewDetails}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="bg-white rounded-lg shadow overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="min-w-full">
-                <thead className="bg-gray-50 border-b">
-                  <tr>
-                    <th className="px-6 py-4 text-right text-sm font-semibold text-gray-700">المدرس</th>
-                    <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700">العمليات</th>
-                    <PermissionGate permission={PERMISSIONS.VIEW_FINANCIAL_DATA}>
-                      <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700">المديونية</th>
-                    </PermissionGate>
-                    <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700">الإجراءات</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {filteredTeachers.map(teacher => (
-                    <tr key={teacher.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center ml-3">
-                            <span className="text-white font-bold text-sm">
-                              {teacher.name.charAt(0)}
-                            </span>
-                          </div>
-                          <div>
-                            <div className="text-sm font-medium text-gray-900">{teacher.name}</div>
-                            <div className="text-sm text-gray-500">📞 {teacher.phone}</div>
-                            {teacher.school && (
-                              <div className="text-xs text-gray-400">🏫 {teacher.school}</div>
-                            )}
-                          </div>
-                        </div>
-                      </td>
-                      
-                      <td className="px-6 py-4 whitespace-nowrap text-center">
-                        <div className="text-sm font-medium text-blue-600">{teacher.operationsCount}</div>
-                        <div className="text-xs text-gray-500">عملية</div>
-                      </td>
-                      
-                      <PermissionGate permission={PERMISSIONS.VIEW_FINANCIAL_DATA}>
-                        <td className="px-6 py-4 whitespace-nowrap text-center">
-                          <div className={`text-sm font-bold ${
-                            teacher.debt > 0 ? 'text-red-600' :
-                            teacher.debt === 0 ? 'text-green-600' : 'text-blue-600'
-                          }`}>
-                            {formatCurrency(Math.abs(teacher.debt))}
-                          </div>
-                          <div className="text-xs text-gray-500">
-                            {teacher.debt > 0 ? 'دين' :
-                             teacher.debt === 0 ? 'مسدد' : 'زائد'}
-                          </div>
-                        </td>
-                      </PermissionGate>
-                      
-                      <td className="px-6 py-4 whitespace-nowrap text-center">
-                        <div className="flex items-center justify-center gap-2">
-                          <PermissionGate permission={PERMISSIONS.ADD_OPERATION}>
-                            <button
-                              onClick={() => handleAddOperation(teacher)}
-                              className="btn btn-primary btn-sm"
-                              title="إضافة عملية"
-                            >
-                              ➕
-                            </button>
-                          </PermissionGate>
-                          
-                          <button
-                            onClick={() => handleViewDetails(teacher)}
-                            className="btn btn-secondary btn-sm"
-                            title="عرض التفاصيل"
-                          >
-                            👁️
-                          </button>
-                          
-                          <PermissionGate permission={PERMISSIONS.EDIT_TEACHER}>
-                            <button
-                              onClick={() => handleEditTeacher(teacher)}
-                              className="btn btn-warning btn-sm"
-                              title="تعديل"
-                            >
-                              ✏️
-                            </button>
-                          </PermissionGate>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+        </div>
+
+        {/* الإحصائيات السريعة */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-6 rounded-2xl shadow-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm font-medium opacity-90">إجمالي المدرسين</div>
+                <div className="text-3xl font-bold">{statistics.totalTeachers}</div>
+              </div>
+              <div className="text-4xl opacity-80">👥</div>
             </div>
           </div>
-        )}
+          
+          <div className="bg-gradient-to-br from-green-500 to-green-600 text-white p-6 rounded-2xl shadow-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm font-medium opacity-90">المدرسين النشطين</div>
+                <div className="text-3xl font-bold">{statistics.activeTeachers}</div>
+              </div>
+              <div className="text-4xl opacity-80">✅</div>
+            </div>
+          </div>
+          
+          <PermissionGate 
+            permission={PERMISSIONS.VIEW_FINANCIAL_DATA}
+            fallback={
+              <div className="bg-gradient-to-br from-gray-400 to-gray-500 text-white p-6 rounded-2xl shadow-lg">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-sm font-medium opacity-90">لديهم ديون</div>
+                    <div className="text-3xl font-bold">---</div>
+                  </div>
+                  <div className="text-4xl opacity-80">🔒</div>
+                </div>
+              </div>
+            }
+          >
+            <div className="bg-gradient-to-br from-red-500 to-red-600 text-white p-6 rounded-2xl shadow-lg">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-sm font-medium opacity-90">لديهم ديون</div>
+                  <div className="text-3xl font-bold">{statistics.teachersWithDebts}</div>
+                </div>
+                <div className="text-4xl opacity-80">⚠️</div>
+              </div>
+            </div>
+          </PermissionGate>
+          
+          <div className="bg-gradient-to-br from-purple-500 to-purple-600 text-white p-6 rounded-2xl shadow-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm font-medium opacity-90">متوسط العمليات</div>
+                <div className="text-3xl font-bold">{statistics.averageOperations}</div>
+              </div>
+              <div className="text-4xl opacity-80">📊</div>
+            </div>
+          </div>
+        </div>
+
+        {/* شريط البحث */}
+        <div className="mb-6">
+          <SearchBar
+            value={searchTerm}
+            onChange={setSearchTerm}
+            placeholder="🔍 البحث في المدرسين (الاسم، الهاتف، المدرسة...)"
+            className="text-lg"
+          />
+        </div>
+
+        {/* عرض النتائج */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold text-gray-800">
+              📋 قائمة المدرسين ({filteredTeachers.length})
+            </h2>
+            
+            {!isMobile && (
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-gray-700">عرض:</span>
+                <div className="flex border-2 border-gray-300 rounded-lg overflow-hidden">
+                  <button
+                    onClick={() => setViewMode('cards')}
+                    className={`px-4 py-2 text-sm font-medium transition-colors ${
+                      viewMode === 'cards' 
+                        ? 'bg-blue-500 text-white' 
+                        : 'bg-white text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    ⊞ بطاقات
+                  </button>
+                  <button
+                    onClick={() => setViewMode('list')}
+                    className={`px-4 py-2 text-sm font-medium border-r-2 border-gray-300 transition-colors ${
+                      viewMode === 'list' 
+                        ? 'bg-blue-500 text-white' 
+                        : 'bg-white text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    ☰ قائمة
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* قائمة المدرسين */}
+        <div className="mb-8">
+          {filteredTeachers.length === 0 && searchTerm ? (
+            <div className="text-center py-16 bg-white rounded-2xl shadow-lg">
+              <div className="text-6xl mb-4">🔍</div>
+              <div className="text-2xl font-bold text-gray-700 mb-2">لا توجد نتائج</div>
+              <div className="text-gray-500 text-lg">
+                لم يتم العثور على مدرسين مطابقين لكلمة البحث "{searchTerm}"
+              </div>
+            </div>
+          ) : filteredTeachers.length === 0 ? (
+            <div className="text-center py-16 bg-white rounded-2xl shadow-lg">
+              <div className="text-6xl mb-4">👨‍🏫</div>
+              <div className="text-2xl font-bold text-gray-700 mb-2">لا يوجد مدرسين</div>
+              <div className="text-gray-500 text-lg mb-6">
+                ابدأ بإضافة مدرس جديد لبدء استخدام النظام
+              </div>
+              <PermissionGate permission={PERMISSIONS.ADD_TEACHER}>
+                <button
+                  onClick={handleAddTeacher}
+                  className="px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold rounded-2xl shadow-lg hover:shadow-xl transition-all duration-200 text-lg"
+                >
+                  <span className="text-2xl ml-2">➕</span>
+                  إضافة مدرس جديد
+                </button>
+              </PermissionGate>
+            </div>
+          ) : viewMode === 'cards' || isMobile ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {filteredTeachers.map(teacher => (
+                <TeacherCardMobile
+                  key={teacher.id}
+                  teacher={teacher}
+                  onEdit={handleEditTeacher}
+                  onDelete={handleDeleteTeacher}
+                  onAddOperation={handleAddOperation}
+                  onViewDetails={handleViewDetails}
+                  hasPermission={hasPermission}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="min-w-full">
+                  <thead className="bg-gray-50 border-b-2 border-gray-200">
+                    <tr>
+                      <th className="px-6 py-4 text-right text-sm font-bold text-gray-700">المدرس</th>
+                      <th className="px-6 py-4 text-center text-sm font-bold text-gray-700">العمليات</th>
+                      <PermissionGate permission={PERMISSIONS.VIEW_FINANCIAL_DATA}>
+                        <th className="px-6 py-4 text-center text-sm font-bold text-gray-700">المديونية</th>
+                      </PermissionGate>
+                      <th className="px-6 py-4 text-center text-sm font-bold text-gray-700">الإجراءات</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {filteredTeachers.map(teacher => (
+                      <tr key={teacher.id} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center">
+                            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center ml-3 shadow-lg">
+                              <span className="text-white font-bold">
+                                {teacher.name.charAt(0)}
+                              </span>
+                            </div>
+                            <div>
+                              <div className="text-sm font-bold text-gray-900">{teacher.name}</div>
+                              <div className="text-sm text-gray-600">📞 {teacher.phone}</div>
+                              {teacher.school && (
+                                <div className="text-xs text-gray-500">🏫 {teacher.school}</div>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+                        
+                        <td className="px-6 py-4 text-center">
+                          <div className="bg-blue-100 rounded-full px-3 py-1 inline-block">
+                            <div className="text-sm font-bold text-blue-800">{teacher.operationsCount}</div>
+                            <div className="text-xs text-blue-600">عملية</div>
+                          </div>
+                        </td>
+                        
+                        <PermissionGate permission={PERMISSIONS.VIEW_FINANCIAL_DATA}>
+                          <td className="px-6 py-4 text-center">
+                            <div className={`rounded-full px-3 py-1 inline-block ${
+                              teacher.debt > 0 ? 'bg-red-100' : 
+                              teacher.debt === 0 ? 'bg-green-100' : 'bg-blue-100'
+                            }`}>
+                              <div className={`text-sm font-bold ${
+                                teacher.debt > 0 ? 'text-red-800' :
+                                teacher.debt === 0 ? 'text-green-800' : 'text-blue-800'
+                              }`}>
+                                {formatCurrency(Math.abs(teacher.debt))}
+                              </div>
+                              <div className={`text-xs ${
+                                teacher.debt > 0 ? 'text-red-600' :
+                                teacher.debt === 0 ? 'text-green-600' : 'text-blue-600'
+                              }`}>
+                                {teacher.debt > 0 ? 'دين' :
+                                 teacher.debt === 0 ? 'مسدد' : 'زائد'}
+                              </div>
+                            </div>
+                          </td>
+                        </PermissionGate>
+                        
+                        <td className="px-6 py-4">
+                          <div className="flex items-center justify-center gap-2">
+                            <PermissionGate permission={PERMISSIONS.ADD_OPERATION}>
+                              <button
+                                onClick={() => handleAddOperation(teacher)}
+                                className="px-3 py-2 bg-green-100 hover:bg-green-200 text-green-800 font-bold rounded-lg transition-colors"
+                                title="إضافة عملية"
+                              >
+                                ➕
+                              </button>
+                            </PermissionGate>
+                            
+                            <button
+                              onClick={() => handleViewDetails(teacher)}
+                              className="px-3 py-2 bg-blue-100 hover:bg-blue-200 text-blue-800 font-bold rounded-lg transition-colors"
+                              title="عرض التفاصيل"
+                            >
+                              👁️
+                            </button>
+                            
+                            <PermissionGate permission={PERMISSIONS.EDIT_TEACHER}>
+                              <button
+                                onClick={() => handleEditTeacher(teacher)}
+                                className="px-3 py-2 bg-yellow-100 hover:bg-yellow-200 text-yellow-800 font-bold rounded-lg transition-colors"
+                                title="تعديل"
+                              >
+                                ✏️
+                              </button>
+                            </PermissionGate>
+                            
+                            <PermissionGate permission={PERMISSIONS.DELETE_TEACHER}>
+                              <button
+                                onClick={() => handleDeleteTeacher(teacher)}
+                                className="px-3 py-2 bg-red-100 hover:bg-red-200 text-red-800 font-bold rounded-lg transition-colors"
+                                title="حذف"
+                              >
+                                🗑️
+                              </button>
+                            </PermissionGate>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* النوافذ المنبثقة */}
+        
+        {/* نافذة إضافة/تعديل مدرس */}
+        <Modal
+          isOpen={showTeacherForm}
+          onClose={handleCloseModals}
+          title={editingTeacher ? '✏️ تعديل بيانات المدرس' : '➕ إضافة مدرس جديد'}
+          size="medium"
+        >
+          <TeacherForm
+            teacher={editingTeacher}
+            onSave={handleSaveTeacher}
+            onCancel={handleCloseModals}
+            loading={state.loading.teachers}
+          />
+        </Modal>
+
+        {/* نافذة إضافة/تعديل عملية */}
+        <Modal
+          isOpen={showOperationForm}
+          onClose={handleCloseModals}
+          title={editingOperation ? '✏️ تعديل العملية' : `➕ إضافة عملية جديدة${selectedTeacher ? ` - ${selectedTeacher.name}` : ''}`}
+          size="large"
+        >
+          <OperationForm
+            operation={editingOperation}
+            teacher={selectedTeacher}
+            onSave={handleSaveOperation}
+            onCancel={handleCloseModals}
+            loading={state.loading.operations}
+          />
+        </Modal>
+
+        {/* نافذة تفاصيل المدرس */}
+        <Modal
+          isOpen={showTeacherDetails}
+          onClose={handleCloseModals}
+          title={`📊 تفاصيل حساب - ${selectedTeacher?.name}`}
+          size="xl"
+        >
+          <TeacherDetails
+            teacher={selectedTeacher}
+            onAddOperation={handleAddOperation}
+            onEditOperation={handleEditOperation}
+            onDeleteOperation={handleDeleteOperation}
+          />
+        </Modal>
+      </div>
+    </div>
+  );
+};
+
+// مكون بطاقة المدرس المحسنة للهواتف المحمولة
+const TeacherCardMobile = ({ 
+  teacher, 
+  onEdit, 
+  onDelete, 
+  onAddOperation, 
+  onViewDetails,
+  hasPermission
+}) => {
+  const [showMenu, setShowMenu] = useState(false);
+
+  const getStatusColor = () => {
+    if (teacher.debt > 0) return 'from-red-500 to-red-600';
+    if (teacher.debt === 0) return 'from-green-500 to-green-600';
+    return 'from-blue-500 to-blue-600';
+  };
+
+  const getStatusIcon = () => {
+    if (teacher.debt > 0) return '⚠️';
+    if (teacher.debt === 0) return '✅';
+    return '💰';
+  };
+
+  const handleMenuClick = (action) => {
+    setShowMenu(false);
+    switch (action) {
+      case 'edit':
+        onEdit(teacher);
+        break;
+      case 'delete':
+        onDelete(teacher);
+        break;
+      case 'addOperation':
+        onAddOperation(teacher);
+        break;
+      case 'viewDetails':
+        onViewDetails(teacher);
+        break;
+    }
+  };
+
+  return (
+    <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border-2 border-gray-100">
+      
+      {/* رأس البطاقة مع الخلفية المتدرجة */}
+      <div className={`bg-gradient-to-r ${getStatusColor()} p-6 text-white relative`}>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center shadow-lg">
+              <span className="text-white font-bold text-2xl">
+                {teacher.name.charAt(0).toUpperCase()}
+              </span>
+            </div>
+            
+            <div>
+              <h3 className="font-bold text-xl leading-tight mb-1">
+                {teacher.name}
+              </h3>
+              <p className="text-sm opacity-90 mb-1">
+                📞 {teacher.phone}
+              </p>
+              {teacher.school && (
+                <p className="text-xs opacity-80">
+                  🏫 {teacher.school}
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div className="text-center">
+            <div className="text-3xl mb-1">{getStatusIcon()}</div>
+            {hasPermission(PERMISSIONS.VIEW_FINANCIAL_DATA) && (
+              <div className="text-sm font-bold">
+                {formatCurrency(Math.abs(teacher.debt))}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
-      {/* النوافذ المنبثقة */}
-      
-      {/* نافذة إضافة/تعديل مدرس */}
-      <Modal
-        isOpen={showTeacherForm}
-        onClose={handleCloseModals}
-        title={editingTeacher ? 'تعديل بيانات المدرس' : 'إضافة مدرس جديد'}
-        size="medium"
-      >
-        <TeacherForm
-          teacher={editingTeacher}
-          onSave={handleSaveTeacher}
-          onCancel={handleCloseModals}
-          loading={state.loading.teachers}
-        />
-      </Modal>
+      {/* محتوى البطاقة */}
+      <div className="p-6">
+        
+        {/* الإحصائيات */}
+        <div className="grid grid-cols-2 gap-4 mb-6">
+          <div className="text-center p-4 bg-blue-50 rounded-xl border border-blue-200">
+            <div className="text-2xl font-bold text-blue-700">{teacher.operationsCount}</div>
+            <div className="text-sm text-blue-600 font-medium">عمليات</div>
+            {hasPermission(PERMISSIONS.VIEW_FINANCIAL_DATA) && (
+              <div className="text-xs text-blue-500 mt-1">
+                {formatCurrency(teacher.totalOperations)}
+              </div>
+            )}
+          </div>
+          
+          {hasPermission(PERMISSIONS.VIEW_FINANCIAL_DATA) && (
+            <div className="text-center p-4 bg-green-50 rounded-xl border border-green-200">
+              <div className="text-2xl font-bold text-green-700">{teacher.paymentsCount}</div>
+              <div className="text-sm text-green-600 font-medium">دفعات</div>
+              <div className="text-xs text-green-500 mt-1">
+                {formatCurrency(teacher.totalPayments)}
+              </div>
+            </div>
+          )}
+        </div>
 
-      {/* نافذة إضافة/تعديل عملية */}
-      <Modal
-        isOpen={showOperationForm}
-        onClose={handleCloseModals}
-        title={editingOperation ? 'تعديل العملية' : `إضافة عملية جديدة${selectedTeacher ? ` - ${selectedTeacher.name}` : ''}`}
-        size="large"
-      >
-        <OperationForm
-          operation={editingOperation}
-          teacher={selectedTeacher}
-          onSave={handleSaveOperation}
-          onCancel={handleCloseModals}
-          loading={state.loading.operations}
-        />
-      </Modal>
+        {/* معلومات إضافية */}
+        {(teacher.email || teacher.address) && (
+          <div className="mb-6 space-y-2">
+            {teacher.email && (
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <span>📧</span>
+                <span className="truncate">{teacher.email}</span>
+              </div>
+            )}
+            {teacher.address && (
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <span>📍</span>
+                <span className="truncate">{teacher.address}</span>
+              </div>
+            )}
+          </div>
+        )}
 
-      {/* نافذة تفاصيل المدرس */}
-      <Modal
-        isOpen={showTeacherDetails}
-        onClose={handleCloseModals}
-        title={`تفاصيل حساب - ${selectedTeacher?.name}`}
-        size="xl"
-      >
-        <TeacherDetails
-          teacher={selectedTeacher}
-          onAddOperation={handleAddOperation}
-          onEditOperation={handleEditOperation}
-          onDeleteOperation={handleDeleteOperation}
-        />
-      </Modal>
+        {/* أزرار التحكم */}
+        <div className="flex gap-3">
+          <button
+            onClick={() => onAddOperation(teacher)}
+            className="flex-1 px-4 py-3 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold rounded-xl transition-all duration-200 shadow-md hover:shadow-lg"
+          >
+            <span className="text-lg ml-1">➕</span>
+            إضافة عملية
+          </button>
+
+          <button
+            onClick={() => onViewDetails(teacher)}
+            className="px-4 py-3 bg-blue-100 hover:bg-blue-200 text-blue-800 font-bold rounded-xl transition-all duration-200"
+            title="عرض التفاصيل"
+          >
+            👁️
+          </button>
+
+          {/* قائمة الخيارات */}
+          <div className="relative">
+            <button
+              onClick={() => setShowMenu(!showMenu)}
+              className="px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold rounded-xl transition-all duration-200"
+              title="المزيد"
+            >
+              ⋮
+            </button>
+
+            {showMenu && (
+              <>
+                <div 
+                  className="fixed inset-0 z-10"
+                  onClick={() => setShowMenu(false)}
+                />
+                
+                <div className="absolute left-0 mt-2 w-48 bg-white border-2 border-gray-200 rounded-xl shadow-xl z-20">
+                  <button
+                    onClick={() => handleMenuClick('edit')}
+                    className="w-full text-right px-4 py-3 text-sm hover:bg-blue-50 flex items-center gap-3 font-medium text-blue-700 rounded-t-xl transition-colors"
+                  >
+                    <span className="text-lg">✏️</span>
+                    تعديل البيانات
+                  </button>
+                  
+                  <button
+                    onClick={() => handleMenuClick('viewDetails')}
+                    className="w-full text-right px-4 py-3 text-sm hover:bg-gray-50 flex items-center gap-3 font-medium text-gray-700 border-t border-gray-200 transition-colors"
+                  >
+                    <span className="text-lg">📊</span>
+                    التفاصيل الكاملة
+                  </button>
+                  
+                  <button
+                    onClick={() => handleMenuClick('addOperation')}
+                    className="w-full text-right px-4 py-3 text-sm hover:bg-green-50 flex items-center gap-3 font-medium text-green-700 border-t border-gray-200 transition-colors"
+                  >
+                    <span className="text-lg">➕</span>
+                    عملية جديدة
+                  </button>
+                  
+                  <div className="border-t border-gray-200"></div>
+                  
+                  <button
+                    onClick={() => handleMenuClick('delete')}
+                    className="w-full text-right px-4 py-3 text-sm hover:bg-red-50 text-red-600 flex items-center gap-3 font-medium rounded-b-xl transition-colors"
+                  >
+                    <span className="text-lg">🗑️</span>
+                    حذف المدرس
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* مؤشرات حالة */}
+      {hasPermission(PERMISSIONS.VIEW_FINANCIAL_DATA) && teacher.debt > 1000 && (
+        <div className="absolute top-3 right-3 bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold animate-pulse">
+          مديونية عالية
+        </div>
+      )}
     </div>
   );
 };

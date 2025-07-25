@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth, PERMISSIONS } from '../../context/AuthContext';
 import { PermissionGate } from '../Common/ProtectedRoute';
 import { dateToInputValue, sanitizeText } from '../../utils/helpers';
-import { OPERATION_TYPES, PAPER_SIZES, PRINT_TYPES } from '../../utils/constants';
+import { OPERATION_TYPES } from '../../utils/constants';
 import LoadingSpinner from '../Common/LoadingSpinner';
 
 const OperationForm = ({ 
@@ -18,61 +18,29 @@ const OperationForm = ({
   // حالة النموذج
   const [formData, setFormData] = useState({
     type: 'printing',
+    customType: '',
     description: '',
-    quantity: 1,
-    paperSize: 'A4',
-    printType: 'black_white',
-    unitPrice: 0.5,
-    amount: 0,
+    amount: '',
     operationDate: dateToInputValue(new Date()),
     notes: ''
   });
 
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
-  const [calculationMode, setCalculationMode] = useState('manual'); // manual, auto
 
   // تعبئة النموذج عند التعديل
   useEffect(() => {
     if (operation) {
       setFormData({
         type: operation.type || 'printing',
+        customType: OPERATION_TYPES.find(t => t.value === operation.type) ? '' : operation.type,
         description: operation.description || '',
-        quantity: operation.quantity || 1,
-        paperSize: operation.paperSize || 'A4',
-        printType: operation.printType || 'black_white',
-        unitPrice: operation.unitPrice || 0.5,
-        amount: operation.amount || 0,
+        amount: operation.amount?.toString() || '',
         operationDate: dateToInputValue(operation.operationDate),
         notes: operation.notes || ''
       });
     }
   }, [operation]);
-
-  // حساب المبلغ تلقائياً
-  useEffect(() => {
-    if (calculationMode === 'auto' && formData.type === 'printing') {
-      const paperSize = PAPER_SIZES.find(size => size.value === formData.paperSize);
-      const printType = PRINT_TYPES.find(type => type.value === formData.printType);
-      
-      if (paperSize && printType) {
-        const calculatedPrice = paperSize.price * printType.multiplier;
-        const calculatedAmount = calculatedPrice * formData.quantity;
-        
-        setFormData(prev => ({
-          ...prev,
-          unitPrice: calculatedPrice,
-          amount: calculatedAmount
-        }));
-      }
-    } else if (calculationMode === 'manual') {
-      const calculatedAmount = formData.unitPrice * formData.quantity;
-      setFormData(prev => ({
-        ...prev,
-        amount: calculatedAmount
-      }));
-    }
-  }, [formData.quantity, formData.paperSize, formData.printType, formData.unitPrice, calculationMode, formData.type]);
 
   // التحقق من صحة البيانات
   const validateForm = () => {
@@ -83,6 +51,11 @@ const OperationForm = ({
       newErrors.type = 'نوع العملية مطلوب';
     }
 
+    // النوع المخصص
+    if (formData.type === 'other' && !formData.customType.trim()) {
+      newErrors.customType = 'يرجى تحديد نوع العملية';
+    }
+
     // وصف العملية
     if (!formData.description.trim()) {
       newErrors.description = 'وصف العملية مطلوب';
@@ -90,33 +63,12 @@ const OperationForm = ({
       newErrors.description = 'وصف العملية يجب أن يكون أكثر من 3 أحرف';
     }
 
-    // الكمية
-    if (!formData.quantity || formData.quantity <= 0) {
-      newErrors.quantity = 'الكمية يجب أن تكون أكبر من صفر';
-    } else if (formData.quantity > 10000) {
-      newErrors.quantity = 'الكمية كبيرة جداً';
-    }
-
-    // السعر (فقط للأدمن)
+    // المبلغ (للأدمن فقط)
     if (canViewPrices) {
-      if (!formData.unitPrice || formData.unitPrice <= 0) {
-        newErrors.unitPrice = 'السعر يجب أن يكون أكبر من صفر';
-      } else if (formData.unitPrice > 1000) {
-        newErrors.unitPrice = 'السعر كبير جداً';
-      }
-
-      // المبلغ الإجمالي
-      if (!formData.amount || formData.amount <= 0) {
-        newErrors.amount = 'المبلغ الإجمالي يجب أن يكون أكبر من صفر';
-      }
-    } else {
-      // للسكرتارية: تعيين أسعار افتراضية إذا لم تكن موجودة
-      if (!formData.unitPrice || formData.unitPrice <= 0) {
-        setFormData(prev => ({
-          ...prev,
-          unitPrice: 0.5,
-          amount: 0.5 * formData.quantity
-        }));
+      if (!formData.amount || parseFloat(formData.amount) <= 0) {
+        newErrors.amount = 'المبلغ يجب أن يكون أكبر من صفر';
+      } else if (parseFloat(formData.amount) > 999999) {
+        newErrors.amount = 'المبلغ كبير جداً';
       }
     }
 
@@ -143,9 +95,9 @@ const OperationForm = ({
   const handleChange = (field, value) => {
     let processedValue = value;
     
-    if (field === 'description' || field === 'notes') {
+    if (field === 'description' || field === 'notes' || field === 'customType') {
       processedValue = sanitizeText(value);
-    } else if (field === 'quantity' || field === 'unitPrice' || field === 'amount') {
+    } else if (field === 'amount') {
       processedValue = Math.max(0, parseFloat(value) || 0);
     }
 
@@ -183,20 +135,23 @@ const OperationForm = ({
     setTouched(allTouched);
 
     if (validateForm()) {
-      // إرسال البيانات مع إخفاء الأسعار عن السكرتارية في الرد
+      // إعداد البيانات للإرسال
       const dataToSave = {
-        ...formData,
-        operationDate: new Date(formData.operationDate)
+        type: formData.type === 'other' ? formData.customType : formData.type,
+        description: formData.description,
+        operationDate: new Date(formData.operationDate),
+        notes: formData.notes,
+        quantity: 1 // قيمة افتراضية
       };
 
-      // للسكرتارية: التأكد من وجود سعر افتراضي
-      if (!canViewPrices) {
-        if (!dataToSave.unitPrice || dataToSave.unitPrice <= 0) {
-          dataToSave.unitPrice = 0.5; // سعر افتراضي
-        }
-        if (!dataToSave.amount || dataToSave.amount <= 0) {
-          dataToSave.amount = dataToSave.unitPrice * dataToSave.quantity;
-        }
+      // إضافة المبلغ للأدمن أو قيمة افتراضية للسكرتارية
+      if (canViewPrices) {
+        dataToSave.amount = parseFloat(formData.amount);
+        dataToSave.unitPrice = parseFloat(formData.amount);
+      } else {
+        // للسكرتارية: قيم افتراضية
+        dataToSave.amount = 1;
+        dataToSave.unitPrice = 1;
       }
 
       onSave(dataToSave);
@@ -212,226 +167,128 @@ const OperationForm = ({
   const selectedOperationType = OPERATION_TYPES.find(type => type.value === formData.type);
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      
-      {/* معلومات المدرس */}
-      {teacher && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
-              <span className="text-white font-bold">{teacher.name.charAt(0)}</span>
-            </div>
-            <div>
-              <h3 className="font-semibold text-blue-900">{teacher.name}</h3>
-              <p className="text-sm text-blue-700">{teacher.phone}</p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* نوع العملية */}
-      <div>
-        <label htmlFor="type" className="block text-sm font-medium text-gray-700 mb-2">
-          نوع العملية <span className="text-red-500">*</span>
-        </label>
-        <select
-          id="type"
-          value={formData.type}
-          onChange={(e) => handleChange('type', e.target.value)}
-          onBlur={() => handleBlur('type')}
-          className={`input ${hasError('type') ? 'border-red-500 focus:border-red-500' : ''}`}
-          disabled={loading}
-        >
-          {OPERATION_TYPES.map(type => (
-            <option key={type.value} value={type.value}>
-              {type.label}
-            </option>
-          ))}
-        </select>
-        {hasError('type') && (
-          <p className="mt-1 text-sm text-red-600">{errors.type}</p>
-        )}
-      </div>
-
-      {/* وصف العملية */}
-      <div>
-        <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
-          وصف العملية <span className="text-red-500">*</span>
-        </label>
-        <textarea
-          id="description"
-          value={formData.description}
-          onChange={(e) => handleChange('description', e.target.value)}
-          onBlur={() => handleBlur('description')}
-          className={`input min-h-[80px] resize-y ${hasError('description') ? 'border-red-500 focus:border-red-500' : ''}`}
-          placeholder="مثال: طباعة 100 ورقة A4 أبيض وأسود"
-          disabled={loading}
-          rows="3"
-        />
-        {hasError('description') && (
-          <p className="mt-1 text-sm text-red-600">{errors.description}</p>
-        )}
-      </div>
-
-      {/* تفاصيل الطباعة (في حالة الطباعة) - مع إخفاء الأسعار للسكرتارية */}
-      {formData.type === 'printing' && (
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-4">
-          <h4 className="font-medium text-gray-900 mb-3">تفاصيل الطباعة</h4>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* حجم الورق */}
-            <div>
-              <label htmlFor="paperSize" className="block text-sm font-medium text-gray-700 mb-1">
-                حجم الورق
-              </label>
-              <select
-                id="paperSize"
-                value={formData.paperSize}
-                onChange={(e) => handleChange('paperSize', e.target.value)}
-                className="input"
-                disabled={loading}
-              >
-                {PAPER_SIZES.map(size => (
-                  <option key={size.value} value={size.value}>
-                    {canViewPrices ? `${size.label} - ${size.price} جنيه` : size.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* نوع الطباعة */}
-            <div>
-              <label htmlFor="printType" className="block text-sm font-medium text-gray-700 mb-1">
-                نوع الطباعة
-              </label>
-              <select
-                id="printType"
-                value={formData.printType}
-                onChange={(e) => handleChange('printType', e.target.value)}
-                className="input"
-                disabled={loading}
-              >
-                {PRINT_TYPES.map(type => (
-                  <option key={type.value} value={type.value}>
-                    {type.label} {canViewPrices ? `(×${type.multiplier})` : ''}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          {/* طريقة الحساب - فقط للأدمن */}
-          <PermissionGate permission={PERMISSIONS.VIEW_OPERATION_PRICES}>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                طريقة حساب السعر
-              </label>
-              <div className="flex gap-4">
-                <label className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    name="calculationMode"
-                    value="auto"
-                    checked={calculationMode === 'auto'}
-                    onChange={(e) => setCalculationMode(e.target.value)}
-                    className="text-blue-500"
-                  />
-                  <span className="text-sm">حساب تلقائي</span>
-                </label>
-                <label className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    name="calculationMode"
-                    value="manual"
-                    checked={calculationMode === 'manual'}
-                    onChange={(e) => setCalculationMode(e.target.value)}
-                    className="text-blue-500"
-                  />
-                  <span className="text-sm">حساب يدوي</span>
-                </label>
+    <div className="p-6">
+      <form onSubmit={handleSubmit} className="space-y-6">
+        
+        {/* معلومات المدرس */}
+        {teacher && (
+          <div className="bg-gradient-to-r from-blue-50 to-blue-100 border-2 border-blue-200 rounded-xl p-4 mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center shadow-lg">
+                <span className="text-white font-bold text-lg">{teacher.name.charAt(0)}</span>
+              </div>
+              <div>
+                <h3 className="font-bold text-blue-900 text-lg">{teacher.name}</h3>
+                <p className="text-blue-700 font-medium">📞 {teacher.phone}</p>
+                {teacher.school && (
+                  <p className="text-blue-600 text-sm">🏫 {teacher.school}</p>
+                )}
               </div>
             </div>
-          </PermissionGate>
-        </div>
-      )}
+          </div>
+        )}
 
-      {/* الكمية والسعر */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        
-        {/* الكمية */}
+        {/* نوع العملية */}
         <div>
-          <label htmlFor="quantity" className="block text-sm font-medium text-gray-700 mb-2">
-            الكمية <span className="text-red-500">*</span>
+          <label htmlFor="type" className="block text-sm font-semibold text-gray-800 mb-2">
+            نوع العملية <span className="text-red-500">*</span>
           </label>
-          <input
-            type="number"
-            id="quantity"
-            value={formData.quantity}
-            onChange={(e) => handleChange('quantity', e.target.value)}
-            onBlur={() => handleBlur('quantity')}
-            className={`input ${hasError('quantity') ? 'border-red-500 focus:border-red-500' : ''}`}
-            placeholder="1"
-            min="1"
-            max="10000"
+          <select
+            id="type"
+            value={formData.type}
+            onChange={(e) => handleChange('type', e.target.value)}
+            onBlur={() => handleBlur('type')}
+            className={`w-full px-4 py-3 border-2 rounded-xl text-base font-medium bg-white transition-all duration-200 ${
+              hasError('type') 
+                ? 'border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-100' 
+                : 'border-gray-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-100'
+            }`}
             disabled={loading}
-          />
-          {hasError('quantity') && (
-            <p className="mt-1 text-sm text-red-600">{errors.quantity}</p>
+          >
+            {OPERATION_TYPES.map(type => (
+              <option key={type.value} value={type.value}>
+                {type.label}
+              </option>
+            ))}
+          </select>
+          {hasError('type') && (
+            <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
+              <span>⚠️</span> {errors.type}
+            </p>
           )}
         </div>
 
-        {/* سعر الوحدة - فقط للأدمن */}
-        <PermissionGate 
-          permission={PERMISSIONS.VIEW_OPERATION_PRICES}
-          fallback={
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                سعر الوحدة
-              </label>
-              <div className="input bg-gray-100 flex items-center justify-center text-gray-500">
-                مخفي
-              </div>
-            </div>
-          }
-        >
+        {/* النوع المخصص (يظهر عند اختيار "أخرى") */}
+        {formData.type === 'other' && (
           <div>
-            <label htmlFor="unitPrice" className="block text-sm font-medium text-gray-700 mb-2">
-              سعر الوحدة (جنيه) <span className="text-red-500">*</span>
+            <label htmlFor="customType" className="block text-sm font-semibold text-gray-800 mb-2">
+              نوع العملية المخصص <span className="text-red-500">*</span>
             </label>
             <input
-              type="number"
-              id="unitPrice"
-              value={formData.unitPrice}
-              onChange={(e) => handleChange('unitPrice', e.target.value)}
-              onBlur={() => handleBlur('unitPrice')}
-              className={`input ${hasError('unitPrice') ? 'border-red-500 focus:border-red-500' : ''}`}
-              placeholder="0.50"
-              min="0"
-              step="0.01"
-              disabled={loading || (calculationMode === 'auto' && formData.type === 'printing')}
+              type="text"
+              id="customType"
+              value={formData.customType}
+              onChange={(e) => handleChange('customType', e.target.value)}
+              onBlur={() => handleBlur('customType')}
+              className={`w-full px-4 py-3 border-2 rounded-xl text-base font-medium bg-white transition-all duration-200 ${
+                hasError('customType') 
+                  ? 'border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-100' 
+                  : 'border-gray-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-100'
+              }`}
+              placeholder="أدخل نوع العملية"
+              disabled={loading}
             />
-            {hasError('unitPrice') && (
-              <p className="mt-1 text-sm text-red-600">{errors.unitPrice}</p>
+            {hasError('customType') && (
+              <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
+                <span>⚠️</span> {errors.customType}
+              </p>
             )}
           </div>
-        </PermissionGate>
+        )}
+
+        {/* وصف العملية */}
+        <div>
+          <label htmlFor="description" className="block text-sm font-semibold text-gray-800 mb-2">
+            وصف العملية <span className="text-red-500">*</span>
+          </label>
+          <textarea
+            id="description"
+            value={formData.description}
+            onChange={(e) => handleChange('description', e.target.value)}
+            onBlur={() => handleBlur('description')}
+            className={`w-full px-4 py-3 border-2 rounded-xl text-base font-medium bg-white transition-all duration-200 resize-none ${
+              hasError('description') 
+                ? 'border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-100' 
+                : 'border-gray-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-100'
+            }`}
+            placeholder="وصف تفصيلي للعملية المطلوبة"
+            disabled={loading}
+            rows="4"
+          />
+          {hasError('description') && (
+            <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
+              <span>⚠️</span> {errors.description}
+            </p>
+          )}
+        </div>
 
         {/* المبلغ الإجمالي - فقط للأدمن */}
         <PermissionGate 
           permission={PERMISSIONS.VIEW_OPERATION_PRICES}
           fallback={
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                المبلغ الإجمالي
-              </label>
-              <div className="input bg-gray-100 flex items-center justify-center text-gray-500 font-bold">
-                مخفي
+            <div className="bg-gray-100 border-2 border-gray-300 rounded-xl p-4">
+              <div className="flex items-center justify-center text-gray-600">
+                <span className="text-2xl ml-2">🔒</span>
+                <div>
+                  <div className="font-semibold">المبلغ الإجمالي</div>
+                  <div className="text-sm">سيتم حساب المبلغ تلقائياً</div>
+                </div>
               </div>
             </div>
           }
         >
           <div>
-            <label htmlFor="amount" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="amount" className="block text-sm font-semibold text-gray-800 mb-2">
               المبلغ الإجمالي (جنيه) <span className="text-red-500">*</span>
             </label>
             <input
@@ -440,136 +297,153 @@ const OperationForm = ({
               value={formData.amount}
               onChange={(e) => handleChange('amount', e.target.value)}
               onBlur={() => handleBlur('amount')}
-              className={`input ${hasError('amount') ? 'border-red-500 focus:border-red-500' : ''} font-bold text-lg`}
+              className={`w-full px-4 py-3 border-2 rounded-xl text-base font-bold bg-white transition-all duration-200 ${
+                hasError('amount') 
+                  ? 'border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-100' 
+                  : 'border-gray-300 focus:border-green-500 focus:ring-4 focus:ring-green-100'
+              }`}
               placeholder="0.00"
               min="0"
               step="0.01"
               disabled={loading}
-              readOnly={calculationMode === 'auto' || calculationMode === 'manual'}
             />
             {hasError('amount') && (
-              <p className="mt-1 text-sm text-red-600">{errors.amount}</p>
+              <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
+                <span>⚠️</span> {errors.amount}
+              </p>
             )}
           </div>
         </PermissionGate>
-      </div>
 
-      {/* تاريخ العملية */}
-      <div>
-        <label htmlFor="operationDate" className="block text-sm font-medium text-gray-700 mb-2">
-          تاريخ العملية <span className="text-red-500">*</span>
-        </label>
-        <input
-          type="date"
-          id="operationDate"
-          value={formData.operationDate}
-          onChange={(e) => handleChange('operationDate', e.target.value)}
-          onBlur={() => handleBlur('operationDate')}
-          className={`input ${hasError('operationDate') ? 'border-red-500 focus:border-red-500' : ''}`}
-          disabled={loading}
-        />
-        {hasError('operationDate') && (
-          <p className="mt-1 text-sm text-red-600">{errors.operationDate}</p>
-        )}
-      </div>
-
-      {/* ملاحظات */}
-      <div>
-        <label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-2">
-          ملاحظات
-        </label>
-        <textarea
-          id="notes"
-          value={formData.notes}
-          onChange={(e) => handleChange('notes', e.target.value)}
-          onBlur={() => handleBlur('notes')}
-          className="input min-h-[80px] resize-y"
-          placeholder="أي ملاحظات إضافية حول العملية"
-          disabled={loading}
-          rows="3"
-        />
-      </div>
-
-      {/* ملخص العملية - مع مراعاة الصلاحيات */}
-      <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-        <h4 className="font-medium text-green-900 mb-3">ملخص العملية</h4>
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <div>
-            <span className="text-green-700">النوع:</span>
-            <span className="font-medium mr-2">{selectedOperationType?.label}</span>
-          </div>
-          <div>
-            <span className="text-green-700">الكمية:</span>
-            <span className="font-medium mr-2">{formData.quantity}</span>
-          </div>
-          
-          {/* إظهار الأسعار فقط للأدمن */}
-          <PermissionGate permission={PERMISSIONS.VIEW_OPERATION_PRICES}>
-            <div>
-              <span className="text-green-700">سعر الوحدة:</span>
-              <span className="font-medium mr-2">{formData.unitPrice.toFixed(2)} جنيه</span>
-            </div>
-            <div>
-              <span className="text-green-700">المبلغ الإجمالي:</span>
-              <span className="font-bold text-lg mr-2 text-green-900">{formData.amount.toFixed(2)} جنيه</span>
-            </div>
-          </PermissionGate>
-        </div>
-      </div>
-
-      {/* أزرار التحكم */}
-      <div className="flex gap-3 pt-6 border-t border-gray-200">
-        <button
-          type="button"
-          onClick={onCancel}
-          disabled={loading}
-          className="flex-1 btn btn-secondary"
-        >
-          إلغاء
-        </button>
-        
-        <button
-          type="submit"
-          disabled={loading}
-          className="flex-1 btn btn-primary"
-        >
-          {loading ? (
-            <div className="flex items-center justify-center gap-2">
-              <LoadingSpinner size="small" color="white" />
-              {operation ? 'جاري التحديث...' : 'جاري الحفظ...'}
-            </div>
-          ) : (
-            operation ? 'تحديث العملية' : 'حفظ العملية'
+        {/* تاريخ العملية */}
+        <div>
+          <label htmlFor="operationDate" className="block text-sm font-semibold text-gray-800 mb-2">
+            تاريخ العملية <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="date"
+            id="operationDate"
+            value={formData.operationDate}
+            onChange={(e) => handleChange('operationDate', e.target.value)}
+            onBlur={() => handleBlur('operationDate')}
+            className={`w-full px-4 py-3 border-2 rounded-xl text-base font-medium bg-white transition-all duration-200 ${
+              hasError('operationDate') 
+                ? 'border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-100' 
+                : 'border-gray-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-100'
+            }`}
+            disabled={loading}
+          />
+          {hasError('operationDate') && (
+            <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
+              <span>⚠️</span> {errors.operationDate}
+            </p>
           )}
-        </button>
-      </div>
+        </div>
 
-      {/* معلومات مساعدة - مخصصة للسكرتارية */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <div className="flex items-start gap-3">
-          <span className="text-blue-500 text-lg">💡</span>
-          <div className="text-sm text-blue-800">
-            <p className="font-medium mb-2">نصائح:</p>
-            <ul className="space-y-1 text-blue-700">
-              {canViewPrices ? (
-                <>
-                  <li>• استخدم الحساب التلقائي للطباعة للحصول على أسعار دقيقة</li>
-                  <li>• تأكد من إدخال وصف واضح ومفصل للعملية</li>
-                  <li>• يمكنك تعديل المبلغ الإجمالي يدوياً إذا احتجت لذلك</li>
-                </>
-              ) : (
-                <>
-                  <li>• تأكد من إدخال وصف واضح ومفصل للعملية</li>
-                  <li>• اختر نوع الطباعة وحجم الورق المناسب</li>
-                  <li>• الأسعار ستُحسب تلقائياً من قبل النظام</li>
-                </>
-              )}
-              <li>• استخدم الملاحظات لأي تفاصيل إضافية مهمة</li>
-            </ul>
+        {/* ملاحظات */}
+        <div>
+          <label htmlFor="notes" className="block text-sm font-semibold text-gray-800 mb-2">
+            ملاحظات
+          </label>
+          <textarea
+            id="notes"
+            value={formData.notes}
+            onChange={(e) => handleChange('notes', e.target.value)}
+            onBlur={() => handleBlur('notes')}
+            className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl text-base font-medium bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 resize-none"
+            placeholder="أي ملاحظات إضافية حول العملية"
+            disabled={loading}
+            rows="3"
+          />
+        </div>
+
+        {/* ملخص العملية */}
+        <div className="bg-gradient-to-r from-green-50 to-green-100 border-2 border-green-200 rounded-xl p-4">
+          <h4 className="font-bold text-green-900 mb-3 text-lg">📋 ملخص العملية</h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <div>
+              <span className="text-green-700 font-medium">النوع:</span>
+              <span className="font-bold mr-2 text-green-900">
+                {formData.type === 'other' ? formData.customType : selectedOperationType?.label}
+              </span>
+            </div>
+            <div>
+              <span className="text-green-700 font-medium">التاريخ:</span>
+              <span className="font-bold mr-2 text-green-900">
+                {formData.operationDate ? new Date(formData.operationDate).toLocaleDateString('ar-EG') : '-'}
+              </span>
+            </div>
+            
+            {/* إظهار المبلغ فقط للأدمن */}
+            <PermissionGate permission={PERMISSIONS.VIEW_OPERATION_PRICES}>
+              <div className="md:col-span-2">
+                <span className="text-green-700 font-medium">المبلغ الإجمالي:</span>
+                <span className="font-bold text-xl mr-2 text-green-900">
+                  {formData.amount ? `${parseFloat(formData.amount).toFixed(2)} جنيه` : '0.00 جنيه'}
+                </span>
+              </div>
+            </PermissionGate>
           </div>
         </div>
-      </div>
-    </form>
+
+        {/* أزرار التحكم */}
+        <div className="flex gap-4 pt-6 border-t border-gray-200">
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={loading}
+            className="flex-1 px-6 py-4 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <span className="text-lg ml-2">❌</span>
+            إلغاء
+          </button>
+          
+          <button
+            type="submit"
+            disabled={loading}
+            className="flex-1 px-6 py-4 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-bold rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
+          >
+            {loading ? (
+              <div className="flex items-center justify-center">
+                <LoadingSpinner size="small" color="white" />
+                <span className="mr-2">جاري الحفظ...</span>
+              </div>
+            ) : (
+              <>
+                <span className="text-lg ml-2">{operation ? '💾' : '➕'}</span>
+                {operation ? 'تحديث العملية' : 'حفظ العملية'}
+              </>
+            )}
+          </button>
+        </div>
+
+        {/* معلومات مساعدة */}
+        <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-4">
+          <div className="flex items-start gap-3">
+            <span className="text-blue-500 text-2xl">💡</span>
+            <div className="text-sm text-blue-800">
+              <p className="font-bold mb-2">نصائح مهمة:</p>
+              <ul className="space-y-1 text-blue-700">
+                {canViewPrices ? (
+                  <>
+                    <li>• أدخل وصف واضح ومفصل للعملية</li>
+                    <li>• تأكد من دقة المبلغ المدخل</li>
+                    <li>• استخدم "أخرى" لإضافة نوع عملية جديد</li>
+                  </>
+                ) : (
+                  <>
+                    <li>• أدخل وصف واضح ومفصل للعملية</li>
+                    <li>• اختر نوع العملية المناسب</li>
+                    <li>• المبلغ سيُحسب تلقائياً من قبل النظام</li>
+                  </>
+                )}
+                <li>• استخدم الملاحظات لأي تفاصيل إضافية مهمة</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
   );
 };
 
