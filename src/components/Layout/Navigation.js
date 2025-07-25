@@ -381,7 +381,7 @@ const Navigation = ({ onNavigate }) => {
           <div className="bg-gradient-to-r from-gray-100 to-gray-200 rounded-2xl p-4 text-center">
             <div className="text-lg font-bold text-gray-800 mb-2 flex items-center justify-center gap-2">
               <span>🖨️</span>
-              نظام إدارة المطبعة
+              نظام إدارة حسابات المدرسين
             </div>
             <div className="text-sm text-gray-600 mb-2">الإصدار 2.0.0</div>
             <div className="text-xs text-gray-500 mb-3">
