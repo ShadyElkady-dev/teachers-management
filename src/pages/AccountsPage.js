@@ -12,7 +12,7 @@ import LoadingSpinner from '../components/Common/LoadingSpinner';
 import Modal from '../components/Common/Modal';
 
 // Utils
-import { searchInText, formatCurrency } from '../utils/helpers';
+import { searchInText, formatCurrency, isSmallScreen } from '../utils/helpers';
 import { MESSAGES } from '../utils/constants';
 
 const AccountsPage = () => {
@@ -28,6 +28,17 @@ const AccountsPage = () => {
   const [filterType, setFilterType] = useState('all'); // all, debts, paid
   const [sortBy, setSortBy] = useState('debt'); // debt, name, lastPayment
   const [sortOrder, setSortOrder] = useState('desc'); // asc, desc
+  const [isMobile, setIsMobile] = useState(isSmallScreen());
+
+  // مراقبة تغيير حجم الشاشة
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(isSmallScreen());
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // معالجة معاملات الـ URL
   useEffect(() => {
@@ -105,7 +116,8 @@ const AccountsPage = () => {
     totalPayments: teachersWithDebts.reduce((sum, t) => sum + t.totalPayments, 0),
     averageDebt: teachersWithDebts.length > 0 
       ? teachersWithDebts.reduce((sum, t) => sum + Math.max(0, t.debt), 0) / teachersWithDebts.length 
-      : 0
+      : 0,
+    paidTeachers: teachersWithDebts.filter(t => t.debt <= 0).length
   };
 
   // وظائف التحكم في المدفوعات
@@ -175,191 +187,267 @@ const AccountsPage = () => {
   }
 
   return (
-    <div className="section-mobile">
-      
-      {/* رأس الصفحة */}
-      <div className="mb-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">إدارة الحسابات</h1>
-            <p className="text-gray-600 mt-1">
-              متابعة المدفوعات والديون
+    <div className="min-h-screen bg-gray-50 pb-24">
+      <div className="container mx-auto px-4 py-6 max-w-7xl">
+        
+        {/* رأس الصفحة */}
+        <div className="mb-8">
+          <div className="text-center">
+            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">💰 إدارة الحسابات</h1>
+            <p className="text-gray-600 text-lg mb-6">
+              متابعة المدفوعات والديون للمدرسين
             </p>
+            
+            <button
+              onClick={() => handleAddPayment()}
+              className="px-8 py-4 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-bold rounded-2xl shadow-lg hover:shadow-xl transition-all duration-200 text-lg"
+            >
+              <span className="text-2xl ml-2">💳</span>
+              تسجيل دفعة جديدة
+            </button>
+          </div>
+        </div>
+
+        {/* الإحصائيات الرئيسية */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-6 rounded-2xl shadow-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm font-medium opacity-90">إجمالي المدرسين</div>
+                <div className="text-3xl font-bold">{statistics.totalTeachers}</div>
+                <div className="text-xs opacity-80">في النظام</div>
+              </div>
+              <div className="text-4xl opacity-80">👥</div>
+            </div>
           </div>
           
-          <button
-            onClick={() => handleAddPayment()}
-            className="btn-mobile btn-primary"
-          >
-            <span className="text-lg">💳</span>
-            تسجيل دفعة جديدة
-          </button>
-        </div>
-      </div>
-
-      {/* الإحصائيات */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-4 rounded-lg border border-blue-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-sm text-blue-600 font-medium">إجمالي المدرسين</div>
-              <div className="text-2xl font-bold text-blue-900">{statistics.totalTeachers}</div>
+          <div className="bg-gradient-to-br from-red-500 to-red-600 text-white p-6 rounded-2xl shadow-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm font-medium opacity-90">لديهم ديون</div>
+                <div className="text-3xl font-bold">{statistics.teachersWithDebts}</div>
+                <div className="text-xs opacity-80">مدرس</div>
+              </div>
+              <div className="text-4xl opacity-80">⚠️</div>
             </div>
-            <div className="text-2xl">👥</div>
           </div>
-        </div>
-        
-        <div className="bg-gradient-to-r from-red-50 to-red-100 p-4 rounded-lg border border-red-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-sm text-red-600 font-medium">لديهم ديون</div>
-              <div className="text-2xl font-bold text-red-900">{statistics.teachersWithDebts}</div>
-            </div>
-            <div className="text-2xl">⚠️</div>
-          </div>
-        </div>
-        
-        <div className="bg-gradient-to-r from-yellow-50 to-yellow-100 p-4 rounded-lg border border-yellow-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-sm text-yellow-600 font-medium">إجمالي الديون</div>
-              <div className="text-lg font-bold text-yellow-900">{formatCurrency(statistics.totalDebts)}</div>
-            </div>
-            <div className="text-2xl">💰</div>
-          </div>
-        </div>
-        
-        <div className="bg-gradient-to-r from-green-50 to-green-100 p-4 rounded-lg border border-green-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-sm text-green-600 font-medium">إجمالي المدفوعات</div>
-              <div className="text-lg font-bold text-green-900">{formatCurrency(statistics.totalPayments)}</div>
-            </div>
-            <div className="text-2xl">✅</div>
-          </div>
-        </div>
-      </div>
-
-      {/* أدوات التصفية والبحث */}
-      <div className="mb-6 space-y-4">
-        
-        {/* شريط البحث */}
-        <SearchBar
-          value={searchTerm}
-          onChange={setSearchTerm}
-          placeholder="البحث في الحسابات (الاسم، الهاتف، المدرسة...)"
-        />
-
-        {/* الفلاتر */}
-        <div className="flex flex-wrap gap-4 items-center">
           
-          {/* فلتر النوع */}
-          <div className="flex items-center gap-2">
-            <label className="text-sm font-medium text-gray-700">عرض:</label>
-            <select 
-              value={filterType}
-              onChange={(e) => setFilterType(e.target.value)}
-              className="input text-sm py-2"
-            >
-              <option value="all">الكل ({teachersWithDebts.length})</option>
-              <option value="debts">لديهم ديون ({statistics.teachersWithDebts})</option>
-              <option value="paid">مسددين ({statistics.totalTeachers - statistics.teachersWithDebts})</option>
-            </select>
+          <div className="bg-gradient-to-br from-yellow-500 to-yellow-600 text-white p-6 rounded-2xl shadow-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm font-medium opacity-90">إجمالي الديون</div>
+                <div className="text-lg font-bold">{formatCurrency(statistics.totalDebts)}</div>
+                <div className="text-xs opacity-80">مستحق الدفع</div>
+              </div>
+              <div className="text-4xl opacity-80">💸</div>
+            </div>
           </div>
-
-          {/* الترتيب */}
-          <div className="flex items-center gap-2">
-            <label className="text-sm font-medium text-gray-700">ترتيب حسب:</label>
-            <select 
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="input text-sm py-2"
-            >
-              <option value="debt">المديونية</option>
-              <option value="name">الاسم</option>
-              <option value="lastPayment">آخر دفعة</option>
-            </select>
+          
+          <div className="bg-gradient-to-br from-green-500 to-green-600 text-white p-6 rounded-2xl shadow-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm font-medium opacity-90">إجمالي المدفوعات</div>
+                <div className="text-lg font-bold">{formatCurrency(statistics.totalPayments)}</div>
+                <div className="text-xs opacity-80">تم تحصيلها</div>
+              </div>
+              <div className="text-4xl opacity-80">✅</div>
+            </div>
           </div>
-
-          {/* اتجاه الترتيب */}
-          <button
-            onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-            className="btn btn-secondary btn-sm"
-          >
-            {sortOrder === 'asc' ? '📈' : '📉'}
-            {sortOrder === 'asc' ? 'تصاعدي' : 'تنازلي'}
-          </button>
         </div>
-      </div>
 
-      {/* قائمة الحسابات */}
-      <div className="mb-6">
-        {filteredTeachers.length === 0 && searchTerm ? (
-          <div className="empty-state">
-            <div className="empty-icon">🔍</div>
-            <div className="empty-title">لا توجد نتائج</div>
-            <div className="empty-description">
-              لم يتم العثور على حسابات مطابقة لكلمة البحث "{searchTerm}"
+        {/* إحصائيات إضافية */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          <div className="bg-white rounded-2xl shadow-lg p-6 border-2 border-gray-100">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm font-medium text-gray-600">متوسط الدين</div>
+                <div className="text-xl font-bold text-orange-600">{formatCurrency(statistics.averageDebt)}</div>
+              </div>
+              <div className="text-3xl">📊</div>
             </div>
           </div>
-        ) : filteredTeachers.length === 0 ? (
-          <div className="empty-state">
-            <div className="empty-icon">💰</div>
-            <div className="empty-title">لا توجد حسابات</div>
-            <div className="empty-description">
-              لا توجد حسابات مطابقة للفلتر المحدد
+
+          <div className="bg-white rounded-2xl shadow-lg p-6 border-2 border-gray-100">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm font-medium text-gray-600">مدرسين مسددين</div>
+                <div className="text-xl font-bold text-green-600">{statistics.paidTeachers}</div>
+              </div>
+              <div className="text-3xl">✅</div>
             </div>
           </div>
-        ) : (
-          <AccountsList
-            teachers={filteredTeachers}
-            onAddPayment={handleAddPayment}
-            onEditPayment={handleEditPayment}
-            onDeletePayment={handleDeletePayment}
-            onViewDetails={handleViewAccountDetails}
+
+          <div className="bg-white rounded-2xl shadow-lg p-6 border-2 border-gray-100">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm font-medium text-gray-600">نسبة السداد</div>
+                <div className="text-xl font-bold text-purple-600">
+                  {statistics.totalTeachers > 0 
+                    ? Math.round((statistics.paidTeachers / statistics.totalTeachers) * 100)
+                    : 0}%
+                </div>
+              </div>
+              <div className="text-3xl">📈</div>
+            </div>
+          </div>
+        </div>
+
+        {/* أدوات التصفية والبحث */}
+        <div className="mb-6 space-y-4">
+          
+          {/* شريط البحث */}
+          <SearchBar
+            value={searchTerm}
+            onChange={setSearchTerm}
+            placeholder="🔍 البحث في الحسابات (الاسم، الهاتف، المدرسة...)"
+            className="text-lg"
           />
-        )}
+
+          {/* الفلاتر */}
+          <div className="bg-white rounded-2xl border-2 border-gray-200 p-6 shadow-lg space-y-4">
+            <h3 className="text-lg font-bold text-gray-900">🔍 البحث والتصفية المتقدمة</h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              
+              {/* فلتر النوع */}
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">عرض:</label>
+                <select 
+                  value={filterType}
+                  onChange={(e) => setFilterType(e.target.value)}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl text-base font-medium bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200"
+                >
+                  <option value="all">الكل ({teachersWithDebts.length})</option>
+                  <option value="debts">لديهم ديون ({statistics.teachersWithDebts})</option>
+                  <option value="paid">مسددين ({statistics.paidTeachers})</option>
+                </select>
+              </div>
+
+              {/* الترتيب */}
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">ترتيب حسب:</label>
+                <select 
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl text-base font-medium bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200"
+                >
+                  <option value="debt">المديونية</option>
+                  <option value="name">الاسم</option>
+                  <option value="lastPayment">آخر دفعة</option>
+                </select>
+              </div>
+
+              {/* اتجاه الترتيب */}
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">الاتجاه:</label>
+                <button
+                  onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                  className="w-full px-4 py-3 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-xl transition-all duration-200 flex items-center justify-center gap-2"
+                >
+                  <span className="text-lg">{sortOrder === 'asc' ? '📈' : '📉'}</span>
+                  {sortOrder === 'asc' ? 'تصاعدي' : 'تنازلي'}
+                </button>
+              </div>
+            </div>
+
+            {/* أدوات التحكم */}
+            <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t-2 border-gray-200">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    setSearchTerm('');
+                    setFilterType('all');
+                    setSortBy('debt');
+                    setSortOrder('desc');
+                  }}
+                  className="px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold rounded-xl transition-all duration-200"
+                >
+                  مسح جميع الفلاتر
+                </button>
+              </div>
+              
+              <div className="bg-blue-50 px-4 py-2 rounded-xl">
+                <span className="text-sm font-bold text-blue-800">
+                  عرض {filteredTeachers.length} حساب
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* قائمة الحسابات */}
+        <div className="mb-6">
+          {filteredTeachers.length === 0 && searchTerm ? (
+            <div className="text-center py-16 bg-white rounded-2xl shadow-lg">
+              <div className="text-6xl mb-4">🔍</div>
+              <div className="text-2xl font-bold text-gray-700 mb-2">لا توجد نتائج</div>
+              <div className="text-gray-500 text-lg">
+                لم يتم العثور على حسابات مطابقة لكلمة البحث "{searchTerm}"
+              </div>
+            </div>
+          ) : filteredTeachers.length === 0 ? (
+            <div className="text-center py-16 bg-white rounded-2xl shadow-lg">
+              <div className="text-6xl mb-4">💰</div>
+              <div className="text-2xl font-bold text-gray-700 mb-2">لا توجد حسابات</div>
+              <div className="text-gray-500 text-lg">
+                لا توجد حسابات مطابقة للفلتر المحدد
+              </div>
+            </div>
+          ) : (
+            <AccountsList
+              teachers={filteredTeachers}
+              onAddPayment={handleAddPayment}
+              onEditPayment={handleEditPayment}
+              onDeletePayment={handleDeletePayment}
+              onViewDetails={handleViewAccountDetails}
+            />
+          )}
+        </div>
+
+
+        {/* نصائح وإرشادات */}
+   
+
+        {/* النوافذ المنبثقة */}
+        
+        {/* نافذة إضافة/تعديل دفعة */}
+        <Modal
+          isOpen={showPaymentForm}
+          onClose={handleCloseModals}
+          title={editingPayment ? '✏️ تعديل الدفعة' : `💳 تسجيل دفعة جديدة${selectedTeacher ? ` - ${selectedTeacher.name}` : ''}`}
+          size="medium"
+        >
+          <PaymentForm
+            payment={editingPayment}
+            teacher={selectedTeacher}
+            teachers={state.teachers}
+            onSave={handleSavePayment}
+            onCancel={handleCloseModals}
+            loading={state.loading.payments}
+          />
+        </Modal>
+
+        {/* نافذة تفاصيل الحساب */}
+        <Modal
+          isOpen={showAccountDetails}
+          onClose={handleCloseModals}
+          title={`📊 تفاصيل حساب - ${selectedTeacher?.name}`}
+          size="xl"
+        >
+          <AccountDetails
+            teacher={selectedTeacher}
+            onAddPayment={() => {
+              setShowAccountDetails(false);
+              handleAddPayment(selectedTeacher);
+            }}
+            onEditPayment={(payment) => {
+              setShowAccountDetails(false);
+              handleEditPayment(payment);
+            }}
+            onDeletePayment={handleDeletePayment}
+          />
+        </Modal>
       </div>
-
-      {/* النوافذ المنبثقة */}
-      
-      {/* نافذة إضافة/تعديل دفعة */}
-      <Modal
-        isOpen={showPaymentForm}
-        onClose={handleCloseModals}
-        title={editingPayment ? 'تعديل الدفعة' : `تسجيل دفعة جديدة${selectedTeacher ? ` - ${selectedTeacher.name}` : ''}`}
-        size="medium"
-      >
-        <PaymentForm
-          payment={editingPayment}
-          teacher={selectedTeacher}
-          teachers={state.teachers}
-          onSave={handleSavePayment}
-          onCancel={handleCloseModals}
-          loading={state.loading.payments}
-        />
-      </Modal>
-
-      {/* نافذة تفاصيل الحساب */}
-      <Modal
-        isOpen={showAccountDetails}
-        onClose={handleCloseModals}
-        title={`تفاصيل حساب - ${selectedTeacher?.name}`}
-        size="xl"
-      >
-        <AccountDetails
-          teacher={selectedTeacher}
-          onAddPayment={() => {
-            setShowAccountDetails(false);
-            handleAddPayment(selectedTeacher);
-          }}
-          onEditPayment={(payment) => {
-            setShowAccountDetails(false);
-            handleEditPayment(payment);
-          }}
-          onDeletePayment={handleDeletePayment}
-        />
-      </Modal>
     </div>
   );
 };
