@@ -352,47 +352,6 @@ const DashboardPage = () => {
             )}
           </div>
         </div>
-
-        {/* نصائح للسكرتارية */}
-        <PermissionGate 
-          permission={PERMISSIONS.ADD_OPERATION}
-          fallback={null}
-        >
-          {!hasPermission(PERMISSIONS.VIEW_FINANCIAL_DATA) && (
-            <div className="mt-8">
-              <div className="bg-gradient-to-r from-yellow-50 to-orange-100 border-2 border-yellow-200 rounded-2xl p-6 shadow-lg">
-                <div className="flex items-start gap-4">
-                  <span className="text-yellow-500 text-3xl">💡</span>
-                  <div>
-                    <h4 className="font-bold text-yellow-900 text-lg mb-3">نصائح لك كسكرتارية</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-yellow-800">
-                      <ul className="space-y-2">
-                        <li className="flex items-center gap-2">
-                          <span>✅</span>
-                          <span>سجل العمليات بدقة ووضوح</span>
-                        </li>
-                        <li className="flex items-center gap-2">
-                          <span>📏</span>
-                          <span>تأكد من الكميات الصحيحة</span>
-                        </li>
-                      </ul>
-                      <ul className="space-y-2">
-                        <li className="flex items-center gap-2">
-                          <span>📝</span>
-                          <span>أضف وصف واضح لكل عملية</span>
-                        </li>
-                        <li className="flex items-center gap-2">
-                          <span>⏰</span>
-                          <span>سجل العمليات في نفس اليوم</span>
-                        </li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-        </PermissionGate>
       </div>
     </div>
   );

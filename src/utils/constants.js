@@ -172,6 +172,20 @@ export const NOTIFICATION_TYPES = {
   INFO: 'info'
 };
 
+// أنواع التقارير
+export const REPORT_TYPES = [
+  { value: 'teacher_detailed', label: 'تقرير مفصل للمدرس' },
+  { value: 'teacher_summary', label: 'ملخص حسابات المدرسين' },
+  { value: 'operations_summary', label: 'ملخص العمليات' },
+  { value: 'financial_report', label: 'تقرير مالي شامل' },
+];
+
+// قوالب التقارير
+export const REPORT_TEMPLATES = {
+  TEACHER_DETAILED: 'teacher_detailed',
+  FINANCIAL_SUMMARY: 'financial_summary',
+};
+
 // حدود التطبيق
 export const LIMITS = {
   MAX_FILE_SIZE: 5 * 1024 * 1024, // 5MB

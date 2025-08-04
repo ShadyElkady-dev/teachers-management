@@ -36,7 +36,7 @@ const Header = ({ onMenuClick, isMobile }) => {
       case '/expenses':
         return { title: 'المصروفات الخاصة', icon: '💸', color: 'from-red-500 to-red-600' };
       default:
-        return { title: 'نظام إدارة المطبعة', icon: '🖨️', color: 'from-gray-500 to-gray-600' };
+        return { title: 'التقارير', icon: '🖨️', color: 'from-gray-500 to-gray-600' };
     }
   };
 

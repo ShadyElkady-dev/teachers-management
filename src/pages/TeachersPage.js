@@ -35,14 +35,17 @@ const TeachersPage = () => {
   const [isMobile, setIsMobile] = useState(isSmallScreen());
 
   // مراقبة تغيير حجم الشاشة
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(isSmallScreen());
-    };
+ useEffect(() => {
+  const handleResize = () => {
+    const small = isSmallScreen();
+    setIsMobile(small);
+    setViewMode(small ? 'cards' : 'list');
+  };
 
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  handleResize(); // شغلها أول مرة عند التحميل
+  window.addEventListener('resize', handleResize);
+  return () => window.removeEventListener('resize', handleResize);
+}, []);
 
   // معالجة معاملات الـ URL
   useEffect(() => {
@@ -576,7 +579,7 @@ const TeacherCardMobile = ({
     if (teacher.debt === 0) return '✅';
     return '💰';
   };
-
+  
   const handleMenuClick = (action) => {
     setShowMenu(false);
     switch (action) {
@@ -596,7 +599,7 @@ const TeacherCardMobile = ({
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border-2 border-gray-100">
+<div className="relative bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-visible border-2 border-gray-100">
       
       {/* رأس البطاقة مع الخلفية المتدرجة */}
       <div className={`bg-gradient-to-r ${getStatusColor()} p-6 text-white relative`}>
@@ -688,23 +691,22 @@ const TeacherCardMobile = ({
             إضافة عملية
           </button>
 
-          <button
-            onClick={() => onViewDetails(teacher)}
-            className="px-4 py-3 bg-blue-100 hover:bg-blue-200 text-blue-800 font-bold rounded-xl transition-all duration-200"
-            title="عرض التفاصيل"
-          >
-            👁️
-          </button>
-
+<button
+  onClick={() => onViewDetails(teacher)}
+  className="w-12 h-12 flex items-center justify-center bg-blue-100 hover:bg-blue-200 text-blue-800 font-bold rounded-xl transition-all duration-200"
+  title="عرض التفاصيل"
+>
+  👁️
+</button>
           {/* قائمة الخيارات */}
           <div className="relative">
-            <button
-              onClick={() => setShowMenu(!showMenu)}
-              className="px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold rounded-xl transition-all duration-200"
-              title="المزيد"
-            >
-              ⋮
-            </button>
+           <button
+  onClick={() => setShowMenu(!showMenu)}
+  className="w-12 h-12 flex items-center justify-center bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold rounded-xl transition-all duration-200"
+  title="المزيد"
+>
+  ⋮
+</button>
 
             {showMenu && (
               <>

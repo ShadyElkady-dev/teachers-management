@@ -17,7 +17,6 @@ const Navigation = ({ onNavigate }) => {
       name: 'لوحة التحكم',
       icon: '📊',
       path: '/dashboard',
-      description: 'نظرة شاملة على النظام',
       permission: null,
       color: 'blue',
       gradient: 'from-blue-500 to-blue-600',
@@ -31,7 +30,6 @@ const Navigation = ({ onNavigate }) => {
       name: 'المدرسين',
       icon: '👨‍🏫',
       path: '/teachers',
-      description: 'إدارة المدرسين',
       permission: PERMISSIONS.VIEW_TEACHERS,
       color: 'indigo',
       gradient: 'from-indigo-500 to-indigo-600',
@@ -45,7 +43,6 @@ const Navigation = ({ onNavigate }) => {
       name: 'العمليات',
       icon: '📝',
       path: '/operations',
-      description: 'إدارة العمليات',
       permission: PERMISSIONS.VIEW_OPERATIONS,
       color: 'green',
       gradient: 'from-green-500 to-green-600',
@@ -59,7 +56,6 @@ const Navigation = ({ onNavigate }) => {
       name: 'الحسابات',
       icon: '💰',
       path: '/accounts',
-      description: 'المدفوعات والديون',
       permission: PERMISSIONS.VIEW_PAYMENTS,
       color: 'purple',
       gradient: 'from-purple-500 to-purple-600',
@@ -73,7 +69,6 @@ const Navigation = ({ onNavigate }) => {
       name: 'المصروفات',
       icon: '💸',
       path: '/expenses',
-      description: 'المصروفات الخاصة',
       permission: PERMISSIONS.VIEW_EXPENSES,
       color: 'red',
       gradient: 'from-red-500 to-red-600',
@@ -81,6 +76,19 @@ const Navigation = ({ onNavigate }) => {
       borderColor: 'border-red-200',
       textColor: 'text-red-700',
       hoverBg: 'hover:bg-red-100'
+    },
+    {
+      id: 'reports',
+      name: 'التقارير',
+      icon: '📄',
+      path: '/reports',
+      permission: PERMISSIONS.VIEW_REPORTS,
+      color: 'teal',
+      gradient: 'from-teal-500 to-teal-600',
+      bgColor: 'bg-teal-50',
+      borderColor: 'border-teal-200',
+      textColor: 'text-teal-700',
+      hoverBg: 'hover:bg-teal-100'
     }
   ];
 
@@ -94,13 +102,12 @@ const Navigation = ({ onNavigate }) => {
     switch (sectionId) {
       case 'dashboard':
         return {
-          count: state.teachers.length + state.operations.length,
-          info: 'عنصر في النظام'
+         // count: state.teachers.length + state.operations.length,
+         // info: 'عنصر في النظام'
         };
       case 'teachers':
         return {
           count: state.teachers.length,
-          info: 'مدرس مسجل'
         };
       case 'operations':
         const todayOperations = state.operations.filter(op => {
@@ -109,8 +116,8 @@ const Navigation = ({ onNavigate }) => {
           return opDate.toDateString() === today.toDateString();
         }).length;
         return {
-          count: todayOperations,
-          info: `من ${state.operations.length} عملية`
+          //count: todayOperations,
+          //info: `من ${state.operations.length} عملية`
         };
       case 'accounts':
         if (!hasPermission(PERMISSIONS.VIEW_FINANCIAL_DATA)) {
@@ -121,8 +128,8 @@ const Navigation = ({ onNavigate }) => {
           return total + Math.max(0, debt);
         }, 0);
         return {
-          count: formatCurrency(totalDebts),
-          info: 'مديونيات'
+         // count: formatCurrency(totalDebts),
+        //  info: 'مديونيات'
         };
       case 'expenses':
         if (!hasPermission(PERMISSIONS.VIEW_EXPENSES)) {
@@ -135,8 +142,8 @@ const Navigation = ({ onNavigate }) => {
                  expenseDate.getFullYear() === now.getFullYear();
         }).reduce((sum, expense) => sum + (expense.amount || 0), 0);
         return {
-          count: formatCurrency(monthlyExpenses),
-          info: 'هذا الشهر'
+         // count: formatCurrency(monthlyExpenses),
+         // info: 'هذا الشهر'
         };
       default:
         return { count: 0, info: '' };
@@ -151,11 +158,11 @@ const Navigation = ({ onNavigate }) => {
 
     switch (sectionId) {
       case 'accounts':
-        const overdueCount = state.teachers.filter(teacher => {
-          const debt = calculateTeacherDebt(teacher.id);
-          return debt > 0;
-        }).length;
-        return overdueCount > 0 ? overdueCount : null;
+      //  const overdueCount = state.teachers.filter(teacher => {
+         // const debt = calculateTeacherDebt(teacher.id);
+      //    return debt > 0;
+       // }).length;
+      //  return overdueCount > 0 ? overdueCount : null;
       default:
         return null;
     }
@@ -239,19 +246,7 @@ const Navigation = ({ onNavigate }) => {
                       </div>
                     </div>
                     
-                    <div className="text-left">
-                      {alertCount && (
-                        <div className="bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center mb-2 animate-pulse">
-                          {alertCount}
-                        </div>
-                      )}
-                      <div className={`text-sm font-bold ${isActive ? 'text-white' : section.textColor}`}>
-                        {stats.count}
-                      </div>
-                      <div className={`text-xs ${isActive ? 'text-white opacity-80' : 'text-gray-500'}`}>
-                        {stats.info}
-                      </div>
-                    </div>
+                    
                   </div>
                 </Link>
               );
@@ -321,23 +316,6 @@ const Navigation = ({ onNavigate }) => {
                 </div>
                 <span className="font-bold text-red-900 text-lg">إضافة مصروف</span>
               </Link>
-            </PermissionGate>
-
-            {/* للسكرتارية: رسالة توجيهية */}
-            <PermissionGate 
-              permission={PERMISSIONS.ADD_OPERATION}
-              fallback={null}
-            >
-              {!hasPermission(PERMISSIONS.VIEW_FINANCIAL_DATA) && (
-                <div className="p-4 bg-gradient-to-r from-yellow-100 to-amber-200 border-2 border-yellow-300 rounded-2xl shadow-md">
-                  <div className="flex items-center gap-3">
-                    <span className="text-yellow-600 text-2xl">💡</span>
-                    <span className="text-sm text-yellow-800 font-bold">
-                      يمكنك إضافة العمليات من صفحة العمليات
-                    </span>
-                  </div>
-                </div>
-              )}
             </PermissionGate>
           </div>
         </div>

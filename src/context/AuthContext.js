@@ -73,13 +73,15 @@ const ROLE_PERMISSIONS = {
   ],
   [USER_ROLES.SECRETARY]: [
     // صلاحيات محدودة جداً للسكرتارية
-    PERMISSIONS.VIEW_TEACHERS,        // عرض المدرسين فقط
-    PERMISSIONS.VIEW_OPERATIONS,      // عرض العمليات فقط
-    PERMISSIONS.ADD_OPERATION,        // إضافة العمليات فقط
+    PERMISSIONS.VIEW_TEACHERS,        // عرض المدرسين
+    PERMISSIONS.VIEW_OPERATIONS,      // عرض العمليات
+    PERMISSIONS.ADD_OPERATION,        // إضافة العمليات
+    PERMISSIONS.EDIT_OPERATION,       // **تمت الإضافة: تعديل العمليات**
+    PERMISSIONS.DELETE_OPERATION,     // **تمت الإضافة: حذف العمليات**
+    PERMISSIONS.VIEW_OPERATION_PRICES // عرض سعر العملية
     // لا يمكن للسكرتارية:
     // - إضافة أو تعديل أو حذف المدرسين
     // - تعديل أو حذف العمليات
-    // - رؤية الأسعار والمبالغ
     // - الوصول للمدفوعات أو المصروفات أو التقارير المالية
   ]
 };

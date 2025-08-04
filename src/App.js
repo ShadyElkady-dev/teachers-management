@@ -16,6 +16,8 @@ import OperationsPage from './pages/OperationsPage';
 import AccountsPage from './pages/AccountsPage';
 import ExpensesPage from './pages/ExpensesPage';
 import LoadingSpinner from './components/Common/LoadingSpinner';
+import ReportsPage from './pages/ReportsPage'; // Import the new page
+
 
 // Styles
 import './styles/globals.css';
@@ -149,8 +151,16 @@ function AppContent() {
                 </ProtectedRoute>
               } 
             />
-            
+             <Route 
+              path="/reports" 
+              element={
+                <ProtectedRoute requiredPermission={PERMISSIONS.VIEW_REPORTS}>
+                  <ReportsPage />
+                </ProtectedRoute>
+              } 
+            />
             {/* صفحة 404 */}
+            
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </Layout>
