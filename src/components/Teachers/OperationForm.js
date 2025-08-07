@@ -8,6 +8,7 @@ import LoadingSpinner from '../Common/LoadingSpinner';
 const OperationForm = ({ 
   operation = null, 
   teacher = null,
+  teachers = [], // قائمة المدرسين
   onSave, 
   onCancel, 
   loading = false 
@@ -17,6 +18,7 @@ const OperationForm = ({
 
   // حالة النموذج
   const [formData, setFormData] = useState({
+    teacherId: teacher?.id || '', // إضافة teacherId
     type: 'printing',
     customType: '',
     description: '',
@@ -32,6 +34,7 @@ const OperationForm = ({
   useEffect(() => {
     if (operation) {
       setFormData({
+        teacherId: operation.teacherId || teacher?.id || '',
         type: operation.type || 'printing',
         customType: OPERATION_TYPES.find(t => t.value === operation.type) ? '' : operation.type,
         description: operation.description || '',
@@ -39,12 +42,28 @@ const OperationForm = ({
         operationDate: dateToInputValue(operation.operationDate),
         notes: operation.notes || ''
       });
+    } else {
+      // إعادة تعيين النموذج مع المدرس المحدد
+      setFormData({
+        teacherId: teacher?.id || '',
+        type: 'printing',
+        customType: '',
+        description: '',
+        amount: '',
+        operationDate: dateToInputValue(new Date()),
+        notes: ''
+      });
     }
-  }, [operation]);
+  }, [operation, teacher]);
 
   // التحقق من صحة البيانات
   const validateForm = () => {
     const newErrors = {};
+
+    // اختيار المدرس
+    if (!formData.teacherId) {
+      newErrors.teacherId = 'اختيار المدرس مطلوب';
+    }
 
     // نوع العملية
     if (!formData.type) {
@@ -95,11 +114,13 @@ const OperationForm = ({
   const handleChange = (field, value) => {
     let processedValue = value;
     
-    if (field === 'description' || field === 'notes' || field === 'customType') {
-      processedValue = sanitizeText(value);
-    } else if (field === 'amount') {
-      processedValue = Math.max(0, parseFloat(value) || 0);
-    }
+if (field === 'notes' || field === 'customType') {
+  processedValue = sanitizeText(value);
+} else if (field === 'amount') {
+  processedValue = Math.max(0, parseFloat(value) || 0);
+} else {
+  processedValue = value; // 👈 خليه يدخل زي ما هو لو description
+}
 
     setFormData(prev => ({
       ...prev,
@@ -116,47 +137,63 @@ const OperationForm = ({
   };
 
   // معالجة التركيز على الحقل
-  const handleBlur = (field) => {
-    setTouched(prev => ({
+const handleBlur = (field) => {
+  setTouched(prev => ({
+    ...prev,
+    [field]: true
+  }));
+
+  // 👇 فقط هنا ننظف description
+  if (field === 'description') {
+    setFormData(prev => ({
       ...prev,
-      [field]: true
+      [field]: sanitizeText(prev[field])
     }));
-  };
-
+  }
+};
   // معالجة إرسال النموذج
-  const handleSubmit = (e) => {
-    e.preventDefault();
+const handleSubmit = (e) => {
+  e.preventDefault();
+  
+  // تعيين جميع الحقول كـ touched
+  const allTouched = Object.keys(formData).reduce((acc, key) => {
+    acc[key] = true;
+    return acc;
+  }, {});
+  setTouched(allTouched);
+
+  if (validateForm()) {
+    // إعداد البيانات للإرسال
+    const teacherIdToSave = formData.teacherId || teacher?.id;
     
-    // تعيين جميع الحقول كـ touched
-    const allTouched = Object.keys(formData).reduce((acc, key) => {
-      acc[key] = true;
-      return acc;
-    }, {});
-    setTouched(allTouched);
-
-    if (validateForm()) {
-      // إعداد البيانات للإرسال
-      const dataToSave = {
-        type: formData.type === 'other' ? formData.customType : formData.type,
-        description: formData.description,
-        operationDate: new Date(formData.operationDate),
-        notes: formData.notes,
-        quantity: 1 // قيمة افتراضية
-      };
-
-      // إضافة المبلغ للأدمن أو قيمة افتراضية للسكرتارية
-      if (canViewPrices) {
-        dataToSave.amount = parseFloat(formData.amount);
-        dataToSave.unitPrice = parseFloat(formData.amount);
-      } else {
-        // للسكرتارية: قيم افتراضية
-        dataToSave.amount = 1;
-        dataToSave.unitPrice = 1;
-      }
-
-      onSave(dataToSave);
+    // التأكد من وجود teacherId قبل الإرسال
+    if (!teacherIdToSave) {
+      setErrors({ teacherId: 'يجب اختيار مدرس' });
+      return;
     }
-  };
+
+    const dataToSave = {
+      type: formData.type === 'other' ? formData.customType : formData.type,
+      description: formData.description,
+      operationDate: new Date(formData.operationDate),
+      notes: formData.notes,
+      quantity: 1 // قيمة افتراضية
+    };
+
+    // إضافة المبلغ للأدمن أو قيمة افتراضية للسكرتارية
+    if (canViewPrices) {
+      dataToSave.amount = parseFloat(formData.amount);
+      dataToSave.unitPrice = parseFloat(formData.amount);
+    } else {
+      // للسكرتارية: قيم افتراضية
+      dataToSave.amount = 1;
+      dataToSave.unitPrice = 1;
+    }
+
+    // تمرير teacherId بشكل منفصل
+    onSave(teacherIdToSave, dataToSave);
+  }
+};
 
   // تحديد ما إذا كان الحقل يحتوي على خطأ
   const hasError = (field) => {
@@ -166,22 +203,60 @@ const OperationForm = ({
   // الحصول على نوع العملية المحدد
   const selectedOperationType = OPERATION_TYPES.find(type => type.value === formData.type);
 
+  // الحصول على المدرس المحدد
+  const selectedTeacher = teacher || teachers.find(t => t.id === formData.teacherId);
+
+  // إضافة الدالة
+
   return (
     <div className="p-6">
       <form onSubmit={handleSubmit} className="space-y-6">
         
+        {/* اختيار المدرس - يظهر فقط إذا لم يتم تمرير مدرس محدد */}
+        {!teacher && (
+          <div>
+            <label htmlFor="teacherId" className="block text-sm font-semibold text-gray-800 mb-2">
+              اختيار المدرس <span className="text-red-500">*</span>
+            </label>
+            <select
+              id="teacherId"
+              value={formData.teacherId}
+              onChange={(e) => handleChange('teacherId', e.target.value)}
+              onBlur={() => handleBlur('teacherId')}
+              className={`w-full px-4 py-3 border-2 rounded-xl text-base font-medium bg-white transition-all duration-200 ${
+                hasError('teacherId') 
+                  ? 'border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-100' 
+                  : 'border-gray-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-100'
+              }`}
+              disabled={loading}
+            >
+              <option value="">اختر المدرس</option>
+              {teachers?.map(t => (
+                <option key={t.id} value={t.id}>
+                  {t.name} - {t.phone}
+                </option>
+              ))}
+            </select>
+            {hasError('teacherId') && (
+              <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
+                <span>⚠️</span> {errors.teacherId}
+              </p>
+            )}
+          </div>
+        )}
+
         {/* معلومات المدرس */}
-        {teacher && (
+        {selectedTeacher && (
           <div className="bg-gradient-to-r from-blue-50 to-blue-100 border-2 border-blue-200 rounded-xl p-4 mb-6">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center shadow-lg">
-                <span className="text-white font-bold text-lg">{teacher.name.charAt(0)}</span>
+                <span className="text-white font-bold text-lg">{selectedTeacher.name.charAt(0)}</span>
               </div>
               <div>
-                <h3 className="font-bold text-blue-900 text-lg">{teacher.name}</h3>
-                <p className="text-blue-700 font-medium">📞 {teacher.phone}</p>
-                {teacher.school && (
-                  <p className="text-blue-600 text-sm">🏫 {teacher.school}</p>
+                <h3 className="font-bold text-blue-900 text-lg">{selectedTeacher.name}</h3>
+                <p className="text-blue-700 font-medium">📞 {selectedTeacher.phone}</p>
+                {selectedTeacher.school && (
+                  <p className="text-blue-600 text-sm">🏫 {selectedTeacher.school}</p>
                 )}
               </div>
             </div>
@@ -362,6 +437,12 @@ const OperationForm = ({
           <h4 className="font-bold text-green-900 mb-3 text-lg">📋 ملخص العملية</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div>
+              <span className="text-green-700 font-medium">المدرس:</span>
+              <span className="font-bold mr-2 text-green-900">
+                {selectedTeacher?.name || 'لم يتم اختيار مدرس'}
+              </span>
+            </div>
+            <div>
               <span className="text-green-700 font-medium">النوع:</span>
               <span className="font-bold mr-2 text-green-900">
                 {formData.type === 'other' ? formData.customType : selectedOperationType?.label}
@@ -376,7 +457,7 @@ const OperationForm = ({
             
             {/* إظهار المبلغ فقط للأدمن */}
             <PermissionGate permission={PERMISSIONS.VIEW_OPERATION_PRICES}>
-              <div className="md:col-span-2">
+              <div>
                 <span className="text-green-700 font-medium">المبلغ الإجمالي:</span>
                 <span className="font-bold text-xl mr-2 text-green-900">
                   {formData.amount ? `${parseFloat(formData.amount).toFixed(2)} جنيه` : '0.00 جنيه'}
@@ -426,12 +507,14 @@ const OperationForm = ({
               <ul className="space-y-1 text-blue-700">
                 {canViewPrices ? (
                   <>
+                    <li>• اختر المدرس المناسب أولاً</li>
                     <li>• أدخل وصف واضح ومفصل للعملية</li>
                     <li>• تأكد من دقة المبلغ المدخل</li>
                     <li>• استخدم "أخرى" لإضافة نوع عملية جديد</li>
                   </>
                 ) : (
                   <>
+                    <li>• اختر المدرس المناسب أولاً</li>
                     <li>• أدخل وصف واضح ومفصل للعملية</li>
                     <li>• اختر نوع العملية المناسب</li>
                     <li>• المبلغ سيُحسب تلقائياً من قبل النظام</li>

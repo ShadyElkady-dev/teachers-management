@@ -185,38 +185,34 @@ export const AppProvider = ({ children }) => {
 
   // وظائف العمليات
   const operationActions = {
-    addOperation: async (teacherId, operationData) => {
-      try {
-        setLoading('operations', true);
-        await operationsService.addOperation(teacherId, operationData);
-        clearError();
-      } catch (error) {
-        setError(error.message);
-        throw error;
-      }
-    },
-
-    updateOperation: async (operationId, updateData) => {
-      try {
-        setLoading('operations', true);
-        await operationsService.updateOperation(operationId, updateData);
-        clearError();
-      } catch (error) {
-        setError(error.message);
-        throw error;
-      }
-    },
-
-    deleteOperation: async (operationId) => {
-      try {
-        setLoading('operations', true);
-        await operationsService.deleteOperation(operationId);
-        clearError();
-      } catch (error) {
-        setError(error.message);
-        throw error;
-      }
+addOperation: async (teacherId, operationData) => {
+  try {
+    setLoading('operations', true);
+    
+    // التأكد من وجود teacherId والبيانات
+    if (!teacherId) {
+      throw new Error('معرف المدرس مطلوب');
     }
+    
+    if (!operationData || typeof operationData !== 'object') {
+      throw new Error('بيانات العملية غير صحيحة');
+    }
+
+    // تنظيف البيانات من القيم undefined
+    const cleanData = {};
+    Object.keys(operationData).forEach(key => {
+      if (operationData[key] !== undefined && operationData[key] !== null) {
+        cleanData[key] = operationData[key];
+      }
+    });
+
+    await operationsService.addOperation(teacherId, cleanData);
+    clearError();
+  } catch (error) {
+    setError(error.message);
+    throw error;
+  }
+},
   };
 
   // وظائف المدفوعات
@@ -363,12 +359,20 @@ export const AppProvider = ({ children }) => {
   };
 
   // حساب إجمالي الأرباح
-  const calculateTotalProfit = () => {
-    const totalRevenue = state.payments.reduce((sum, payment) => sum + (payment.amount || 0), 0);
-    const totalExpenses = state.expenses.reduce((sum, expense) => sum + (expense.amount || 0), 0);
+//  const calculateTotalProfit = () => {
+  //  const totalRevenue = state.payments.reduce((sum, payment) => sum + (payment.amount || 0), 0);
+ //   const totalExpenses = state.expenses.reduce((sum, expense) => sum + (expense.amount || 0), 0);
     
-    return totalRevenue - totalExpenses;
-  };
+  //  return totalRevenue - totalExpenses;
+ // };
+const calculateTotalProfit = () => {
+  const totalRevenue = state.payments.reduce((sum, payment) => sum + (payment.amount || 0), 0);
+  const totalExpenses = state.expenses.reduce((sum, expense) => sum + (expense.amount || 0), 0);
+  // إضافة تكلفة العمليات (إذا كانت موجودة)
+  const operationsCost = state.operations.reduce((sum, op) => sum + ((op.cost || 0)), 0);
+  
+  return totalRevenue - totalExpenses - operationsCost;
+};
 
   const value = {
     state,

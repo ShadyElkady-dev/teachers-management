@@ -231,6 +231,7 @@ a:hover {
   transform: scale(0.98);
 }
 
+
 .btn-enhanced:disabled {
   @apply opacity-50 cursor-not-allowed;
   transform: none;

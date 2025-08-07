@@ -80,7 +80,7 @@ const AccountDetails = ({
     totalPayments,
     operationsCount: operations.length,
     paymentsCount: payments.length,
-    averageOperation: operations.length > 0 ? totalOperations / operations.length : 0,
+    averageOperation: operations.length > 0 ? Math.round(totalOperations / operations.length) : 0,
     averagePayment: payments.length > 0 ? totalPayments / payments.length : 0,
     lastOperation: operations.length > 0 
       ? operations.sort((a, b) => b.operationDate?.toDate() - a.operationDate?.toDate())[0]

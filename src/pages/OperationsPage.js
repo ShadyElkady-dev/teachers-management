@@ -194,25 +194,43 @@ const OperationsPage = () => {
     }
   };
 
-  const handleSaveOperation = async (operationData) => {
-    try {
-      if (editingOperation) {
-        await operationActions.updateOperation(editingOperation.id, operationData);
-        toast.success(MESSAGES.SUCCESS.OPERATION_UPDATED);
-      } else {
-        await operationActions.addOperation(selectedTeacher?.id, operationData);
-        toast.success(MESSAGES.SUCCESS.OPERATION_ADDED);
-      }
+const handleSaveOperation = async (teacherIdOrData, operationData) => {
+  try {
+    if (editingOperation) {
+      // في حالة التعديل، البيانات في المعاملة الأولى
+      const updateData = typeof teacherIdOrData === 'string' ? operationData : teacherIdOrData;
+      await operationActions.updateOperation(editingOperation.id, updateData);
+      toast.success(MESSAGES.SUCCESS.OPERATION_UPDATED);
+    } else {
+      // في حالة الإضافة، تحديد teacherId والبيانات
+      let teacherId, data;
       
-      setShowOperationForm(false);
-      setEditingOperation(null);
-      setSelectedTeacher(null);
-    } catch (error) {
-      toast.error(error.message || MESSAGES.ERROR.GENERAL);
-    }
-  };
+      if (typeof teacherIdOrData === 'string') {
+        // تم تمرير teacherId منفصل
+        teacherId = teacherIdOrData;
+        data = operationData;
+      } else {
+        // تم تمرير البيانات مع teacherId داخلها (الطريقة القديمة)
+        teacherId = selectedTeacher?.id;
+        data = teacherIdOrData;
+      }
 
-  // إغلاق النوافذ
+      if (!teacherId) {
+        toast.error('يجب اختيار مدرس');
+        return;
+      }
+
+      await operationActions.addOperation(teacherId, data);
+      toast.success(MESSAGES.SUCCESS.OPERATION_ADDED);
+    }
+    
+    setShowOperationForm(false);
+    setEditingOperation(null);
+    setSelectedTeacher(null);
+  } catch (error) {
+    toast.error(error.message || MESSAGES.ERROR.GENERAL);
+  }
+};  // إغلاق النوافذ
   const handleCloseModals = () => {
     setShowOperationForm(false);
     setEditingOperation(null);
@@ -524,14 +542,14 @@ const OperationsPage = () => {
           title={editingOperation ? '✏️ تعديل العملية' : `➕ إضافة عملية جديدة${selectedTeacher ? ` - ${selectedTeacher.name}` : ''}`}
           size="large"
         >
-          <OperationForm
-            operation={editingOperation}
-            teacher={selectedTeacher}
-            teachers={state.teachers}
-            onSave={handleSaveOperation}
-            onCancel={handleCloseModals}
-            loading={state.loading.operations}
-          />
+         <OperationForm
+  operation={editingOperation}
+  teacher={selectedTeacher}
+  teachers={state.teachers} // إضافة هذا السطر
+  onSave={handleSaveOperation}
+  onCancel={handleCloseModals}
+  loading={state.loading.operations}
+/>
         </Modal>
       </div>
     </div>

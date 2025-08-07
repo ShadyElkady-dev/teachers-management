@@ -81,20 +81,41 @@ export const teachersService = {
 // خدمات العمليات
 export const operationsService = {
   // إضافة عملية جديدة
-  addOperation: async (teacherId, operationData) => {
-    try {
-      const docRef = await addDoc(collection(db, 'operations'), {
-        ...operationData,
-        teacherId,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
-      });
-      return docRef.id;
-    } catch (error) {
-      console.error('Error adding operation:', error);
-      throw error;
+addOperation: async (teacherId, operationData) => {
+  try {
+    // التحقق من البيانات المطلوبة
+    if (!teacherId) {
+      throw new Error('معرف المدرس مطلوب');
     }
-  },
+
+    if (!operationData || typeof operationData !== 'object') {
+      throw new Error('بيانات العملية مطلوبة');
+    }
+
+    // تنظيف البيانات من القيم undefined
+    const cleanData = {};
+    Object.keys(operationData).forEach(key => {
+      const value = operationData[key];
+      if (value !== undefined && value !== null && value !== '') {
+        cleanData[key] = value;
+      }
+    });
+
+    // إضافة البيانات الأساسية
+    const finalData = {
+      ...cleanData,
+      teacherId: teacherId, // التأكد من إضافة teacherId
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    };
+
+    const docRef = await addDoc(collection(db, 'operations'), finalData);
+    return docRef.id;
+  } catch (error) {
+    console.error('Error adding operation:', error);
+    throw new Error(`فشل في إضافة العملية: ${error.message}`);
+  }
+},
 
   // تحديث عملية
   updateOperation: async (operationId, updateData) => {

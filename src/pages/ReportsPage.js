@@ -132,8 +132,11 @@ const ReportsPage = () => {
         );
 
         // فلترة العمليات
-        filteredOperations = state.operations.filter(operation => {
-          if (!reportConfig.selectedTeachers.includes(operation.teacherId)) return false;
+filteredOperations = state.operations.filter(operation => {
+  if (!reportConfig.selectedTeachers.includes(operation.teacherId)) return false;
+
+  // تأكد من وجود البيانات الأساسية
+  if (!operation.description && !operation.type) return false;
 
           // فلترة حسب التاريخ
           if (reportConfig.dateRange.from) {

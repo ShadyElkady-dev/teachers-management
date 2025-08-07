@@ -71,9 +71,12 @@ export const generateId = () => {
 // تنظيف النص
 export const sanitizeText = (text) => {
   if (!text) return '';
-  return text.trim().replace(/\s+/g, ' ');
+  
+  return text
+    .split('\n') // قسم السطور
+    .map(line => line.trim()) // شيل المسافات الزايدة من أول وآخر كل سطر
+    .join('\n'); // رجّعها زي ما كانت
 };
-
 // تحويل التاريخ إلى ISO string للإدخال
 export const dateToInputValue = (date) => {
   if (!date) return '';

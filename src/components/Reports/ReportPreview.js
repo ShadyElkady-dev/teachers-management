@@ -668,34 +668,36 @@ const ReportPreview = ({ reportData, onDownloadPDF, onClose }) => {
                       <div class="section-title">📋 العمليات (${teacherOperations.length})</div>
                       <div class="table-container">
                         <table>
-                          <thead>
-                            <tr>
-                              <th>#</th>
-                              <th>التاريخ</th>
-                              <th>النوع</th>
-                              <th>الكمية</th>
-                              <th>السعر</th>
-                              <th>الإجمالي</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            ${teacherOperations.map((op, i) => `
-                              <tr>
-                                <td>${i + 1}</td>
-                                <td>${formatDate(op.operationDate) || 'غير محدد'}</td>
-                                <td>${op.type || 'غير محدد'}</td>
-                                <td>${op.quantity || 0}</td>
-                                <td>${formatCurrency(op.price || 0)}</td>
-                                <td><strong>${formatCurrency(op.amount || 0)}</strong></td>
-                              </tr>
-                            `).join('')}
-                          </tbody>
-                          <tfoot>
-                            <tr class="totals-row">
-                              <td colspan="5"><strong>إجمالي العمليات</strong></td>
-                              <td><strong>${formatCurrency(totalOperations)}</strong></td>
-                            </tr>
-                          </tfoot>
+                         <thead>
+  <tr>
+    <th>#</th>
+    <th>التاريخ</th>
+    <th>النوع</th>
+    <th>الوصف</th>
+    <th>الكمية</th>
+    <th>السعر</th>
+    <th>الإجمالي</th>
+  </tr>
+</thead>
+<tbody>
+  ${teacherOperations.map((op, i) => `
+    <tr>
+      <td>${i + 1}</td>
+      <td>${formatDate(op.operationDate) || 'غير محدد'}</td>
+      <td>${op.type || 'غير محدد'}</td>
+      <td style="max-width: 200px; word-wrap: break-word;">${op.description || 'غير محدد'}</td>
+      <td>${op.quantity || 0}</td>
+      <td>${formatCurrency(op.price || 0)}</td>
+      <td><strong>${formatCurrency(op.amount || 0)}</strong></td>
+    </tr>
+  `).join('')}
+</tbody>
+<tfoot>
+  <tr class="totals-row">
+    <td colspan="6"><strong>إجمالي العمليات</strong></td>
+    <td><strong>${formatCurrency(totalOperations)}</strong></td>
+  </tr>
+</tfoot>
                         </table>
                       </div>
                     ` : ''}
