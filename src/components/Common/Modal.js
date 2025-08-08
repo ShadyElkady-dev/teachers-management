@@ -1,11 +1,11 @@
 import React, { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 
-const Modal = ({ 
-  isOpen, 
-  onClose, 
-  title, 
-  children, 
+const Modal = ({
+  isOpen,
+  onClose,
+  title,
+  children,
   size = 'medium',
   showCloseButton = true,
   closeOnOverlayClick = true,
@@ -19,12 +19,15 @@ const Modal = ({
   const modalRef = useRef(null);
   const previousFocusRef = useRef(null);
 
-  // أحجام مختلفة للنوافذ
+  // أحجام مختلفة للنوافذ (تم إضافة أحجام أكبر)
   const sizes = {
     small: 'max-w-md',
     medium: 'max-w-lg',
     large: 'max-w-2xl',
     xl: 'max-w-4xl',
+    '5xl': 'max-w-5xl', // <-- حجم جديد
+    '6xl': 'max-w-6xl', // <-- حجم جديد
+    '7xl': 'max-w-7xl', // <-- حجم جديد
     full: 'max-w-none mx-4'
   };
 
@@ -33,10 +36,10 @@ const Modal = ({
     if (isOpen) {
       // حفظ العنصر المركز عليه حالياً
       previousFocusRef.current = document.activeElement;
-      
+
       // منع التمرير في الخلفية
       document.body.style.overflow = 'hidden';
-      
+
       // التركيز على النافذة
       setTimeout(() => {
         if (modalRef.current) {
@@ -46,7 +49,7 @@ const Modal = ({
     } else {
       // استعادة التمرير
       document.body.style.overflow = 'unset';
-      
+
       // استعادة التركيز
       if (previousFocusRef.current) {
         previousFocusRef.current.focus();
@@ -115,10 +118,11 @@ const handleKeyDown = (event) => {
   }
 };
 
+
   if (!isOpen) return null;
 
   const modalContent = (
-    <div 
+    <div
       className="modal-overlay fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50 backdrop-blur-sm"
       onClick={handleOverlayClick}
     >
@@ -127,7 +131,7 @@ const handleKeyDown = (event) => {
         tabIndex={-1}
         onKeyDown={handleKeyDown}
         className={`
-          modal-content relative bg-white rounded-2xl shadow-2xl w-full ${sizes[size]} 
+          modal-content relative bg-white rounded-2xl shadow-2xl w-full ${sizes[size]}
           max-h-[90vh] overflow-hidden animate-fade-in
           ${className}
         `}
@@ -135,7 +139,7 @@ const handleKeyDown = (event) => {
         aria-modal="true"
         aria-labelledby={title ? "modal-title" : undefined}
       >
-        
+
         {/* رأس النافذة */}
         {(title || showCloseButton) && (
           <div className={`
@@ -143,35 +147,35 @@ const handleKeyDown = (event) => {
             ${headerClassName}
           `}>
             {title && (
-              <h2 
+              <h2
                 id="modal-title"
                 className="text-xl font-semibold text-gray-900"
               >
                 {title}
               </h2>
             )}
-            
+
             {showCloseButton && (
               <button
                 onClick={onClose}
                 className="
-                  p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 
+                  p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100
                   rounded-lg transition-colors duration-200
                   focus:outline-none focus:ring-2 focus:ring-blue-500
                 "
                 aria-label="إغلاق النافذة"
               >
-                <svg 
-                  className="w-5 h-5" 
-                  fill="none" 
-                  stroke="currentColor" 
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
                   viewBox="0 0 24 24"
                 >
-                  <path 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round" 
-                    strokeWidth={2} 
-                    d="M6 18L18 6M6 6l12 12" 
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
                   />
                 </svg>
               </button>
@@ -209,10 +213,10 @@ const handleKeyDown = (event) => {
 // مكونات مساعدة للنوافذ المخصصة
 
 // نافذة تأكيد
-export const ConfirmModal = ({ 
-  isOpen, 
-  onClose, 
-  onConfirm, 
+export const ConfirmModal = ({
+  isOpen,
+  onClose,
+  onConfirm,
   title = 'تأكيد العملية',
   message = 'هل أنت متأكد من هذا الإجراء؟',
   confirmText = 'تأكيد',
@@ -251,11 +255,11 @@ export const ConfirmModal = ({
         <div className={`text-6xl mb-4 ${style.iconColor}`}>
           {style.icon}
         </div>
-        
+
         <p className="text-gray-700 mb-6 leading-relaxed">
           {message}
         </p>
-        
+
         <div className="flex gap-3 justify-center">
           <button
             onClick={onClose}
@@ -263,7 +267,7 @@ export const ConfirmModal = ({
           >
             {cancelText}
           </button>
-          
+
           <button
             onClick={() => {
               onConfirm();
@@ -280,10 +284,10 @@ export const ConfirmModal = ({
 };
 
 // نافذة معلومات
-export const InfoModal = ({ 
-  isOpen, 
-  onClose, 
-  title, 
+export const InfoModal = ({
+  isOpen,
+  onClose,
+  title,
   message,
   type = 'info'
 }) => {
@@ -307,11 +311,11 @@ export const InfoModal = ({
         <div className={`text-6xl mb-4 ${style.color}`}>
           {style.icon}
         </div>
-        
+
         <p className="text-gray-700 mb-6 leading-relaxed">
           {message}
         </p>
-        
+
         <button
           onClick={onClose}
           className="btn btn-primary px-8"
@@ -324,8 +328,8 @@ export const InfoModal = ({
 };
 
 // نافذة تحميل
-export const LoadingModal = ({ 
-  isOpen, 
+export const LoadingModal = ({
+  isOpen,
   message = 'جاري المعالجة...',
   subMessage = 'يرجى الانتظار'
 }) => {
@@ -340,11 +344,11 @@ export const LoadingModal = ({
     >
       <div className="text-center py-8">
         <div className="loading-spinner mb-4"></div>
-        
+
         <h3 className="text-lg font-semibold text-gray-900 mb-2">
           {message}
         </h3>
-        
+
         <p className="text-gray-600">
           {subMessage}
         </p>
@@ -354,10 +358,10 @@ export const LoadingModal = ({
 };
 
 // نافذة ملء الشاشة
-export const FullScreenModal = ({ 
-  isOpen, 
-  onClose, 
-  title, 
+export const FullScreenModal = ({
+  isOpen,
+  onClose,
+  title,
   children,
   showCloseButton = true
 }) => {

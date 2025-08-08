@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { formatCurrency, formatDate, timeAgo } from '../../utils/helpers';
+import React, { useState, useEffect } from 'react';
+import { formatCurrency, formatDate, timeAgo, isSmallScreen } from '../../utils/helpers';
 import { OPERATION_TYPES } from '../../utils/constants';
 import Modal from '../Common/Modal';
 
@@ -13,7 +13,19 @@ const OperationsList = ({
   canDelete = false
 }) => {
   const [showNotesModal, setShowNotesModal] = useState(null);
-  const [viewMode, setViewMode] = useState('cards'); // cards, table
+  const [isMobile, setIsMobile] = useState(isSmallScreen());
+  const [viewMode, setViewMode] = useState(isMobile ? 'cards' : 'table');
+
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = isSmallScreen();
+      setIsMobile(mobile);
+      setViewMode(mobile ? 'cards' : 'table');
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const renderEmptyState = () => (
     <div className="text-center py-16 bg-white rounded-2xl shadow-lg">
@@ -44,7 +56,7 @@ const OperationsList = ({
   const renderTableView = () => (
     <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
       <div className="overflow-x-auto">
-        <table className="min-w-full">
+        <table className="min-w-full table-auto">
           <thead className="bg-gray-50 border-b-2 border-gray-200">
             <tr>
               <th className="px-6 py-4 text-right text-sm font-bold text-gray-700">التاريخ</th>
@@ -82,47 +94,46 @@ const OperationsList = ({
 
   return (
     <>
-      {/* شريط التحكم في العرض */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-gray-700">عرض:</span>
-          <div className="flex border-2 border-gray-300 rounded-lg overflow-hidden">
-            <button
-              onClick={() => setViewMode('cards')}
-              className={`px-4 py-2 text-sm font-medium transition-colors ${
-                viewMode === 'cards' 
-                  ? 'bg-blue-500 text-white' 
-                  : 'bg-white text-gray-700 hover:bg-gray-50'
-              }`}
-              title="عرض البطاقات"
-            >
-              ⊞ بطاقات
-            </button>
-            <button
-              onClick={() => setViewMode('table')}
-              className={`px-4 py-2 text-sm font-medium border-r-2 border-gray-300 transition-colors ${
-                viewMode === 'table' 
-                  ? 'bg-blue-500 text-white' 
-                  : 'bg-white text-gray-700 hover:bg-gray-50'
-              }`}
-              title="عرض الجدول"
-            >
-              ☰ جدول
-            </button>
+      {!isMobile && (
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-gray-700">عرض:</span>
+            <div className="flex border-2 border-gray-300 rounded-lg overflow-hidden">
+              <button
+                onClick={() => setViewMode('cards')}
+                className={`px-4 py-2 text-sm font-medium transition-colors ${
+                  viewMode === 'cards' 
+                    ? 'bg-blue-500 text-white' 
+                    : 'bg-white text-gray-700 hover:bg-gray-50'
+                }`}
+                title="عرض البطاقات"
+              >
+                ⊞ بطاقات
+              </button>
+              <button
+                onClick={() => setViewMode('table')}
+                className={`px-4 py-2 text-sm font-medium border-r-2 border-gray-300 transition-colors ${
+                  viewMode === 'table' 
+                    ? 'bg-blue-500 text-white' 
+                    : 'bg-white text-gray-700 hover:bg-gray-50'
+                }`}
+                title="عرض الجدول"
+              >
+                ☰ جدول
+              </button>
+            </div>
+          </div>
+          
+          <div className="text-sm text-gray-600">
+            عرض {operations.length} عملية
           </div>
         </div>
-        
-        <div className="text-sm text-gray-600">
-          عرض {operations.length} عملية
-        </div>
-      </div>
+      )}
 
-      {/* المحتوى حسب نوع العرض */}
       {operations.length === 0 ? renderEmptyState() : (
         viewMode === 'cards' ? renderCardsView() : renderTableView()
       )}
 
-      {/* نافذة عرض الملاحظات */}
       <Modal
         isOpen={!!showNotesModal}
         onClose={() => setShowNotesModal(null)}
@@ -135,7 +146,7 @@ const OperationsList = ({
               <h3 className="font-bold text-blue-900 text-xl mb-3">
                 {OPERATION_TYPES.find(t => t.value === showNotesModal.type)?.label || showNotesModal.type}
               </h3>
-              <p className="text-blue-700 mb-3 text-lg">{showNotesModal.description}</p>
+              <p className="text-blue-700 mb-3 text-lg break-all" style={{wordBreak: 'break-all'}}>{showNotesModal.description}</p>
               <p className="text-blue-600 text-sm">📅 {formatDate(showNotesModal.operationDate)}</p>
             </div>
             
@@ -164,7 +175,6 @@ const OperationsList = ({
   );
 };
 
-// مكون بطاقة العملية المحسن
 const OperationCardEnhanced = ({ 
   operation, 
   teacher, 
@@ -221,88 +231,61 @@ const OperationCardEnhanced = ({
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border-2 border-gray-100">
-      
-      {/* رأس البطاقة مع الخلفية المتدرجة */}
+    <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border-2 border-gray-100 flex flex-col">
       <div className={`bg-gradient-to-r ${getCardColor()} p-6 text-white relative`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center shadow-lg">
-              <span className="text-white text-3xl">
-                {getOperationIcon()}
-              </span>
+              <span className="text-white text-3xl">{getOperationIcon()}</span>
             </div>
-            
             <div>
-              <h3 className="font-bold text-xl leading-tight mb-1">
-                {operationType?.label || operation.type}
-              </h3>
-              <p className="text-sm opacity-90 mb-1">
-                👨‍🏫 {teacher?.name || 'مدرس غير معروف'}
-              </p>
-              <p className="text-xs opacity-80">
-                📅 {formatDate(operation.operationDate)}
-              </p>
+              <h3 className="font-bold text-xl leading-tight mb-1">{operationType?.label || operation.type}</h3>
+              <p className="text-sm opacity-90 mb-1">👨‍🏫 {teacher?.name || 'مدرس غير معروف'}</p>
+              <p className="text-xs opacity-80">📅 {formatDate(operation.operationDate)}</p>
             </div>
           </div>
-
           {showPrices && (
             <div className="text-center">
-              <div className="text-2xl font-bold">
-                {formatCurrency(operation.amount)}
-              </div>
-              <div className="text-xs opacity-90">
-                المبلغ
-              </div>
+              <div className="text-2xl font-bold">{formatCurrency(operation.amount)}</div>
+              <div className="text-xs opacity-90">المبلغ</div>
             </div>
           )}
         </div>
       </div>
 
-      {/* محتوى البطاقة */}
-      <div className="p-6">
-        
-        {/* وصف العملية */}
+      <div className="p-6 flex flex-col flex-grow">
         <div className="mb-6">
           <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
-            <p className="text-gray-800 leading-relaxed font-medium">
+            <p className="text-gray-800 leading-relaxed font-medium break-all" style={{wordBreak: 'break-all'}}>
               {operation.description}
             </p>
           </div>
         </div>
 
-        {/* التفاصيل الإضافية */}
         <div className="grid grid-cols-2 gap-4 mb-6">
           <div className="text-center p-3 bg-blue-50 rounded-xl border border-blue-200">
             <div className="text-xl font-bold text-blue-700">{operation.quantity || 1}</div>
             <div className="text-xs text-blue-600 font-medium">الكمية</div>
           </div>
-          
           <div className="text-center p-3 bg-purple-50 rounded-xl border border-purple-200">
             <div className="text-xs text-purple-600 font-medium">{timeAgo(operation.operationDate)}</div>
             <div className="text-xs text-purple-500">منذ</div>
           </div>
         </div>
 
-        {/* الملاحظات إن وجدت */}
         {operation.notes && (
           <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-xl p-4">
             <div className="flex items-center gap-2 mb-2">
               <span className="text-lg">📝</span>
               <span className="font-medium text-yellow-900">ملاحظات</span>
             </div>
-            <p className="text-yellow-800 text-sm leading-relaxed">
-              {operation.notes.length > 100 
-                ? `${operation.notes.substring(0, 100)}...` 
-                : operation.notes
-              }
+            <p className="text-yellow-800 text-sm leading-relaxed break-all" style={{wordBreak: 'break-all'}}>
+              {operation.notes.length > 100 ? `${operation.notes.substring(0, 100)}...` : operation.notes}
             </p>
           </div>
         )}
 
-        {/* أزرار التحكم */}
-        <div className="flex gap-3">
-          {/* زر الملاحظات */}
+        <div className="flex gap-3 mt-auto pt-6 border-t">
           <button
             onClick={() => onShowNotes(operation)}
             className={`flex-1 px-4 py-3 rounded-xl font-bold transition-all duration-200 shadow-md hover:shadow-lg ${
@@ -313,10 +296,9 @@ const OperationCardEnhanced = ({
             title={operation.notes ? 'عرض الملاحظات' : 'لا توجد ملاحظات'}
           >
             <span className="text-lg ml-1">📝</span>
-            {operation.notes ? 'عرض الملاحظات' : 'لا توجد ملاحظات'}
+            {operation.notes ? 'الملاحظات' : 'لا توجد'}
           </button>
 
-          {/* أزرار التحكم للأدمن */}
           {(canEdit || canDelete) && (
             <div className="relative">
               <button
@@ -326,17 +308,10 @@ const OperationCardEnhanced = ({
               >
                 <span className="text-lg">⚙️</span>
               </button>
-
               {showMenu && (
                 <>
-                  {/* خلفية لإغلاق القائمة */}
-                  <div 
-                    className="fixed inset-0 z-10"
-                    onClick={() => setShowMenu(false)}
-                  />
-                  
-                  {/* القائمة المنسدلة */}
-                  <div className="absolute left-0 mt-2 w-48 bg-white border-2 border-gray-200 rounded-2xl shadow-xl z-20">
+                  <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)}/>
+                  <div className="absolute left-0 bottom-full mb-2 w-48 bg-white border-2 border-gray-200 rounded-2xl shadow-xl z-20">
                     {canEdit && (
                       <button
                         onClick={() => handleMenuClick('edit')}
@@ -346,11 +321,7 @@ const OperationCardEnhanced = ({
                         تعديل العملية
                       </button>
                     )}
-                    
-                    {canEdit && canDelete && (
-                      <div className="border-t border-gray-200"></div>
-                    )}
-                    
+                    {canEdit && canDelete && <div className="border-t border-gray-200"></div>}
                     {canDelete && (
                       <button
                         onClick={() => handleMenuClick('delete')}
@@ -367,8 +338,7 @@ const OperationCardEnhanced = ({
           )}
         </div>
       </div>
-
-      {/* مؤشر الملاحظات */}
+      
       {operation.notes && (
         <div className="absolute top-3 right-3 w-4 h-4 bg-yellow-500 rounded-full animate-pulse" title="يحتوي على ملاحظات"></div>
       )}
@@ -376,7 +346,6 @@ const OperationCardEnhanced = ({
   );
 };
 
-// مكون صف الجدول المحسن
 const OperationTableRow = ({
   operation,
   teacher,
@@ -387,7 +356,6 @@ const OperationTableRow = ({
   canEdit,
   canDelete
 }) => {
-  const [showActions, setShowActions] = useState(false);
   const operationType = OPERATION_TYPES.find(t => t.value === operation.type);
 
   const getOperationIcon = () => {
@@ -405,91 +373,53 @@ const OperationTableRow = ({
 
   return (
     <tr className="hover:bg-gray-50 transition-colors">
-      {/* التاريخ */}
       <td className="px-6 py-4 whitespace-nowrap">
-        <div className="text-sm font-medium text-gray-900">
-          {formatDate(operation.operationDate)}
-        </div>
-        <div className="text-xs text-gray-500">
-          {timeAgo(operation.operationDate)}
-        </div>
+        <div className="text-sm font-medium text-gray-900">{formatDate(operation.operationDate)}</div>
+        <div className="text-xs text-gray-500">{timeAgo(operation.operationDate)}</div>
       </td>
-      
-      {/* المدرس */}
       <td className="px-6 py-4 whitespace-nowrap">
         <div className="flex items-center">
           <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center ml-3 shadow-md">
-            <span className="text-white font-bold text-sm">
-              {teacher?.name?.charAt(0) || '؟'}
-            </span>
+            <span className="text-white font-bold text-sm">{teacher?.name?.charAt(0) || '؟'}</span>
           </div>
           <div>
-            <div className="text-sm font-medium text-gray-900">
-              {teacher?.name || 'غير معروف'}
-            </div>
-            <div className="text-xs text-gray-500">
-              {teacher?.phone}
-            </div>
+            <div className="text-sm font-medium text-gray-900">{teacher?.name || 'غير معروف'}</div>
+            <div className="text-xs text-gray-500">{teacher?.phone}</div>
           </div>
         </div>
       </td>
-      
-      {/* النوع */}
       <td className="px-6 py-4 whitespace-nowrap">
         <div className="flex items-center">
           <span className="text-lg ml-2">{getOperationIcon()}</span>
           <div>
-            <span className="text-sm font-medium text-gray-900">
-              {operationType?.label || operation.type}
-            </span>
-            <div className={`inline-block w-3 h-3 rounded-full ml-2 ${
-              operationType?.color?.replace('bg-', 'bg-') || 'bg-gray-400'
-            }`}></div>
+            <span className="text-sm font-medium text-gray-900">{operationType?.label || operation.type}</span>
+            <div className={`inline-block w-3 h-3 rounded-full ml-2 ${operationType?.color?.replace('bg-', 'bg-') || 'bg-gray-400'}`}></div>
           </div>
         </div>
       </td>
-      
-      {/* الوصف */}
       <td className="px-6 py-4 max-w-xs">
-        <div className="text-sm text-gray-900">
-          <div className="line-clamp-2" title={operation.description}>
-            {operation.description}
-          </div>
-        </div>
+        <div className="text-sm text-gray-900 whitespace-normal break-all">{operation.description}</div>
         {operation.notes && (
           <div className="flex items-center gap-1 mt-1">
             <span className="text-yellow-500">📝</span>
             <span className="text-xs text-gray-500 line-clamp-1" title={operation.notes}>
-              {operation.notes.length > 30 
-                ? `${operation.notes.substring(0, 30)}...` 
-                : operation.notes
-              }
+              {operation.notes.length > 30 ? `${operation.notes.substring(0, 30)}...` : operation.notes}
             </span>
           </div>
         )}
       </td>
-      
-      {/* الكمية */}
       <td className="px-6 py-4 whitespace-nowrap text-center">
         <div className="bg-blue-100 rounded-full px-3 py-1 inline-block">
-          <span className="text-sm font-bold text-blue-800">
-            {operation.quantity || 1}
-          </span>
+          <span className="text-sm font-bold text-blue-800">{operation.quantity || 1}</span>
         </div>
       </td>
-      
-      {/* المبلغ - للأدمن فقط */}
       {showPrices && (
         <td className="px-6 py-4 whitespace-nowrap text-center">
           <div className="bg-green-100 rounded-full px-3 py-1 inline-block">
-            <span className="text-sm font-bold text-green-800">
-              {formatCurrency(operation.amount || 0)}
-            </span>
+            <span className="text-sm font-bold text-green-800">{formatCurrency(operation.amount || 0)}</span>
           </div>
         </td>
       )}
-      
-      {/* الإجراءات */}
       {(canEdit || canDelete) && (
         <td className="px-6 py-4 whitespace-nowrap text-center">
           <div className="flex items-center justify-center gap-2">
@@ -500,7 +430,6 @@ const OperationTableRow = ({
             >
               📝
             </button>
-            
             {canEdit && (
               <button
                 onClick={() => onEdit(operation)}
@@ -510,7 +439,6 @@ const OperationTableRow = ({
                 ✏️
               </button>
             )}
-            
             {canDelete && (
               <button
                 onClick={() => onDelete(operation)}

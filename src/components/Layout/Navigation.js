@@ -10,21 +10,7 @@ const Navigation = ({ onNavigate }) => {
   const { state, calculateTotalProfit, calculateTeacherDebt } = useAppContext();
   const { user, hasPermission } = useAuth();
 
-  // الأقسام الرئيسية مع الصلاحيات والألوان المحدثة
   const mainSections = [
-    {
-      id: 'dashboard',
-      name: 'لوحة التحكم',
-      icon: '📊',
-      path: '/dashboard',
-      permission: null,
-      color: 'blue',
-      gradient: 'from-blue-500 to-blue-600',
-      bgColor: 'bg-blue-50',
-      borderColor: 'border-blue-200',
-      textColor: 'text-blue-700',
-      hoverBg: 'hover:bg-blue-100'
-    },
     {
       id: 'teachers',
       name: 'المدرسين',
@@ -92,87 +78,14 @@ const Navigation = ({ onNavigate }) => {
     }
   ];
 
-  // تصفية الأقسام المتاحة
   const availableSections = mainSections.filter(section => 
     !section.permission || hasPermission(section.permission)
   );
-
-  // حساب الإحصائيات لكل قسم
-  const getSectionStats = (sectionId) => {
-    switch (sectionId) {
-      case 'dashboard':
-        return {
-         // count: state.teachers.length + state.operations.length,
-         // info: 'عنصر في النظام'
-        };
-      case 'teachers':
-        return {
-          count: state.teachers.length,
-        };
-      case 'operations':
-        const todayOperations = state.operations.filter(op => {
-          const today = new Date();
-          const opDate = op.operationDate?.toDate ? op.operationDate.toDate() : new Date(op.operationDate);
-          return opDate.toDateString() === today.toDateString();
-        }).length;
-        return {
-          //count: todayOperations,
-          //info: `من ${state.operations.length} عملية`
-        };
-      case 'accounts':
-        if (!hasPermission(PERMISSIONS.VIEW_FINANCIAL_DATA)) {
-          return { count: '---', info: 'محدود الوصول' };
-        }
-        const totalDebts = state.teachers.reduce((total, teacher) => {
-          const debt = calculateTeacherDebt(teacher.id);
-          return total + Math.max(0, debt);
-        }, 0);
-        return {
-         // count: formatCurrency(totalDebts),
-        //  info: 'مديونيات'
-        };
-      case 'expenses':
-        if (!hasPermission(PERMISSIONS.VIEW_EXPENSES)) {
-          return { count: '---', info: 'محدود الوصول' };
-        }
-        const monthlyExpenses = state.expenses.filter(expense => {
-          const expenseDate = expense.expenseDate?.toDate ? expense.expenseDate.toDate() : new Date(expense.expenseDate);
-          const now = new Date();
-          return expenseDate.getMonth() === now.getMonth() && 
-                 expenseDate.getFullYear() === now.getFullYear();
-        }).reduce((sum, expense) => sum + (expense.amount || 0), 0);
-        return {
-         // count: formatCurrency(monthlyExpenses),
-         // info: 'هذا الشهر'
-        };
-      default:
-        return { count: 0, info: '' };
-    }
-  };
-
-  // التحقق من وجود تنبيهات
-  const getAlerts = (sectionId) => {
-    if (!hasPermission(PERMISSIONS.VIEW_FINANCIAL_DATA)) {
-      return null;
-    }
-
-    switch (sectionId) {
-      case 'accounts':
-      //  const overdueCount = state.teachers.filter(teacher => {
-         // const debt = calculateTeacherDebt(teacher.id);
-      //    return debt > 0;
-       // }).length;
-      //  return overdueCount > 0 ? overdueCount : null;
-      default:
-        return null;
-    }
-  };
 
   return (
     <nav className="h-full bg-gradient-to-b from-gray-50 to-white">
       <div className="p-6">
         
-        {/* معلومات المستخدم المحسنة */}
         <div className="mb-6 relative overflow-hidden">
           <div className={`bg-gradient-to-r ${user?.role === 'admin' ? 'from-purple-500 to-indigo-600' : 'from-blue-500 to-cyan-600'} rounded-2xl p-6 text-white shadow-lg`}>
             <div className="flex items-center gap-4">
@@ -191,13 +104,11 @@ const Navigation = ({ onNavigate }) => {
                 </div>
               </div>
             </div>
-            {/* تأثير بصري */}
             <div className="absolute -top-4 -right-4 w-24 h-24 bg-white bg-opacity-10 rounded-full"></div>
             <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-white bg-opacity-5 rounded-full"></div>
           </div>
         </div>
 
-        {/* الأقسام الرئيسية */}
         <div className="mb-8">
           <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
             <span className="text-2xl">🏠</span>
@@ -206,10 +117,7 @@ const Navigation = ({ onNavigate }) => {
           
           <div className="space-y-2">
             {availableSections.map((section) => {
-              const isActive = location.pathname === section.path;
-              const stats = getSectionStats(section.id);
-              const alertCount = getAlerts(section.id);
-
+              const isActive = location.pathname.startsWith(section.path);
               return (
                 <Link
                   key={section.id}
@@ -240,13 +148,8 @@ const Navigation = ({ onNavigate }) => {
                         <div className={`font-bold text-lg ${isActive ? 'text-white' : section.textColor}`}>
                           {section.name}
                         </div>
-                        <div className={`text-sm ${isActive ? 'text-white opacity-90' : 'text-gray-600'}`}>
-                          {section.description}
-                        </div>
                       </div>
                     </div>
-                    
-                    
                   </div>
                 </Link>
               );
@@ -254,131 +157,9 @@ const Navigation = ({ onNavigate }) => {
           </div>
         </div>
 
-        {/* الإجراءات السريعة */}
-        <div className="mb-8">
-          <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <span className="text-2xl">⚡</span>
-            إجراءات سريعة
-          </h3>
-          
-          <div className="space-y-3">
-            {/* إضافة مدرس - للأدمن فقط */}
-            <PermissionGate permission={PERMISSIONS.ADD_TEACHER}>
-              <Link
-                to="/teachers?action=add"
-                onClick={onNavigate}
-                className="group flex items-center gap-3 p-4 bg-gradient-to-r from-blue-100 to-blue-200 hover:from-blue-200 hover:to-blue-300 rounded-2xl transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105"
-              >
-                <div className="w-12 h-12 bg-blue-500 rounded-2xl flex items-center justify-center shadow-lg">
-                  <span className="text-lg text-white">👨‍🏫</span>
-                </div>
-                <span className="font-bold text-blue-900 text-lg">إضافة مدرس جديد</span>
-              </Link>
-            </PermissionGate>
-            
-            {/* إضافة عملية */}
-            <PermissionGate permission={PERMISSIONS.ADD_OPERATION}>
-              <Link
-                to="/operations?action=add"
-                onClick={onNavigate}
-                className="group flex items-center gap-3 p-4 bg-gradient-to-r from-green-100 to-green-200 hover:from-green-200 hover:to-green-300 rounded-2xl transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105"
-              >
-                <div className="w-12 h-12 bg-green-500 rounded-2xl flex items-center justify-center shadow-lg">
-                  <span className="text-lg text-white">📝</span>
-                </div>
-                <span className="font-bold text-green-900 text-lg">إضافة عملية جديدة</span>
-              </Link>
-            </PermissionGate>
-            
-            {/* تسجيل دفعة - للأدمن فقط */}
-            <PermissionGate permission={PERMISSIONS.ADD_PAYMENT}>
-              <Link
-                to="/accounts?action=payment"
-                onClick={onNavigate}
-                className="group flex items-center gap-3 p-4 bg-gradient-to-r from-purple-100 to-purple-200 hover:from-purple-200 hover:to-purple-300 rounded-2xl transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105"
-              >
-                <div className="w-12 h-12 bg-purple-500 rounded-2xl flex items-center justify-center shadow-lg">
-                  <span className="text-lg text-white">💳</span>
-                </div>
-                <span className="font-bold text-purple-900 text-lg">تسجيل دفعة سريعة</span>
-              </Link>
-            </PermissionGate>
-            
-            {/* إضافة مصروف - للأدمن فقط */}
-            <PermissionGate permission={PERMISSIONS.ADD_EXPENSE}>
-              <Link
-                to="/expenses?action=add"
-                onClick={onNavigate}
-                className="group flex items-center gap-3 p-4 bg-gradient-to-r from-red-100 to-red-200 hover:from-red-200 hover:to-red-300 rounded-2xl transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105"
-              >
-                <div className="w-12 h-12 bg-red-500 rounded-2xl flex items-center justify-center shadow-lg">
-                  <span className="text-lg text-white">💸</span>
-                </div>
-                <span className="font-bold text-red-900 text-lg">إضافة مصروف</span>
-              </Link>
-            </PermissionGate>
-          </div>
-        </div>
-
-        {/* الملخص المالي - للأدمن فقط */}
-        <PermissionGate permission={PERMISSIONS.VIEW_FINANCIAL_DATA}>
-          <div className="mb-8">
-            <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-              <span className="text-2xl">💰</span>
-              الملخص المالي
-            </h3>
-            
-            <div className="space-y-4">
-              <div className="bg-gradient-to-r from-green-500 to-emerald-600 p-4 rounded-2xl border border-green-300 shadow-lg">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-sm text-white font-medium opacity-90">صافي الأرباح</div>
-                    <div className="text-2xl font-bold text-white">{formatCurrency(calculateTotalProfit())}</div>
-                  </div>
-                  <div className="text-3xl text-white opacity-80">📈</div>
-                </div>
-              </div>
-              
-              <div className="bg-gradient-to-r from-blue-500 to-cyan-600 p-4 rounded-2xl border border-blue-300 shadow-lg">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-sm text-white font-medium opacity-90">إجمالي الإيرادات</div>
-                    <div className="text-xl font-bold text-white">
-                      {formatCurrency(state.payments.reduce((sum, payment) => sum + (payment.amount || 0), 0))}
-                    </div>
-                  </div>
-                  <div className="text-3xl text-white opacity-80">💰</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </PermissionGate>
-
-        {/* معلومات النظام */}
         <div className="border-t-2 border-gray-200 pt-6">
-          <div className="bg-gradient-to-r from-gray-100 to-gray-200 rounded-2xl p-4 text-center">
-            <div className="text-lg font-bold text-gray-800 mb-2 flex items-center justify-center gap-2">
-              <span>🖨️</span>
-              نظام إدارة حسابات المدرسين
-            </div>
-            <div className="text-sm text-gray-600 mb-2">الإصدار 2.0.0</div>
-            <div className="text-xs text-gray-500 mb-3">
-              تحديث: {new Date().toLocaleDateString('ar-EG')}
-            </div>
-            <div className="bg-white rounded-xl p-3 shadow-md">
-              <div className="text-xs font-bold text-gray-700 mb-1">
-                المستخدم الحالي
-              </div>
-              <div className="flex items-center justify-center gap-2">
-                <span className="text-lg">{user?.role === 'admin' ? '👑' : '📝'}</span>
-                <div className="text-sm">
-                  <div className="font-bold text-gray-800">{user?.name}</div>
-                  <div className="text-gray-600">
-                    {user?.role === 'admin' ? 'مدير النظام' : 'سكرتارية'}
-                  </div>
-                </div>
-              </div>
-            </div>
+          <div className="text-xs text-gray-500 text-center">
+            إدارة حسابات المدرسين - الإصدار 2.0.0
           </div>
         </div>
 

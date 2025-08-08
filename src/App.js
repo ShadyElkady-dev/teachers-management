@@ -10,14 +10,13 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import Layout from './components/Layout/Layout';
 import ProtectedRoute from './components/Common/ProtectedRoute';
 import LoginPage from './pages/LoginPage';
-import DashboardPage from './pages/DashboardPage';
 import TeachersPage from './pages/TeachersPage';
 import OperationsPage from './pages/OperationsPage';
 import AccountsPage from './pages/AccountsPage';
 import ExpensesPage from './pages/ExpensesPage';
+import ReportsPage from './pages/ReportsPage';
 import LoadingSpinner from './components/Common/LoadingSpinner';
-import ReportsPage from './pages/ReportsPage'; // Import the new page
-
+import ScrollToTop from './components/Common/ScrollToTop'; // <-- (التعديل الأول) قم باستيراد المكون
 
 // Styles
 import './styles/globals.css';
@@ -43,7 +42,6 @@ function AppContent() {
     // محاكاة تحميل التطبيق
     const initializeApp = async () => {
       try {
-        // هنا يمكن إضافة أي عمليات تهيئة مطلوبة
         await new Promise(resolve => setTimeout(resolve, 1000));
         setIsLoading(false);
       } catch (error) {
@@ -67,7 +65,8 @@ function AppContent() {
         <div className="text-center">
           <LoadingSpinner size="large" />
           <h2 className="mt-4 text-xl font-semibold text-gray-900">
-ادارة حسابات المدرسين</h2>
+            ادارة حسابات المدرسين
+          </h2>
           <p className="mt-2 text-gray-600">
             يرجى الانتظار قليلاً
           </p>
@@ -85,7 +84,7 @@ function AppContent() {
   return (
     <AppProvider>
       <Router>
-        {/* إشعار عدم الاتصال بالإنترنت */}
+        <ScrollToTop /> {/* <-- (التعديل الثاني) قم بإضافة المكون هنا */}
         {isOffline && (
           <div className="fixed top-0 left-0 right-0 bg-red-500 text-white text-center py-2 px-4 z-50">
             <div className="flex items-center justify-center gap-2">
@@ -99,20 +98,10 @@ function AppContent() {
 
         <Layout>
           <Routes>
-            {/* الصفحة الرئيسية - لوحة التحكم */}
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            {/* الصفحة الافتراضية -> المدرسين */}
+            <Route path="/" element={<Navigate to="/teachers" replace />} />
             
-            {/* لوحة التحكم - متاحة للجميع */}
-            <Route 
-              path="/dashboard" 
-              element={
-                <ProtectedRoute>
-                  <DashboardPage />
-                </ProtectedRoute>
-              } 
-            />
-            
-            {/* صفحة المدرسين - متاحة للجميع */}
+            {/* صفحة المدرسين */}
             <Route 
               path="/teachers" 
               element={
@@ -122,7 +111,7 @@ function AppContent() {
               } 
             />
             
-            {/* صفحة العمليات - متاحة للجميع */}
+            {/* صفحة العمليات */}
             <Route 
               path="/operations" 
               element={
@@ -132,7 +121,7 @@ function AppContent() {
               } 
             />
             
-            {/* صفحة الحسابات - فقط للأدمن */}
+            {/* صفحة الحسابات */}
             <Route 
               path="/accounts" 
               element={
@@ -142,7 +131,7 @@ function AppContent() {
               } 
             />
             
-            {/* صفحة المصروفات - فقط للأدمن */}
+            {/* صفحة المصروفات */}
             <Route 
               path="/expenses" 
               element={
@@ -151,6 +140,8 @@ function AppContent() {
                 </ProtectedRoute>
               } 
             />
+            
+            {/* صفحة التقارير */}
              <Route 
               path="/reports" 
               element={
@@ -159,13 +150,12 @@ function AppContent() {
                 </ProtectedRoute>
               } 
             />
+
             {/* صفحة 404 */}
-            
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </Layout>
 
-        {/* مكون الإشعارات */}
         <Toaster
           position="top-center"
           reverseOrder={false}
@@ -175,7 +165,6 @@ function AppContent() {
             direction: 'rtl'
           }}
           toastOptions={{
-            // إعدادات افتراضية لجميع الإشعارات
             duration: 4000,
             style: {
               background: '#363636',
@@ -188,8 +177,6 @@ function AppContent() {
               direction: 'rtl',
               textAlign: 'right'
             },
-            
-            // إعدادات مخصصة لكل نوع
             success: {
               duration: 3000,
               style: {
@@ -200,7 +187,6 @@ function AppContent() {
                 secondary: '#10b981',
               },
             },
-            
             error: {
               duration: 5000,
               style: {
@@ -211,7 +197,6 @@ function AppContent() {
                 secondary: '#ef4444',
               },
             },
-            
             loading: {
               duration: Infinity,
               style: {

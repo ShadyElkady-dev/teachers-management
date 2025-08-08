@@ -564,7 +564,7 @@ const handleSaveOperation = async (teacherIdOrData, operationData) => {
           isOpen={showTeacherDetails}
           onClose={handleCloseModals}
           title={`📊 تفاصيل حساب - ${selectedTeacher?.name}`}
-          size="xl"
+          size="7xl"
         >
           <TeacherDetails
             teacher={selectedTeacher}

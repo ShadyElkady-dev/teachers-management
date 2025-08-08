@@ -3,6 +3,8 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import Header from './Header';
 import Navigation from './Navigation';
 import { isSmallScreen } from '../../utils/helpers';
+import { PERMISSIONS, useAuth } from '../../context/AuthContext';
+import { PermissionGate } from '../Common/ProtectedRoute';
 
 const Layout = ({ children }) => {
   const [isMobile, setIsMobile] = useState(isSmallScreen());
@@ -15,8 +17,6 @@ const Layout = ({ children }) => {
     const handleResize = () => {
       const mobile = isSmallScreen();
       setIsMobile(mobile);
-      
-      // إغلاق الشريط الجانبي تلقائياً في الشاشات الصغيرة
       if (mobile) {
         setSidebarOpen(false);
       }
@@ -33,14 +33,13 @@ const Layout = ({ children }) => {
     }
   }, [location.pathname, isMobile]);
 
-  // منع التمرير في الخلفية عند فتح الشريط الجانبي
+  // منع التمرير في الخلفية
   useEffect(() => {
     if (isMobile && sidebarOpen) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'unset';
     }
-
     return () => {
       document.body.style.overflow = 'unset';
     };
@@ -50,17 +49,15 @@ const Layout = ({ children }) => {
     setSidebarOpen(!sidebarOpen);
   };
 
-  // الحصول على ارتفاع الهيدر بناء على الشاشة
   const getHeaderHeight = () => {
     if (isMobile) {
-      return '128px'; // هيدر + شريط الإحصائيات للموبايل
+      return '128px';
     }
-    return '112px'; // هيدر عادي + شريط المستخدم
+    return '112px';
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      {/* الهيدر المحسن */}
       <Header 
         onMenuClick={toggleSidebar}
         isMobile={isMobile}
@@ -97,15 +94,12 @@ const Layout = ({ children }) => {
         {/* الشريط الجانبي المنبثق للهواتف المحمولة */}
         {isMobile && (
           <>
-            {/* الخلفية المظللة المحسنة */}
             {sidebarOpen && (
               <div 
                 className="fixed inset-0 bg-black bg-opacity-60 z-40 transition-all duration-300 backdrop-blur-sm"
                 onClick={() => setSidebarOpen(false)}
               />
             )}
-
-            {/* الشريط الجانبي المحسن */}
             <div 
               className={`
                 fixed w-80 max-w-[90vw] bg-white shadow-2xl z-50 
@@ -119,7 +113,6 @@ const Layout = ({ children }) => {
                 height: `calc(100vh - ${getHeaderHeight()})` 
               }}
             >
-              {/* عنوان الشريط الجانبي للموبايل */}
               <div className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-4 border-b-2 border-blue-300">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -134,25 +127,17 @@ const Layout = ({ children }) => {
                   </button>
                 </div>
               </div>
-              
               <Navigation onNavigate={() => setSidebarOpen(false)} />
             </div>
           </>
         )}
       </div>
 
-      {/* الملاحة السفلية المحسنة للهواتف المحمولة */}
+      {/* الملاحة السفلية المحدثة للهواتف المحمولة */}
       {isMobile && (
         <div className="bottom-navigation-enhanced">
           <div className="bg-white border-t-2 border-gray-200 shadow-2xl">
             <div className="flex justify-around items-center px-2 py-2">
-              <BottomNavItem 
-                icon="📊" 
-                label="الرئيسية" 
-                path="/dashboard"
-                active={location.pathname === '/dashboard'}
-                color="blue"
-              />
               <BottomNavItem 
                 icon="👨‍🏫" 
                 label="المدرسين" 
@@ -167,13 +152,24 @@ const Layout = ({ children }) => {
                 active={location.pathname === '/operations'}
                 color="green"
               />
-              <BottomNavItem 
-                icon="💰" 
-                label="الحسابات" 
-                path="/accounts"
-                active={location.pathname === '/accounts'}
-                color="purple"
-              />
+              <PermissionGate permission={PERMISSIONS.VIEW_PAYMENTS}>
+                <BottomNavItem 
+                  icon="💰" 
+                  label="الحسابات" 
+                  path="/accounts"
+                  active={location.pathname === '/accounts'}
+                  color="purple"
+                />
+              </PermissionGate>
+              <PermissionGate permission={PERMISSIONS.VIEW_EXPENSES}>
+                <BottomNavItem 
+                  icon="💸" 
+                  label="المصروفات" 
+                  path="/expenses"
+                  active={location.pathname === '/expenses'}
+                  color="red"
+                />
+              </PermissionGate>
               <BottomNavItem 
                 icon="☰" 
                 label="القائمة" 
@@ -189,7 +185,6 @@ const Layout = ({ children }) => {
   );
 };
 
-// مكون عنصر الملاحة السفلية المحسن
 const BottomNavItem = ({ icon, label, path, onClick, active, color }) => {
   const navigate = useNavigate();
   
@@ -203,26 +198,12 @@ const BottomNavItem = ({ icon, label, path, onClick, active, color }) => {
 
   const getColorClasses = () => {
     const colors = {
-      blue: {
-        active: 'bg-blue-100 text-blue-600 border-blue-300',
-        inactive: 'text-gray-600 hover:bg-blue-50 hover:text-blue-600'
-      },
-      indigo: {
-        active: 'bg-indigo-100 text-indigo-600 border-indigo-300',
-        inactive: 'text-gray-600 hover:bg-indigo-50 hover:text-indigo-600'
-      },
-      green: {
-        active: 'bg-green-100 text-green-600 border-green-300',
-        inactive: 'text-gray-600 hover:bg-green-50 hover:text-green-600'
-      },
-      purple: {
-        active: 'bg-purple-100 text-purple-600 border-purple-300',
-        inactive: 'text-gray-600 hover:bg-purple-50 hover:text-purple-600'
-      },
-      gray: {
-        active: 'bg-gray-100 text-gray-700 border-gray-300',
-        inactive: 'text-gray-600 hover:bg-gray-50 hover:text-gray-700'
-      }
+      blue: { active: 'bg-blue-100 text-blue-600 border-blue-300', inactive: 'text-gray-600 hover:bg-blue-50 hover:text-blue-600' },
+      indigo: { active: 'bg-indigo-100 text-indigo-600 border-indigo-300', inactive: 'text-gray-600 hover:bg-indigo-50 hover:text-indigo-600' },
+      green: { active: 'bg-green-100 text-green-600 border-green-300', inactive: 'text-gray-600 hover:bg-green-50 hover:text-green-600' },
+      purple: { active: 'bg-purple-100 text-purple-600 border-purple-300', inactive: 'text-gray-600 hover:bg-purple-50 hover:text-purple-600' },
+      red: { active: 'bg-red-100 text-red-600 border-red-300', inactive: 'text-gray-600 hover:bg-red-50 hover:text-red-600' },
+      gray: { active: 'bg-gray-100 text-gray-700 border-gray-300', inactive: 'text-gray-600 hover:bg-gray-50 hover:text-gray-700' }
     };
     return colors[color] || colors.gray;
   };
@@ -244,7 +225,6 @@ const BottomNavItem = ({ icon, label, path, onClick, active, color }) => {
       <div className="nav-icon-enhanced text-2xl mb-1">{icon}</div>
       <div className="nav-label-enhanced text-xs font-bold">{label}</div>
       
-      {/* مؤشر النشاط */}
       {active && (
         <div className="w-1 h-1 bg-current rounded-full mt-1 animate-pulse"></div>
       )}

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { formatCurrency, formatDate, timeAgo } from '../../utils/helpers';
+import React, { useState, useEffect } from 'react';
+import { formatCurrency, formatDate, timeAgo, isSmallScreen } from '../../utils/helpers';
 
 const AccountsList = ({ 
   teachers, 
@@ -8,7 +8,19 @@ const AccountsList = ({
   onDeletePayment, 
   onViewDetails 
 }) => {
-  const [viewMode, setViewMode] = useState('cards'); // cards, table
+  const [isMobile, setIsMobile] = useState(isSmallScreen());
+  const [viewMode, setViewMode] = useState(isMobile ? 'cards' : 'table');
+
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = isSmallScreen();
+      setIsMobile(mobile);
+      setViewMode(mobile ? 'cards' : 'table');
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const renderEmptyState = () => (
     <div className="text-center py-16 bg-white rounded-2xl shadow-lg">
@@ -63,7 +75,6 @@ const AccountsList = ({
         </table>
       </div>
 
-      {/* ملخص الجدول */}
       {teachers.length > 0 && (
         <div className="bg-gray-50 px-6 py-4 border-t-2 border-gray-200">
           <div className="flex items-center justify-between text-sm">
@@ -92,42 +103,42 @@ const AccountsList = ({
 
   return (
     <div>
-      {/* شريط التحكم في العرض */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-gray-700">عرض:</span>
-          <div className="flex border-2 border-gray-300 rounded-lg overflow-hidden">
-            <button
-              onClick={() => setViewMode('cards')}
-              className={`px-4 py-2 text-sm font-medium transition-colors ${
-                viewMode === 'cards' 
-                  ? 'bg-blue-500 text-white' 
-                  : 'bg-white text-gray-700 hover:bg-gray-50'
-              }`}
-              title="عرض البطاقات"
-            >
-              ⊞ بطاقات
-            </button>
-            <button
-              onClick={() => setViewMode('table')}
-              className={`px-4 py-2 text-sm font-medium border-r-2 border-gray-300 transition-colors ${
-                viewMode === 'table' 
-                  ? 'bg-blue-500 text-white' 
-                  : 'bg-white text-gray-700 hover:bg-gray-50'
-              }`}
-              title="عرض الجدول"
-            >
-              ☰ جدول
-            </button>
+      {!isMobile && (
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-gray-700">عرض:</span>
+            <div className="flex border-2 border-gray-300 rounded-lg overflow-hidden">
+              <button
+                onClick={() => setViewMode('cards')}
+                className={`px-4 py-2 text-sm font-medium transition-colors ${
+                  viewMode === 'cards' 
+                    ? 'bg-blue-500 text-white' 
+                    : 'bg-white text-gray-700 hover:bg-gray-50'
+                }`}
+                title="عرض البطاقات"
+              >
+                ⊞ بطاقات
+              </button>
+              <button
+                onClick={() => setViewMode('table')}
+                className={`px-4 py-2 text-sm font-medium border-r-2 border-gray-300 transition-colors ${
+                  viewMode === 'table' 
+                    ? 'bg-blue-500 text-white' 
+                    : 'bg-white text-gray-700 hover:bg-gray-50'
+                }`}
+                title="عرض الجدول"
+              >
+                ☰ جدول
+              </button>
+            </div>
+          </div>
+          
+          <div className="text-sm text-gray-600 font-medium">
+            عرض {teachers.length} حساب
           </div>
         </div>
-        
-        <div className="text-sm text-gray-600 font-medium">
-          عرض {teachers.length} حساب
-        </div>
-      </div>
+      )}
 
-      {/* المحتوى حسب نوع العرض */}
       {teachers.length === 0 ? renderEmptyState() : (
         viewMode === 'cards' ? renderCardsView() : renderTableView()
       )}
@@ -310,7 +321,7 @@ const TeacherAccountCard = ({
                   onClick={() => setShowMenu(false)}
                 />
                 
-                <div className="absolute left-0 mt-2 w-48 bg-white border-2 border-gray-200 rounded-2xl shadow-xl z-20">
+                <div className="absolute left-0 bottom-full mb-2 w-48 bg-white border-2 border-gray-200 rounded-2xl shadow-xl z-20">
                   <button
                     onClick={() => handleMenuClick('viewDetails')}
                     className="w-full text-right px-4 py-3 text-sm hover:bg-blue-50 flex items-center gap-3 font-medium text-blue-700 rounded-t-2xl transition-colors"
@@ -508,14 +519,12 @@ const TeacherAccountTableRow = ({
 
             {showActions && (
               <>
-                {/* خلفية لإغلاق القائمة */}
                 <div 
                   className="fixed inset-0 z-10"
                   onClick={toggleActions}
                 />
                 
-                {/* القائمة المنسدلة */}
-                <div className="absolute left-0 mt-1 w-40 bg-white border-2 border-gray-200 rounded-xl shadow-lg z-20">
+                <div className="absolute left-0 bottom-full mb-2 w-40 bg-white border-2 border-gray-200 rounded-xl shadow-lg z-20">
                   <button
                     onClick={() => {
                       onViewDetails(teacher);

@@ -405,9 +405,6 @@ const AccountsPage = () => {
         </div>
 
 
-        {/* نصائح وإرشادات */}
-   
-
         {/* النوافذ المنبثقة */}
         
         {/* نافذة إضافة/تعديل دفعة */}
@@ -432,7 +429,7 @@ const AccountsPage = () => {
           isOpen={showAccountDetails}
           onClose={handleCloseModals}
           title={`📊 تفاصيل حساب - ${selectedTeacher?.name}`}
-          size="xl"
+          size="7xl"
         >
           <AccountDetails
             teacher={selectedTeacher}

@@ -51,7 +51,7 @@ const AccountDetails = ({
         unsubscribePayments();
       };
     }
-  }, [teacher]);
+  }, [teacher, operationsService, paymentsService]);
 
   if (!teacher) {
     return (
@@ -168,7 +168,8 @@ const AccountDetails = ({
               {formatCurrency(Math.abs(debt))}
             </div>
             <div className="text-sm text-gray-600">
-              {debt > 0 ? 'مديونية' : debt === 0 ? 'مسدد' : 'دفع زائد'}
+              {debt > 0 ? 'مديونية' :
+               debt === 0 ? 'مسدد' : 'دفع زائد'}
             </div>
           </div>
         </div>
@@ -214,7 +215,7 @@ const AccountDetails = ({
               <div className="font-medium text-gray-900">
                 {OPERATION_TYPES.find(t => t.value === statistics.lastOperation.type)?.label}
               </div>
-              <div className="text-sm text-gray-600 mt-1">
+              <div className="text-sm text-gray-600 mt-1 whitespace-pre-wrap break-all">
                 {statistics.lastOperation.description}
               </div>
               <div className="flex justify-between items-center mt-3">
@@ -320,23 +321,23 @@ const AccountDetails = ({
               
               return (
                 <div key={operation.id} className="bg-white border border-gray-200 rounded-lg p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-3 h-3 rounded-full ${operationType?.color || 'bg-gray-400'}`}></div>
-                      <div>
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start gap-3 min-w-0">
+                      <div className={`w-3 h-3 rounded-full mt-1.5 flex-shrink-0 ${operationType?.color || 'bg-gray-400'}`}></div>
+                      <div className="min-w-0">
                         <div className="font-medium text-gray-900">
                           {operationType?.label || operation.type}
                         </div>
-                        <div className="text-sm text-gray-600">
+                        <div className="text-sm text-gray-600 whitespace-pre-wrap break-all">
                           {operation.description}
                         </div>
-                        <div className="text-xs text-gray-500">
+                        <div className="text-xs text-gray-500 mt-1">
                           {formatDate(operation.operationDate)} • {timeAgo(operation.operationDate)}
                         </div>
                       </div>
                     </div>
-                    
-                    <div className="text-left">
+
+                    <div className="text-left flex-shrink-0 ml-4">
                       <div className="font-bold text-blue-600">
                         {formatCurrency(operation.amount)}
                       </div>
@@ -349,7 +350,7 @@ const AccountDetails = ({
                   </div>
                   
                   {operation.notes && (
-                    <div className="mt-3 p-2 bg-gray-50 rounded text-sm text-gray-600">
+                    <div className="mt-3 p-2 bg-gray-50 rounded text-sm text-gray-600 border-r-4 border-gray-300">
                       <span className="font-medium">ملاحظات: </span>
                       {operation.notes}
                     </div>
@@ -361,6 +362,7 @@ const AccountDetails = ({
       )}
     </div>
   );
+
 
   // عرض المدفوعات
   const renderPayments = () => (

@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../../context/AppContext';
 import { useAuth, PERMISSIONS } from '../../context/AuthContext';
 import { PermissionGate } from '../Common/ProtectedRoute';
-import { formatCurrency, formatDate } from '../../utils/helpers';
+import { formatCurrency, formatDate, timeAgo, isSmallScreen } from '../../utils/helpers';
+import { OPERATION_TYPES, PAYMENT_METHODS } from '../../utils/constants';
 import LoadingSpinner from '../Common/LoadingSpinner';
 import ConfirmationModal from '../Common/ConfirmationModal';
 
@@ -22,9 +23,15 @@ const TeacherDetails = ({
     const [payments, setPayments] = useState([]);
     const [loading, setLoading] = useState(true);
     const [confirmModalState, setConfirmModalState] = useState({ isOpen: false, item: null, type: '' });
+    const [isMobile, setIsMobile] = useState(isSmallScreen());
 
+    useEffect(() => {
+        const handleResize = () => setIsMobile(isSmallScreen());
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+    
     const canViewPrices = hasPermission(PERMISSIONS.VIEW_OPERATION_PRICES);
-    const canManagePayments = hasPermission(PERMISSIONS.VIEW_PAYMENTS);
     const canEditOperations = hasPermission(PERMISSIONS.EDIT_OPERATION);
     const canDeleteOperations = hasPermission(PERMISSIONS.DELETE_OPERATION);
 
@@ -98,78 +105,38 @@ const TeacherDetails = ({
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* المديونية - مع مراعاة الصلاحيات */}
-                <PermissionGate 
-                    permission={PERMISSIONS.VIEW_FINANCIAL_DATA}
-                    fallback={
-                        <div className="p-6 rounded-lg border-2 bg-gray-50 border-gray-200">
-                            <div className="text-center">
-                                <div className="text-2xl mb-2">🔒</div>
-                                <div className="text-lg font-bold text-gray-600">مخفي</div>
-                                <div className="text-sm text-gray-500">غير مصرح</div>
-                            </div>
-                        </div>
-                    }
-                >
+                <PermissionGate permission={PERMISSIONS.VIEW_FINANCIAL_DATA}>
                     <div className={`p-6 rounded-lg border-2 ${
                         debt > 0 ? 'bg-red-50 border-red-200' :
                         debt === 0 ? 'bg-green-50 border-green-200' : 'bg-blue-50 border-blue-200'
                     }`}>
                         <div className="text-center">
-                            <div className="text-2xl mb-2">
-                                {debt > 0 ? '⚠️' : debt === 0 ? '✅' : '💰'}
-                            </div>
+                            <div className="text-2xl mb-2">{debt > 0 ? '⚠️' : debt === 0 ? '✅' : '💰'}</div>
                             <div className={`text-2xl font-bold ${
                                 debt > 0 ? 'text-red-600' :
                                 debt === 0 ? 'text-green-600' : 'text-blue-600'
-                            }`}>
-                                {formatCurrency(Math.abs(debt))}
-                            </div>
-                            <div className="text-sm text-gray-600">
-                                {debt > 0 ? 'مديونية' : debt === 0 ? 'مسدد' : 'دفع زائد'}
-                            </div>
+                            }`}>{formatCurrency(Math.abs(debt))}</div>
+                            <div className="text-sm text-gray-600">{debt > 0 ? 'مديونية' : debt === 0 ? 'مسدد' : 'دفع زائد'}</div>
                         </div>
                     </div>
                 </PermissionGate>
 
-                {/* إجمالي العمليات */}
                 <div className="bg-blue-50 border border-blue-200 p-6 rounded-lg">
                     <div className="text-center">
                         <div className="text-2xl mb-2">📊</div>
                         <div className="text-2xl font-bold text-blue-600">
-                            {canViewPrices 
-                                ? formatCurrency(operations.reduce((sum, op) => sum + (op.amount || 0), 0))
-                                : '---'
-                            }
+                            {canViewPrices ? formatCurrency(operations.reduce((sum, op) => sum + (op.amount || 0), 0)) : '---'}
                         </div>
-                        <div className="text-sm text-gray-600">
-                            إجمالي العمليات ({operations.length})
-                        </div>
+                        <div className="text-sm text-gray-600">إجمالي العمليات ({operations.length})</div>
                     </div>
                 </div>
 
-                {/* إجمالي المدفوعات */}
-                <PermissionGate 
-                    permission={PERMISSIONS.VIEW_PAYMENTS}
-                    fallback={
-                        <div className="bg-gray-50 border border-gray-200 p-6 rounded-lg">
-                            <div className="text-center">
-                                <div className="text-2xl mb-2">🔒</div>
-                                <div className="text-2xl font-bold text-gray-600">مخفي</div>
-                                <div className="text-sm text-gray-500">غير مصرح</div>
-                            </div>
-                        </div>
-                    }
-                >
+                <PermissionGate permission={PERMISSIONS.VIEW_PAYMENTS}>
                     <div className="bg-green-50 border border-green-200 p-6 rounded-lg">
                         <div className="text-center">
                             <div className="text-2xl mb-2">💳</div>
-                            <div className="text-2xl font-bold text-green-600">
-                                {formatCurrency(payments.reduce((sum, p) => sum + (p.amount || 0), 0))}
-                            </div>
-                            <div className="text-sm text-gray-600">
-                                إجمالي المدفوعات ({payments.length})
-                            </div>
+                            <div className="text-2xl font-bold text-green-600">{formatCurrency(payments.reduce((sum, p) => sum + (p.amount || 0), 0))}</div>
+                            <div className="text-sm text-gray-600">إجمالي المدفوعات ({payments.length})</div>
                         </div>
                     </div>
                 </PermissionGate>
@@ -177,135 +144,76 @@ const TeacherDetails = ({
         </div>
     );
 
-    const renderOperations = () => (
-        <div>
-            <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold">العمليات ({operations.length})</h3>
-                <PermissionGate permission={PERMISSIONS.ADD_OPERATION}>
-                    <button onClick={() => onAddOperation(teacher)} className="btn btn-primary">
-                        <span className="text-lg">➕</span> إضافة عملية جديدة
-                    </button>
-                </PermissionGate>
-            </div>
-            
-            {operations.length === 0 ? renderEmptyState(
+    const renderOperations = () => {
+        if (operations.length === 0) {
+            return renderEmptyState(
                 'لا توجد عمليات', 
                 'لم يتم تسجيل أي عمليات لهذا المدرس بعد.',
                 hasPermission(PERMISSIONS.ADD_OPERATION) ? () => onAddOperation(teacher) : null
-            ) : (
-                <div className="overflow-x-auto">
-                    <table className="min-w-full bg-white rounded-lg shadow table-fixed">
-                        <thead className="bg-gray-200">
-                            <tr>
-                                <th className="py-3 px-4 text-right font-semibold text-gray-700 w-40">التاريخ</th>
-                                <th className="py-3 px-4 text-right font-semibold text-gray-700">الوصف</th>
-                                <th className="py-3 px-4 text-right font-semibold text-gray-700 w-20">الكمية</th>
-                                {canViewPrices && (
-                                    <th className="py-3 px-4 text-right font-semibold text-gray-700 w-36">المبلغ</th>
-                                )}
-                                <th className="py-3 px-4 text-right font-semibold text-gray-700 w-32">إجراءات</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {operations.map(op => (
-                                <tr key={op.id} className="border-b hover:bg-gray-50">
-                                    <td className="py-3 px-4">{formatDate(op.operationDate)}</td>
-                                    <td className="py-3 px-4 whitespace-normal break-words">{op.description}</td>
-                                    <td className="py-3 px-4">{op.quantity || 1}</td>
-                                    {canViewPrices && (
-                                        <td className="py-3 px-4 font-mono">{formatCurrency(op.amount)}</td>
-                                    )}
-                                    <td className="py-3 px-4">
-                                        <div className="flex items-center gap-3">
-                                            <PermissionGate permission={PERMISSIONS.EDIT_OPERATION}>
-                                                <button 
-                                                    onClick={() => onEditOperation(op)} 
-                                                    className="text-blue-600 hover:text-blue-800"
-                                                >
-                                                    ✏️ تعديل
-                                                </button>
-                                            </PermissionGate>
-                                            <PermissionGate permission={PERMISSIONS.DELETE_OPERATION}>
-                                                <button 
-                                                    onClick={() => openConfirmModal(op, 'operation')} 
-                                                    className="text-red-600 hover:text-red-800"
-                                                >
-                                                    🗑️ حذف
-                                                </button>
-                                            </PermissionGate>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            )}
-        </div>
-    );
+            );
+        }
 
-    const renderPayments = () => (
-        <PermissionGate 
-            permission={PERMISSIONS.VIEW_PAYMENTS}
-            fallback={
-                <div className="text-center py-12">
-                    <div className="text-6xl mb-4">🔒</div>
-                    <h3 className="text-lg font-semibold text-gray-700 mb-2">الوصول محدود</h3>
-                    <p className="text-gray-500">لا تملك صلاحية لعرض المدفوعات</p>
-                </div>
-            }
-        >
+        return (
             <div>
                 <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-lg font-semibold">المدفوعات ({payments.length})</h3>
-                    <PermissionGate permission={PERMISSIONS.ADD_PAYMENT}>
-                        <button onClick={() => onAddPayment(teacher)} className="btn btn-success">
-                             <span className="text-lg">💵</span> إضافة دفعة جديدة
+                    <h3 className="text-lg font-semibold">العمليات ({operations.length})</h3>
+                    <PermissionGate permission={PERMISSIONS.ADD_OPERATION}>
+                        <button onClick={() => onAddOperation(teacher)} className="btn btn-primary">
+                            <span className="text-lg">➕</span> إضافة عملية جديدة
                         </button>
                     </PermissionGate>
                 </div>
-                
-                {payments.length === 0 ? renderEmptyState(
-                    'لا توجد مدفوعات', 
-                    'لم يتم تسجيل أي مدفوعات من هذا المدرس بعد.',
-                    hasPermission(PERMISSIONS.ADD_PAYMENT) ? () => onAddPayment(teacher) : null
+
+                {isMobile ? (
+                    <div className="space-y-3">
+                        {operations.map(op => {
+                            const opType = OPERATION_TYPES.find(t => t.value === op.type);
+                            return (
+                                <div key={op.id} className="bg-white border border-gray-200 rounded-lg p-4">
+                                    <div className="flex justify-between items-start">
+                                        <div className="flex-1 min-w-0">
+                                            <div className="font-bold text-gray-800">{opType?.label || op.type}</div>
+                                            <p className="text-sm text-gray-600 whitespace-pre-wrap break-all mt-1" style={{ wordBreak: 'break-all' }}>{op.description}</p>
+                                            <div className="text-xs text-gray-500 mt-2">{formatDate(op.operationDate)} • {timeAgo(op.operationDate)}</div>
+                                        </div>
+                                        {canViewPrices && (
+                                            <div className="text-left ml-2 flex-shrink-0">
+                                                <div className="font-bold text-blue-600">{formatCurrency(op.amount)}</div>
+                                                <div className="text-xs text-gray-500">الكمية: {op.quantity || 1}</div>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="flex justify-end gap-3 mt-3 pt-3 border-t">
+                                        <PermissionGate permission={PERMISSIONS.EDIT_OPERATION}><button onClick={() => onEditOperation(op)} className="text-blue-600">✏️ تعديل</button></PermissionGate>
+                                        <PermissionGate permission={PERMISSIONS.DELETE_OPERATION}><button onClick={() => openConfirmModal(op, 'operation')} className="text-red-600">🗑️ حذف</button></PermissionGate>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
                 ) : (
                     <div className="overflow-x-auto">
-                        <table className="min-w-full bg-white rounded-lg shadow table-fixed">
-                             <thead className="bg-gray-200">
+                        <table className="w-full bg-white rounded-lg shadow table-auto">
+                            <thead className="bg-gray-200">
                                 <tr>
-                                    <th className="py-3 px-4 text-right font-semibold text-gray-700 w-40">تاريخ الدفعة</th>
-                                    <th className="py-3 px-4 text-right font-semibold text-gray-700 w-36">المبلغ</th>
-                                    <th className="py-3 px-4 text-right font-semibold text-gray-700 w-32">طريقة الدفع</th>
-                                    <th className="py-3 px-4 text-right font-semibold text-gray-700">ملاحظات</th>
-                                    <th className="py-3 px-4 text-right font-semibold text-gray-700 w-32">إجراءات</th>
+                                    <th className="py-3 px-4 text-right font-semibold text-gray-700 w-40">التاريخ</th>
+                                    <th className="py-3 px-4 text-right font-semibold text-gray-700">الوصف</th>
+                                    <th className="py-3 px-4 text-center font-semibold text-gray-700 w-24">الكمية</th>
+                                    {canViewPrices && <th className="py-3 px-4 text-center font-semibold text-gray-700 w-36">المبلغ</th>}
+                                    <th className="py-3 px-4 text-center font-semibold text-gray-700 w-32">إجراءات</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {payments.map(p => (
-                                    <tr key={p.id} className="border-b hover:bg-gray-50">
-                                        <td className="py-3 px-4">{formatDate(p.paymentDate)}</td>
-                                        <td className="py-3 px-4 font-mono text-green-700">{formatCurrency(p.amount)}</td>
-                                        <td className="py-3 px-4">{p.paymentMethod}</td>
-                                        <td className="py-3 px-4 whitespace-normal break-words">{p.notes || '-'}</td>
+                                {operations.map(op => (
+                                    <tr key={op.id} className="border-b hover:bg-gray-50">
+                                        <td className="py-3 px-4">{formatDate(op.operationDate)}</td>
+                                        <td className="py-3 px-4 whitespace-normal break-all">{op.description}</td>
+                                        <td className="py-3 px-4 text-center">{op.quantity || 1}</td>
+                                        {canViewPrices && <td className="py-3 px-4 font-mono text-center">{formatCurrency(op.amount)}</td>}
                                         <td className="py-3 px-4">
-                                            <div className="flex items-center gap-3">
-                                                <PermissionGate permission={PERMISSIONS.EDIT_PAYMENT}>
-                                                    <button 
-                                                        onClick={() => onEditPayment(p)} 
-                                                        className="text-blue-600 hover:text-blue-800"
-                                                    >
-                                                        ✏️ تعديل
-                                                    </button>
-                                                </PermissionGate>
-                                                <PermissionGate permission={PERMISSIONS.DELETE_PAYMENT}>
-                                                    <button 
-                                                        onClick={() => openConfirmModal(p, 'payment')} 
-                                                        className="text-red-600 hover:text-red-800"
-                                                    >
-                                                        🗑️ حذف
-                                                    </button>
-                                                </PermissionGate>
+                                            <div className="flex items-center justify-center gap-3">
+                                                <PermissionGate permission={PERMISSIONS.EDIT_OPERATION}><button onClick={() => onEditOperation(op)} className="text-blue-600 hover:text-blue-800">✏️</button></PermissionGate>
+                                                <PermissionGate permission={PERMISSIONS.DELETE_OPERATION}><button onClick={() => openConfirmModal(op, 'operation')} className="text-red-600 hover:text-red-800">🗑️</button></PermissionGate>
                                             </div>
                                         </td>
                                     </tr>
@@ -315,32 +223,93 @@ const TeacherDetails = ({
                     </div>
                 )}
             </div>
-        </PermissionGate>
-    );
+        );
+    };
+
+    const renderPayments = () => {
+         if (payments.length === 0) {
+            return renderEmptyState(
+                'لا توجد مدفوعات',
+                'لم يتم تسجيل أي مدفوعات من هذا المدرس بعد.',
+                hasPermission(PERMISSIONS.ADD_PAYMENT) ? () => onAddPayment(teacher) : null
+            );
+        }
+
+        return (
+            <PermissionGate permission={PERMISSIONS.VIEW_PAYMENTS} fallback={<div>غير مصرح لك</div>}>
+                <div>
+                    <div className="flex justify-between items-center mb-4">
+                        <h3 className="text-lg font-semibold">المدفوعات ({payments.length})</h3>
+                        <PermissionGate permission={PERMISSIONS.ADD_PAYMENT}>
+                            <button onClick={() => onAddPayment(teacher)} className="btn btn-success"><span className="text-lg">💵</span> إضافة دفعة جديدة</button>
+                        </PermissionGate>
+                    </div>
+
+                    {isMobile ? (
+                        <div className="space-y-3">
+                            {payments.map(p => {
+                                const paymentMethod = PAYMENT_METHODS.find(m => m.value === p.paymentMethod);
+                                return (
+                                <div key={p.id} className="bg-white border border-gray-200 rounded-lg p-4">
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <div className="font-bold text-gray-800">{paymentMethod?.label || p.paymentMethod}</div>
+                                            <p className="text-sm text-gray-600 whitespace-pre-wrap break-all mt-1">{p.notes || 'لا توجد ملاحظات'}</p>
+                                            <div className="text-xs text-gray-500 mt-2">{formatDate(p.paymentDate)} • {timeAgo(p.paymentDate)}</div>
+                                        </div>
+                                        <div className="text-left ml-2">
+                                            <div className="font-bold text-green-600">{formatCurrency(p.amount)}</div>
+                                        </div>
+                                    </div>
+                                    <div className="flex justify-end gap-3 mt-3 pt-3 border-t">
+                                        <PermissionGate permission={PERMISSIONS.EDIT_PAYMENT}><button onClick={() => onEditPayment(p)} className="text-blue-600">✏️ تعديل</button></PermissionGate>
+                                        <PermissionGate permission={PERMISSIONS.DELETE_PAYMENT}><button onClick={() => openConfirmModal(p, 'payment')} className="text-red-600">🗑️ حذف</button></PermissionGate>
+                                    </div>
+                                </div>
+                            )})}
+                        </div>
+                    ) : (
+                        <div className="overflow-x-auto">
+                            <table className="w-full bg-white rounded-lg shadow table-auto">
+                                <thead className="bg-gray-200">
+                                    <tr>
+                                        <th className="py-3 px-4 text-right font-semibold text-gray-700 w-40">تاريخ الدفعة</th>
+                                        <th className="py-3 px-4 text-center font-semibold text-gray-700 w-36">المبلغ</th>
+                                        <th className="py-3 px-4 text-right font-semibold text-gray-700 w-32">طريقة الدفع</th>
+                                        <th className="py-3 px-4 text-right font-semibold text-gray-700">ملاحظات</th>
+                                        <th className="py-3 px-4 text-center font-semibold text-gray-700 w-32">إجراءات</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {payments.map(p => (
+                                        <tr key={p.id} className="border-b hover:bg-gray-50">
+                                            <td className="py-3 px-4">{formatDate(p.paymentDate)}</td>
+                                            <td className="py-3 px-4 font-mono text-green-700 text-center">{formatCurrency(p.amount)}</td>
+                                            <td className="py-3 px-4">{p.paymentMethod}</td>
+                                            <td className="py-3 px-4 whitespace-normal break-all">{p.notes || '-'}</td>
+                                            <td className="py-3 px-4">
+                                                <div className="flex items-center justify-center gap-3">
+                                                    <PermissionGate permission={PERMISSIONS.EDIT_PAYMENT}><button onClick={() => onEditPayment(p)} className="text-blue-600 hover:text-blue-800">✏️</button></PermissionGate>
+                                                    <PermissionGate permission={PERMISSIONS.DELETE_PAYMENT}><button onClick={() => openConfirmModal(p, 'payment')} className="text-red-600 hover:text-red-800">🗑️</button></PermissionGate>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </div>
+            </PermissionGate>
+        );
+    };
 
     return (
         <div>
-            <div className="flex border-b mb-4">
-                <button 
-                    onClick={() => setActiveTab('overview')} 
-                    className={`px-4 py-2 font-semibold ${activeTab === 'overview' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500'}`}
-                >
-                    نظرة عامة
-                </button>
-                <button 
-                    onClick={() => setActiveTab('operations')} 
-                    className={`px-4 py-2 font-semibold ${activeTab === 'operations' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500'}`}
-                >
-                    العمليات
-                </button>
-                <PermissionGate permission={PERMISSIONS.VIEW_PAYMENTS}>
-                    <button 
-                        onClick={() => setActiveTab('payments')} 
-                        className={`px-4 py-2 font-semibold ${activeTab === 'payments' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500'}`}
-                    >
-                        المدفوعات
-                    </button>
-                </PermissionGate>
+            <div className="flex border-b mb-4 overflow-x-auto">
+                <button onClick={() => setActiveTab('overview')} className={`px-4 py-2 font-semibold whitespace-nowrap ${activeTab === 'overview' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500'}`}>نظرة عامة</button>
+                <button onClick={() => setActiveTab('operations')} className={`px-4 py-2 font-semibold whitespace-nowrap ${activeTab === 'operations' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500'}`}>العمليات</button>
+                <PermissionGate permission={PERMISSIONS.VIEW_PAYMENTS}><button onClick={() => setActiveTab('payments')} className={`px-4 py-2 font-semibold whitespace-nowrap ${activeTab === 'payments' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500'}`}>المدفوعات</button></PermissionGate>
             </div>
             <div className="pt-4">
                 {activeTab === 'overview' && renderOverview()}

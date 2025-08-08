@@ -185,35 +185,54 @@ export const AppProvider = ({ children }) => {
 
   // وظائف العمليات
   const operationActions = {
-addOperation: async (teacherId, operationData) => {
-  try {
-    setLoading('operations', true);
-    
-    // التأكد من وجود teacherId والبيانات
-    if (!teacherId) {
-      throw new Error('معرف المدرس مطلوب');
-    }
-    
-    if (!operationData || typeof operationData !== 'object') {
-      throw new Error('بيانات العملية غير صحيحة');
-    }
-
-    // تنظيف البيانات من القيم undefined
-    const cleanData = {};
-    Object.keys(operationData).forEach(key => {
-      if (operationData[key] !== undefined && operationData[key] !== null) {
-        cleanData[key] = operationData[key];
+    addOperation: async (teacherId, operationData) => {
+      try {
+        setLoading('operations', true);
+        if (!teacherId) {
+          throw new Error('معرف المدرس مطلوب');
+        }
+        if (!operationData || typeof operationData !== 'object') {
+          throw new Error('بيانات العملية غير صحيحة');
+        }
+        const cleanData = {};
+        Object.keys(operationData).forEach(key => {
+          if (operationData[key] !== undefined && operationData[key] !== null) {
+            cleanData[key] = operationData[key];
+          }
+        });
+        await operationsService.addOperation(teacherId, cleanData);
+        clearError();
+      } catch (error) {
+        setError(error.message);
+        throw error;
       }
-    });
+    },
+    
+    // -->> الإضافة تبدأ من هنا <<--
+    updateOperation: async (operationId, updateData) => {
+      try {
+        setLoading('operations', true);
+        await operationsService.updateOperation(operationId, updateData);
+        clearError();
+      } catch (error) {
+        setError(error.message);
+        throw error;
+      }
+    },
 
-    await operationsService.addOperation(teacherId, cleanData);
-    clearError();
-  } catch (error) {
-    setError(error.message);
-    throw error;
-  }
-},
+    deleteOperation: async (operationId) => {
+      try {
+        setLoading('operations', true);
+        await operationsService.deleteOperation(operationId);
+        clearError();
+      } catch (error) {
+        setError(error.message);
+        throw error;
+      }
+    }
+    // -->> الإضافة تنتهي هنا <<--
   };
+
 
   // وظائف المدفوعات
   const paymentActions = {
