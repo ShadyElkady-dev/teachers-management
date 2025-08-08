@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { FiFilter, FiSettings, FiFileText, FiSave, FiEye, FiLoader, FiCalendar, FiUsers, FiTrendingUp, FiChevronDown, FiX } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 
-// مكون متعدد الاختيار مبسط
+// مكون متعدد الاختيار
 const MultiSelect = ({ options, value, onChange, placeholder }) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -11,14 +11,6 @@ const MultiSelect = ({ options, value, onChange, placeholder }) => {
       ? value.filter(v => v !== optionValue)
       : [...value, optionValue];
     onChange(newValue);
-  };
-
-  const selectAll = () => {
-    onChange(options.map(opt => opt.value));
-  };
-
-  const clearAll = () => {
-    onChange([]);
   };
 
   return (
@@ -39,14 +31,14 @@ const MultiSelect = ({ options, value, onChange, placeholder }) => {
           <div className="p-2 border-b border-gray-200 flex gap-2">
             <button
               type="button"
-              onClick={selectAll}
+              onClick={() => onChange(options.map(opt => opt.value))}
               className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
             >
               تحديد الكل
             </button>
             <button
               type="button"
-              onClick={clearAll}
+              onClick={() => onChange([])}
               className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
             >
               إلغاء التحديد
@@ -68,53 +60,26 @@ const MultiSelect = ({ options, value, onChange, placeholder }) => {
           ))}
         </div>
       )}
-      
-      {value.length > 0 && (
-        <div className="mt-2 flex flex-wrap gap-1">
-          {value.slice(0, 3).map(val => {
-            const option = options.find(opt => opt.value === val);
-            return option ? (
-              <span
-                key={val}
-                className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded"
-              >
-                {option.label}
-                <button
-                  type="button"
-                  onClick={() => toggleOption(val)}
-                  className="hover:text-blue-600"
-                >
-                  <FiX size={12} />
-                </button>
-              </span>
-            ) : null;
-          })}
-          {value.length > 3 && (
-            <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">
-              +{value.length - 3} أخرى
-            </span>
-          )}
-        </div>
-      )}
     </div>
   );
 };
 
+// مكون القسم
 const Section = ({ title, icon, children, isCollapsed, onToggle }) => (
-  <div className="bg-white rounded-2xl shadow-md border border-gray-100 mb-6 overflow-hidden">
+  <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-4 overflow-hidden">
     <div 
-      className="flex items-center justify-between p-6 cursor-pointer hover:bg-gray-50 transition-colors"
+      className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 transition-colors"
       onClick={onToggle}
     >
       <div className="flex items-center">
-        <div className="text-xl text-blue-600 ml-3">{icon}</div>
-        <h3 className="text-lg font-bold text-gray-800">{title}</h3>
+        <div className="text-lg text-blue-600 ml-3">{icon}</div>
+        <h3 className="text-base font-semibold text-gray-800">{title}</h3>
       </div>
       <FiChevronDown className={`transition-transform ${isCollapsed ? '' : 'rotate-180'}`} />
     </div>
     {!isCollapsed && (
-      <div className="px-6 pb-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">{children}</div>
+      <div className="px-4 pb-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">{children}</div>
       </div>
     )}
   </div>
@@ -123,6 +88,12 @@ const Section = ({ title, icon, children, isCollapsed, onToggle }) => (
 const REPORT_TYPES = [
   { value: 'teacher_detailed', label: 'تقرير مفصل للمدرسين' },
   { value: 'expenses_report', label: 'تقرير المصروفات الخاصة' },
+];
+
+const REPORT_SECTIONS = [
+  { value: 'operations', label: 'العمليات', icon: '📋' },
+  { value: 'payments', label: 'المدفوعات', icon: '💰' },
+  { value: 'balance', label: 'الرصيد', icon: '📊' },
 ];
 
 const ReportBuilder = ({
@@ -165,22 +136,6 @@ const ReportBuilder = ({
     toast.success('تم حفظ إعدادات التقرير بنجاح');
   };
 
-  const handleQuickSelect = (type) => {
-    switch (type) {
-      case 'all':
-        onConfigUpdate('selectedTeachers', teachers.map(t => t.id));
-        break;
-      case 'none':
-        onConfigUpdate('selectedTeachers', []);
-        break;
-      case 'first10':
-        onConfigUpdate('selectedTeachers', teachers.slice(0, 10).map(t => t.id));
-        break;
-      default:
-        break;
-    }
-  };
-
   const setDateRange = (range) => {
     const today = new Date();
     let from, to;
@@ -197,11 +152,6 @@ const ReportBuilder = ({
         from = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
         to = new Date().toISOString().split('T')[0];
         break;
-      case 'quarter':
-        const quarter = Math.floor(today.getMonth() / 3);
-        from = new Date(today.getFullYear(), quarter * 3, 1).toISOString().split('T')[0];
-        to = new Date().toISOString().split('T')[0];
-        break;
       case 'year':
         from = new Date(today.getFullYear(), 0, 1).toISOString().split('T')[0];
         to = new Date().toISOString().split('T')[0];
@@ -214,56 +164,55 @@ const ReportBuilder = ({
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4">
       {/* إحصائيات سريعة */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4 rounded-xl">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="bg-blue-500 text-white p-3 rounded-lg">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-medium opacity-90">إجمالي المدرسين</h3>
-              <p className="text-2xl font-bold">{teachers.length}</p>
+              <h3 className="text-xs opacity-90">إجمالي المدرسين</h3>
+              <p className="text-xl font-bold">{teachers.length}</p>
             </div>
-            <FiUsers className="text-3xl opacity-80" />
+            <FiUsers className="text-2xl opacity-80" />
           </div>
         </div>
         
-        <div className="bg-gradient-to-r from-green-500 to-green-600 text-white p-4 rounded-xl">
+        <div className="bg-green-500 text-white p-3 rounded-lg">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-medium opacity-90">المدرسين المختارين</h3>
-              <p className="text-2xl font-bold">{reportConfig.selectedTeachers?.length || 0}</p>
+              <h3 className="text-xs opacity-90">المدرسين المختارين</h3>
+              <p className="text-xl font-bold">{reportConfig.selectedTeachers?.length || 0}</p>
             </div>
-            <FiTrendingUp className="text-3xl opacity-80" />
+            <FiTrendingUp className="text-2xl opacity-80" />
           </div>
         </div>
         
-        <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white p-4 rounded-xl">
+        <div className="bg-purple-500 text-white p-3 rounded-lg">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-medium opacity-90">نوع التقرير</h3>
-              <p className="text-lg font-bold truncate">
+              <h3 className="text-xs opacity-90">نوع التقرير</h3>
+              <p className="text-sm font-bold truncate">
                 {REPORT_TYPES.find(t => t.value === reportConfig.type)?.label || 'غير محدد'}
               </p>
             </div>
-            <FiFileText className="text-3xl opacity-80" />
+            <FiFileText className="text-2xl opacity-80" />
           </div>
         </div>
       </div>
 
-      {/* القسم الأول: إعدادات التقرير الأساسية */}
+      {/* القسم الأساسي */}
       <Section 
         title="إعدادات التقرير الأساسية" 
         icon={<FiFileText />}
         isCollapsed={collapsedSections.basic}
         onToggle={() => toggleSection('basic')}
       >
-        {/* نوع التقرير */}
         <div>
-          <label className="font-semibold text-gray-700 mb-2 block">نوع التقرير</label>
+          <label className="font-medium text-gray-700 mb-2 block text-sm">نوع التقرير</label>
           <select
             value={reportConfig.type || 'teacher_detailed'}
             onChange={(e) => onConfigUpdate('type', e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 transition"
+            className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
           >
             {REPORT_TYPES.map(type => (
               <option key={type.value} value={type.value}>{type.label}</option>
@@ -271,48 +220,62 @@ const ReportBuilder = ({
           </select>
         </div>
         
-        {/* عنوان التقرير */}
         <div>
-          <label className="font-semibold text-gray-700 mb-2 block">عنوان التقرير</label>
+          <label className="font-medium text-gray-700 mb-2 block text-sm">عنوان التقرير</label>
           <input
             type="text"
-            placeholder="مثال: التقرير المالي للربع الأول"
+            placeholder="مثال: التقرير الشهري"
             value={reportConfig.title || ''}
             onChange={(e) => onConfigUpdate('title', e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 transition"
+            className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
           />
         </div>
 
-        {/* اختيار المدرسين - مخفي لتقارير المصروفات */}
-        {!['expenses_report', 'expenses_detailed'].includes(reportConfig.type) && (
+        {/* اختيار الأقسام المطلوبة */}
+        <div className="md:col-span-2">
+          <label className="font-medium text-gray-700 mb-2 block text-sm">الأقسام المطلوبة في التقرير</label>
+          <div className="grid grid-cols-3 gap-3">
+            {REPORT_SECTIONS.map(section => (
+              <label key={section.value} className="flex items-center p-2 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={reportConfig.includedSections?.[section.value] === true || 
+                          (reportConfig.includedSections?.[section.value] === undefined && true)}
+                  onChange={(e) => {
+                    const newSections = {
+                      ...reportConfig.includedSections,
+                      [section.value]: e.target.checked
+                    };
+                    onConfigUpdate('includedSections', newSections);
+                  }}
+                  className="ml-2"
+                />
+                <span className="text-sm">{section.icon} {section.label}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        {/* اختيار المدرسين */}
+        {reportConfig.type !== 'expenses_report' && (
           <div className="md:col-span-2">
-            <label className="font-semibold text-gray-700 mb-2 block">تحديد المدرسين</label>
-            
-            {/* أزرار الاختيار السريع */}
-            <div className="flex flex-wrap gap-2 mb-3">
+            <label className="font-medium text-gray-700 mb-2 block text-sm">تحديد المدرسين</label>
+            <div className="flex flex-wrap gap-2 mb-2">
               <button
                 type="button"
-                onClick={() => handleQuickSelect('all')}
-                className="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-full hover:bg-blue-200 transition"
+                onClick={() => onConfigUpdate('selectedTeachers', teachers.map(t => t.id))}
+                className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
               >
-                تحديد الكل ({teachers.length})
+                تحديد الكل
               </button>
               <button
                 type="button"
-                onClick={() => handleQuickSelect('none')}
-                className="px-3 py-1 text-xs bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200 transition"
+                onClick={() => onConfigUpdate('selectedTeachers', [])}
+                className="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
               >
                 إلغاء التحديد
               </button>
-              <button
-                type="button"
-                onClick={() => handleQuickSelect('first10')}
-                className="px-3 py-1 text-xs bg-green-100 text-green-700 rounded-full hover:bg-green-200 transition"
-              >
-                أول 10 مدرسين
-              </button>
             </div>
-
             <MultiSelect
               options={teacherOptions}
               value={reportConfig.selectedTeachers || []}
@@ -322,393 +285,171 @@ const ReportBuilder = ({
           </div>
         )}
 
-        {/* رسالة للمصروفات */}
-        {['expenses_report', 'expenses_detailed'].includes(reportConfig.type) && (
-          <div className="md:col-span-2 bg-orange-50 border-2 border-orange-200 rounded-lg p-4">
-            <div className="flex items-center gap-3">
-              <span className="text-3xl">💰</span>
-              <div>
-                <h4 className="font-bold text-orange-800">تقرير المصروفات الخاصة</h4>
-                <p className="text-sm text-orange-700">
-                  هذا التقرير يعرض المصروفات الخاصة بالنظام ولا يحتاج لتحديد مدرسين معينين.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* نطاق التاريخ */}
         <div className="md:col-span-2">
-          <label className="font-semibold text-gray-700 mb-2 block">
+          <label className="font-medium text-gray-700 mb-2 block text-sm">
             <FiCalendar className="inline ml-1" />
             نطاق التاريخ
           </label>
           
-          {/* أزرار الفترات السريعة */}
-          <div className="flex flex-wrap gap-2 mb-3">
-            <button
-              type="button"
-              onClick={() => setDateRange('today')}
-              className="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-full hover:bg-blue-200 transition"
-            >
-              اليوم
-            </button>
-            <button
-              type="button"
-              onClick={() => setDateRange('week')}
-              className="px-3 py-1 text-xs bg-green-100 text-green-700 rounded-full hover:bg-green-200 transition"
-            >
-              آخر أسبوع
-            </button>
-            <button
-              type="button"
-              onClick={() => setDateRange('month')}
-              className="px-3 py-1 text-xs bg-purple-100 text-purple-700 rounded-full hover:bg-purple-200 transition"
-            >
-              هذا الشهر
-            </button>
-            <button
-              type="button"
-              onClick={() => setDateRange('quarter')}
-              className="px-3 py-1 text-xs bg-orange-100 text-orange-700 rounded-full hover:bg-orange-200 transition"
-            >
-              هذا الربع
-            </button>
-            <button
-              type="button"
-              onClick={() => setDateRange('year')}
-              className="px-3 py-1 text-xs bg-red-100 text-red-700 rounded-full hover:bg-red-200 transition"
-            >
-              هذا العام
-            </button>
+          <div className="flex flex-wrap gap-2 mb-2">
+            {['today', 'week', 'month', 'year'].map(range => (
+              <button
+                key={range}
+                type="button"
+                onClick={() => setDateRange(range)}
+                className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
+              >
+                {range === 'today' ? 'اليوم' : 
+                 range === 'week' ? 'آخر أسبوع' : 
+                 range === 'month' ? 'هذا الشهر' : 'هذا العام'}
+              </button>
+            ))}
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-sm text-gray-600 mb-1 block">من تاريخ</label>
-              <input
-                type="date"
-                value={reportConfig.dateRange?.from || ''}
-                onChange={(e) => onConfigUpdate('dateRange', { 
-                  ...reportConfig.dateRange, 
-                  from: e.target.value 
-                })}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div>
-              <label className="text-sm text-gray-600 mb-1 block">إلى تاريخ</label>
-              <input
-                type="date"
-                value={reportConfig.dateRange?.to || ''}
-                onChange={(e) => onConfigUpdate('dateRange', { 
-                  ...reportConfig.dateRange, 
-                  to: e.target.value 
-                })}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
+          <div className="grid grid-cols-2 gap-2">
+            <input
+              type="date"
+              value={reportConfig.dateRange?.from || ''}
+              onChange={(e) => onConfigUpdate('dateRange', { 
+                ...reportConfig.dateRange, 
+                from: e.target.value 
+              })}
+              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+            />
+            <input
+              type="date"
+              value={reportConfig.dateRange?.to || ''}
+              onChange={(e) => onConfigUpdate('dateRange', { 
+                ...reportConfig.dateRange, 
+                to: e.target.value 
+              })}
+              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+            />
           </div>
         </div>
       </Section>
 
-      {/* القسم الثاني: خيارات التصفية */}
+      {/* القسم الثاني: الفلاتر */}
       <Section 
-        title="خيارات التصفية المتقدمة" 
+        title="خيارات التصفية" 
         icon={<FiFilter />}
         isCollapsed={collapsedSections.filters}
         onToggle={() => toggleSection('filters')}
       >
-        {/* تضمين البيانات */}
-        <div className="md:col-span-2">
-          <label className="font-semibold text-gray-700 mb-3 block">تضمين البيانات</label>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                id="includeOperations"
-                checked={reportConfig.includeOperations !== false}
-                onChange={(e) => onConfigUpdate('includeOperations', e.target.checked)}
-                className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-              />
-              <label htmlFor="includeOperations" className="mr-3 text-gray-700">
-                العمليات والمعاملات
-              </label>
-            </div>
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                id="includePayments"
-                checked={reportConfig.includePayments !== false}
-                onChange={(e) => onConfigUpdate('includePayments', e.target.checked)}
-                className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-              />
-              <label htmlFor="includePayments" className="mr-3 text-gray-700">
-                المدفوعات
-              </label>
-            </div>
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                id="includeExpenses"
-                checked={reportConfig.includeExpenses === true}
-                onChange={(e) => onConfigUpdate('includeExpenses', e.target.checked)}
-                className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-              />
-              <label htmlFor="includeExpenses" className="mr-3 text-gray-700">
-                المصروفات الخاصة
-              </label>
-            </div>
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                id="includeFinancialSummary"
-                checked={reportConfig.includeFinancialSummary !== false}
-                onChange={(e) => onConfigUpdate('includeFinancialSummary', e.target.checked)}
-                className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-              />
-              <label htmlFor="includeFinancialSummary" className="mr-3 text-gray-700">
-                الملخص المالي
-              </label>
-            </div>
-          </div>
-        </div>
-
-        {/* فلاتر المصروفات */}
-        {(reportConfig.type === 'expenses_report' || reportConfig.includeExpenses) && (
-          <div className="md:col-span-2">
-            <label className="font-semibold text-gray-700 mb-3 block">
-              🏷️ فلاتر المصروفات
-            </label>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm text-gray-600 mb-1 block">فئة المصروف</label>
-                <select
-                  value={reportConfig.filters?.expenseCategory || ''}
-                  onChange={(e) => onFiltersUpdate('expenseCategory', e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">جميع الفئات</option>
-                  <option value="office_supplies">مستلزمات مكتبية</option>
-                  <option value="utilities">فواتير وخدمات</option>
-                  <option value="maintenance">صيانة</option>
-                  <option value="transportation">مواصلات</option>
-                  <option value="marketing">تسويق</option>
-                  <option value="equipment">معدات</option>
-                  <option value="other">أخرى</option>
-                </select>
-              </div>
-              <div>
-                <label className="text-sm text-gray-600 mb-1 block">طريقة الدفع</label>
-                <select
-                  value={reportConfig.filters?.expensePaymentMethod || ''}
-                  onChange={(e) => onFiltersUpdate('expensePaymentMethod', e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">جميع الطرق</option>
-                  <option value="cash">نقدي</option>
-                  <option value="bank_transfer">تحويل بنكي</option>
-                  <option value="credit_card">بطاقة ائتمان</option>
-                  <option value="check">شيك</option>
-                </select>
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4 mt-4">
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="onlyLargeExpenses"
-                  checked={reportConfig.filters?.onlyLargeExpenses || false}
-                  onChange={(e) => onFiltersUpdate('onlyLargeExpenses', e.target.checked)}
-                  className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                />
-                <label htmlFor="onlyLargeExpenses" className="mr-3 text-gray-700">
-                  المصروفات الكبيرة فقط (أكثر من 1000)
-                </label>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* فلاتر إضافية */}
-        <div className="flex items-center">
-          <input
-            type="checkbox"
-            id="hasDebts"
-            checked={reportConfig.filters?.hasDebts || false}
-            onChange={(e) => onFiltersUpdate('hasDebts', e.target.checked)}
-            className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-          />
-          <label htmlFor="hasDebts" className="mr-3 text-gray-700">
-            المدرسين أصحاب المديونيات فقط
-          </label>
-        </div>
-        
-        <div className="flex items-center">
-          <input
-            type="checkbox"
-            id="hasOperations"
-            checked={reportConfig.filters?.hasOperations || false}
-            onChange={(e) => onFiltersUpdate('hasOperations', e.target.checked)}
-            className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-          />
-          <label htmlFor="hasOperations" className="mr-3 text-gray-700">
-            المدرسين الذين لديهم عمليات فقط
-          </label>
-        </div>
-
-        {/* نطاق المبلغ */}
         <div>
-          <label className="font-semibold text-gray-700 mb-2 block">الحد الأدنى للمبلغ</label>
+          <label className="font-medium text-gray-700 mb-2 block text-sm">الحد الأدنى للمبلغ</label>
           <input
             type="number"
             placeholder="0"
             value={reportConfig.filters?.minAmount || ''}
             onChange={(e) => onFiltersUpdate('minAmount', e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
           />
         </div>
         
         <div>
-          <label className="font-semibold text-gray-700 mb-2 block">الحد الأقصى للمبلغ</label>
+          <label className="font-medium text-gray-700 mb-2 block text-sm">الحد الأقصى للمبلغ</label>
           <input
             type="number"
-            placeholder="لا يوجد حد أقصى"
+            placeholder="لا يوجد حد"
             value={reportConfig.filters?.maxAmount || ''}
             onChange={(e) => onFiltersUpdate('maxAmount', e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
           />
         </div>
+
+        <label className="flex items-center">
+          <input
+            type="checkbox"
+            checked={reportConfig.filters?.hasOperations || false}
+            onChange={(e) => onFiltersUpdate('hasOperations', e.target.checked)}
+            className="ml-2"
+          />
+          <span className="text-sm">المدرسين الذين لديهم عمليات فقط</span>
+        </label>
+
+        <label className="flex items-center">
+          <input
+            type="checkbox"
+            checked={reportConfig.filters?.hasDebts || false}
+            onChange={(e) => onFiltersUpdate('hasDebts', e.target.checked)}
+            className="ml-2"
+          />
+          <span className="text-sm">المدرسين أصحاب المديونيات فقط</span>
+        </label>
       </Section>
 
-      {/* القسم الثالث: إعدادات التنسيق */}
+      {/* القسم الثالث: التنسيق */}
       <Section 
-        title="إعدادات التنسيق والعرض" 
+        title="إعدادات العرض" 
         icon={<FiSettings />}
         isCollapsed={collapsedSections.formatting}
         onToggle={() => toggleSection('formatting')}
       >
-        {/* حجم الصفحة */}
         <div>
-          <label className="font-semibold text-gray-700 mb-2 block">حجم الصفحة</label>
+          <label className="font-medium text-gray-700 mb-2 block text-sm">حجم الصفحة</label>
           <select 
             value={reportConfig.formatting?.pageSize || 'A4'}
             onChange={(e) => onFormattingUpdate('pageSize', e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
           >
             <option value="A4">A4</option>
             <option value="Letter">Letter</option>
-            <option value="A3">A3</option>
           </select>
         </div>
         
-        {/* اتجاه الصفحة */}
         <div>
-          <label className="font-semibold text-gray-700 mb-2 block">اتجاه الصفحة</label>
-          <select 
-            value={reportConfig.formatting?.orientation || 'portrait'}
-            onChange={(e) => onFormattingUpdate('orientation', e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="portrait">طولي</option>
-            <option value="landscape">عرضي</option>
-          </select>
-        </div>
-
-        {/* حجم الخط */}
-        <div>
-          <label className="font-semibold text-gray-700 mb-2 block">حجم الخط</label>
-          <select 
-            value={reportConfig.formatting?.fontSize || 'medium'}
-            onChange={(e) => onFormattingUpdate('fontSize', e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="small">صغير</option>
-            <option value="medium">متوسط</option>
-            <option value="large">كبير</option>
-          </select>
-        </div>
-
-        {/* ترتيب البيانات */}
-        <div>
-          <label className="font-semibold text-gray-700 mb-2 block">ترتيب حسب</label>
+          <label className="font-medium text-gray-700 mb-2 block text-sm">ترتيب حسب</label>
           <select 
             value={reportConfig.sortBy || 'name'}
             onChange={(e) => onConfigUpdate('sortBy', e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
           >
             <option value="name">الاسم</option>
             <option value="debt">المديونية</option>
             <option value="operations_count">عدد العمليات</option>
-            <option value="total_amount">إجمالي المبلغ</option>
           </select>
         </div>
       </Section>
 
       {/* أزرار الإجراءات */}
-      <div className="bg-white p-6 rounded-2xl shadow-md border border-gray-100 mt-8">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          {/* زر الإنشاء */}
-          <div className="flex-grow">
-            <button
-              onClick={onGenerate}
-              disabled={isGenerating || (!reportConfig.selectedTeachers?.length && !['expenses_report', 'expenses_detailed'].includes(reportConfig.type))}
-              className="w-full lg:w-auto flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-bold py-3 px-6 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed transform hover:scale-105"
-            >
-              {isGenerating ? (
-                <>
-                  <FiLoader className="animate-spin" />
-                  <span>جاري الإنشاء...</span>
-                </>
-              ) : (
-                <>
-                  <FiEye />
-                  <span>إنشاء ومعاينة التقرير</span>
-                </>
-              )}
-            </button>
-            
-            {/* رسائل التحقق */}
-            {!['expenses_report', 'expenses_detailed'].includes(reportConfig.type) && !reportConfig.selectedTeachers?.length && (
-              <p className="text-red-500 text-sm mt-2 flex items-center gap-1">
-                <span>⚠️</span>
-                يرجى اختيار مدرس واحد على الأقل لإنشاء التقرير
-              </p>
+      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+          <button
+            onClick={onGenerate}
+            disabled={isGenerating || (!reportConfig.selectedTeachers?.length && reportConfig.type !== 'expenses_report')}
+            className="flex items-center justify-center gap-2 bg-blue-600 text-white font-medium py-2.5 px-4 rounded-lg hover:bg-blue-700 transition-all disabled:bg-gray-400 disabled:cursor-not-allowed"
+          >
+            {isGenerating ? (
+              <>
+                <FiLoader className="animate-spin" />
+                <span>جاري الإنشاء...</span>
+              </>
+            ) : (
+              <>
+                <FiEye />
+                <span>إنشاء التقرير</span>
+              </>
             )}
-            
-            {!['expenses_report', 'expenses_detailed'].includes(reportConfig.type) && reportConfig.selectedTeachers?.length > 0 && (
-              <p className="text-green-600 text-sm mt-2 flex items-center gap-1">
-                <span>✅</span>
-                تم اختيار {reportConfig.selectedTeachers.length} مدرس
-              </p>
-            )}
+          </button>
 
-            {['expenses_report', 'expenses_detailed'].includes(reportConfig.type) && (
-              <p className="text-blue-600 text-sm mt-2 flex items-center gap-1">
-                <span>💰</span>
-                تقرير المصروفات جاهز للإنشاء
-              </p>
-            )}
-          </div>
-
-          {/* حفظ الإعدادات */}
           {hasPermission && hasPermission('MANAGE_REPORTS') && (
-            <div className="flex-grow flex flex-col lg:flex-row items-center gap-2 border-t lg:border-t-0 lg:border-r border-gray-200 pt-4 lg:pt-0 lg:pr-4">
+            <div className="flex items-center gap-2">
               <input
                 type="text"
-                placeholder="اسم إعدادات التقرير للحفظ"
+                placeholder="اسم التقرير للحفظ"
                 value={saveName}
                 onChange={(e) => setSaveName(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 transition-all"
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm"
               />
               <button
                 onClick={handleSaveClick}
                 disabled={!saveName.trim()}
-                className="w-full lg:w-auto flex items-center justify-center gap-2 bg-gradient-to-r from-green-600 to-green-700 text-white font-bold py-3 px-4 rounded-lg hover:from-green-700 hover:to-green-800 transition-all disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed transform hover:scale-105"
+                className="flex items-center gap-2 bg-green-600 text-white font-medium py-2.5 px-4 rounded-lg hover:bg-green-700 transition-all disabled:bg-gray-400"
               >
                 <FiSave />
-                <span>حفظ الإعدادات</span>
+                <span>حفظ</span>
               </button>
             </div>
           )}
