@@ -10,6 +10,7 @@ import TeacherCard from '../components/Teachers/TeacherCard';
 import TeacherForm from '../components/Teachers/TeacherForm';
 import OperationForm from '../components/Teachers/OperationForm';
 import TeacherDetails from '../components/Teachers/TeacherDetails';
+import PaymentForm from '../components/Accounts/PaymentForm'; // <-- (1) إضافة استيراد جديد
 import SearchBar from '../components/Common/SearchBar';
 import LoadingSpinner from '../components/Common/LoadingSpinner';
 import Modal from '../components/Common/Modal';
@@ -19,7 +20,8 @@ import { searchInText, formatCurrency, isSmallScreen } from '../utils/helpers';
 import { MESSAGES } from '../utils/constants';
 
 const TeachersPage = () => {
-  const { state, teacherActions, operationActions, calculateTeacherDebt } = useAppContext();
+  // (2) إضافة paymentActions
+  const { state, teacherActions, operationActions, paymentActions, calculateTeacherDebt } = useAppContext();
   const { hasPermission } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   
@@ -33,6 +35,11 @@ const TeachersPage = () => {
   const [editingOperation, setEditingOperation] = useState(null);
   const [viewMode, setViewMode] = useState('cards');
   const [isMobile, setIsMobile] = useState(isSmallScreen());
+
+  // (3) إضافة حالات جديدة للمدفوعات
+  const [showPaymentForm, setShowPaymentForm] = useState(false);
+  const [editingPayment, setEditingPayment] = useState(null);
+
 
   // مراقبة تغيير حجم الشاشة
  useEffect(() => {
@@ -157,6 +164,7 @@ const TeachersPage = () => {
     setSelectedTeacher(teacher);
     setEditingOperation(null);
     setShowOperationForm(true);
+    setShowTeacherDetails(false); // Close details modal if open
   };
 
   const handleEditOperation = (operation) => {
@@ -164,6 +172,7 @@ const TeachersPage = () => {
     setSelectedTeacher(teacher);
     setEditingOperation(operation);
     setShowOperationForm(true);
+    setShowTeacherDetails(false); // Close details modal
   };
 
   const handleDeleteOperation = async (operation) => {
@@ -177,43 +186,79 @@ const TeachersPage = () => {
     }
   };
 
-const handleSaveOperation = async (teacherIdOrData, operationData) => {
-  try {
-    if (editingOperation) {
-      // في حالة التعديل، البيانات في المعاملة الأولى
-      const updateData = typeof teacherIdOrData === 'string' ? operationData : teacherIdOrData;
-      await operationActions.updateOperation(editingOperation.id, updateData);
-      toast.success(MESSAGES.SUCCESS.OPERATION_UPDATED);
-    } else {
-      // في حالة الإضافة، تحديد teacherId والبيانات
-      let teacherId, data;
-      
-      if (typeof teacherIdOrData === 'string') {
-        // تم تمرير teacherId منفصل
-        teacherId = teacherIdOrData;
-        data = operationData;
+  const handleSaveOperation = async (teacherIdOrData, operationData) => {
+    try {
+      if (editingOperation) {
+        const updateData = typeof teacherIdOrData === 'string' ? operationData : teacherIdOrData;
+        await operationActions.updateOperation(editingOperation.id, updateData);
+        toast.success(MESSAGES.SUCCESS.OPERATION_UPDATED);
       } else {
-        // تم تمرير البيانات مع teacherId داخلها (الطريقة القديمة)
-        teacherId = selectedTeacher?.id;
-        data = teacherIdOrData;
+        let teacherId, data;
+        if (typeof teacherIdOrData === 'string') {
+          teacherId = teacherIdOrData;
+          data = operationData;
+        } else {
+          teacherId = selectedTeacher?.id;
+          data = teacherIdOrData;
+        }
+        if (!teacherId) {
+          toast.error('يجب اختيار مدرس');
+          return;
+        }
+        await operationActions.addOperation(teacherId, data);
+        toast.success(MESSAGES.SUCCESS.OPERATION_ADDED);
       }
-
-      if (!teacherId) {
-        toast.error('يجب اختيار مدرس');
-        return;
-      }
-
-      await operationActions.addOperation(teacherId, data);
-      toast.success(MESSAGES.SUCCESS.OPERATION_ADDED);
+      setShowOperationForm(false);
+      setEditingOperation(null);
+      setSelectedTeacher(null);
+    } catch (error) {
+      toast.error(error.message || MESSAGES.ERROR.GENERAL);
     }
-    
-    setShowOperationForm(false);
-    setEditingOperation(null);
-    setSelectedTeacher(null);
-  } catch (error) {
-    toast.error(error.message || MESSAGES.ERROR.GENERAL);
-  }
-};
+  };
+
+  // (4) إضافة وظائف التحكم في المدفوعات
+  const handleAddPayment = (teacher) => {
+    setSelectedTeacher(teacher);
+    setEditingPayment(null);
+    setShowPaymentForm(true);
+    setShowTeacherDetails(false); // Close details modal
+  };
+
+  const handleEditPayment = (payment) => {
+    const teacher = state.teachers.find(t => t.id === payment.teacherId);
+    setSelectedTeacher(teacher);
+    setEditingPayment(payment);
+    setShowPaymentForm(true);
+    setShowTeacherDetails(false); // Close details modal
+  };
+
+  const handleDeletePayment = async (payment) => {
+    if (window.confirm(MESSAGES.CONFIRM.DELETE_PAYMENT)) {
+      try {
+        await paymentActions.deletePayment(payment.id);
+        toast.success(MESSAGES.SUCCESS.PAYMENT_DELETED);
+      } catch (error) {
+        toast.error(error.message || MESSAGES.ERROR.GENERAL);
+      }
+    }
+  };
+
+  const handleSavePayment = async (paymentData) => {
+    try {
+      if (editingPayment) {
+        await paymentActions.updatePayment(editingPayment.id, paymentData);
+        toast.success(MESSAGES.SUCCESS.PAYMENT_UPDATED);
+      } else {
+        await paymentActions.addPayment(selectedTeacher?.id, paymentData);
+        toast.success(MESSAGES.SUCCESS.PAYMENT_ADDED);
+      }
+      setShowPaymentForm(false);
+      setEditingPayment(null);
+      setSelectedTeacher(null);
+    } catch (error) {
+      toast.error(error.message || MESSAGES.ERROR.GENERAL);
+    }
+  };
 
   // عرض تفاصيل المدرس
   const handleViewDetails = (teacher) => {
@@ -226,8 +271,10 @@ const handleSaveOperation = async (teacherIdOrData, operationData) => {
     setShowTeacherForm(false);
     setShowOperationForm(false);
     setShowTeacherDetails(false);
+    setShowPaymentForm(false);
     setEditingTeacher(null);
     setEditingOperation(null);
+    setEditingPayment(null);
     setSelectedTeacher(null);
   };
 
@@ -243,7 +290,6 @@ const handleSaveOperation = async (teacherIdOrData, operationData) => {
     <div className="min-h-screen bg-gray-50 pb-24">
       <div className="container mx-auto px-4 py-6 max-w-7xl">
         
-        {/* رأس الصفحة */}
         <div className="mb-8">
           <div className="flex flex-col gap-4">
             <div className="text-center">
@@ -265,7 +311,6 @@ const handleSaveOperation = async (teacherIdOrData, operationData) => {
           </div>
         </div>
 
-        {/* الإحصائيات السريعة */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-6 rounded-2xl shadow-lg">
             <div className="flex items-center justify-between">
@@ -323,7 +368,6 @@ const handleSaveOperation = async (teacherIdOrData, operationData) => {
           </div>
         </div>
 
-        {/* شريط البحث */}
         <div className="mb-6">
           <SearchBar
             value={searchTerm}
@@ -333,7 +377,6 @@ const handleSaveOperation = async (teacherIdOrData, operationData) => {
           />
         </div>
 
-        {/* عرض النتائج */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-bold text-gray-800">
@@ -369,8 +412,7 @@ const handleSaveOperation = async (teacherIdOrData, operationData) => {
             )}
           </div>
         </div>
-
-        {/* قائمة المدرسين */}
+        
         <div className="mb-8">
           {filteredTeachers.length === 0 && searchTerm ? (
             <div className="text-center py-16 bg-white rounded-2xl shadow-lg">
@@ -527,7 +569,6 @@ const handleSaveOperation = async (teacherIdOrData, operationData) => {
 
         {/* النوافذ المنبثقة */}
         
-        {/* نافذة إضافة/تعديل مدرس */}
         <Modal
           isOpen={showTeacherForm}
           onClose={handleCloseModals}
@@ -542,24 +583,38 @@ const handleSaveOperation = async (teacherIdOrData, operationData) => {
           />
         </Modal>
 
-        {/* نافذة إضافة/تعديل عملية */}
         <Modal
           isOpen={showOperationForm}
           onClose={handleCloseModals}
           title={editingOperation ? '✏️ تعديل العملية' : `➕ إضافة عملية جديدة${selectedTeacher ? ` - ${selectedTeacher.name}` : ''}`}
           size="large"
         >
-<OperationForm
-  operation={editingOperation}
-  teacher={selectedTeacher}
-  teachers={state.teachers} // إضافة هذا السطر
-  onSave={handleSaveOperation}
-  onCancel={handleCloseModals}
-  loading={state.loading.operations}
-/>
+          <OperationForm
+            operation={editingOperation}
+            teacher={selectedTeacher}
+            teachers={state.teachers}
+            onSave={handleSaveOperation}
+            onCancel={handleCloseModals}
+            loading={state.loading.operations}
+          />
         </Modal>
 
-        {/* نافذة تفاصيل المدرس */}
+        <Modal
+          isOpen={showPaymentForm}
+          onClose={handleCloseModals}
+          title={editingPayment ? '✏️ تعديل الدفعة' : `💳 تسجيل دفعة جديدة`}
+          size="medium"
+        >
+          <PaymentForm
+            payment={editingPayment}
+            teacher={selectedTeacher}
+            teachers={state.teachers}
+            onSave={handleSavePayment}
+            onCancel={handleCloseModals}
+            loading={state.loading.payments}
+          />
+        </Modal>
+
         <Modal
           isOpen={showTeacherDetails}
           onClose={handleCloseModals}
@@ -571,6 +626,9 @@ const handleSaveOperation = async (teacherIdOrData, operationData) => {
             onAddOperation={handleAddOperation}
             onEditOperation={handleEditOperation}
             onDeleteOperation={handleDeleteOperation}
+            onAddPayment={handleAddPayment}
+            onEditPayment={handleEditPayment}
+            onDeletePayment={handleDeletePayment}
           />
         </Modal>
       </div>
@@ -578,7 +636,6 @@ const handleSaveOperation = async (teacherIdOrData, operationData) => {
   );
 };
 
-// مكون بطاقة المدرس المحسنة للهواتف المحمولة
 const TeacherCardMobile = ({ 
   teacher, 
   onEdit, 
@@ -620,9 +677,8 @@ const TeacherCardMobile = ({
   };
 
   return (
-<div className="relative bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-visible border-2 border-gray-100">
+    <div className="relative bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-visible border-2 border-gray-100">
       
-      {/* رأس البطاقة مع الخلفية المتدرجة */}
       <div className={`bg-gradient-to-r ${getStatusColor()} p-6 text-white relative`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -658,10 +714,8 @@ const TeacherCardMobile = ({
         </div>
       </div>
 
-      {/* محتوى البطاقة */}
       <div className="p-6">
         
-        {/* الإحصائيات */}
         <div className="grid grid-cols-2 gap-4 mb-6">
           <div className="text-center p-4 bg-blue-50 rounded-xl border border-blue-200">
             <div className="text-2xl font-bold text-blue-700">{teacher.operationsCount}</div>
@@ -684,7 +738,6 @@ const TeacherCardMobile = ({
           )}
         </div>
 
-        {/* معلومات إضافية */}
         {(teacher.email || teacher.address) && (
           <div className="mb-6 space-y-2">
             {teacher.email && (
@@ -702,7 +755,6 @@ const TeacherCardMobile = ({
           </div>
         )}
 
-        {/* أزرار التحكم */}
         <div className="flex gap-3">
           <button
             onClick={() => onAddOperation(teacher)}
@@ -712,22 +764,22 @@ const TeacherCardMobile = ({
             إضافة عملية
           </button>
 
-<button
-  onClick={() => onViewDetails(teacher)}
-  className="w-12 h-12 flex items-center justify-center bg-blue-100 hover:bg-blue-200 text-blue-800 font-bold rounded-xl transition-all duration-200"
-  title="عرض التفاصيل"
->
-  👁️
-</button>
-          {/* قائمة الخيارات */}
+          <button
+            onClick={() => onViewDetails(teacher)}
+            className="w-12 h-12 flex items-center justify-center bg-blue-100 hover:bg-blue-200 text-blue-800 font-bold rounded-xl transition-all duration-200"
+            title="عرض التفاصيل"
+          >
+            👁️
+          </button>
+          
           <div className="relative">
            <button
-  onClick={() => setShowMenu(!showMenu)}
-  className="w-12 h-12 flex items-center justify-center bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold rounded-xl transition-all duration-200"
-  title="المزيد"
->
-  ⋮
-</button>
+              onClick={() => setShowMenu(!showMenu)}
+              className="w-12 h-12 flex items-center justify-center bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold rounded-xl transition-all duration-200"
+              title="المزيد"
+            >
+              ⋮
+            </button>
 
             {showMenu && (
               <>
@@ -736,7 +788,7 @@ const TeacherCardMobile = ({
                   onClick={() => setShowMenu(false)}
                 />
                 
-                <div className="absolute left-0 mt-2 w-48 bg-white border-2 border-gray-200 rounded-xl shadow-xl z-20">
+                <div className="absolute left-0 bottom-full mb-2 w-48 bg-white border-2 border-gray-200 rounded-xl shadow-xl z-20">
                   <button
                     onClick={() => handleMenuClick('edit')}
                     className="w-full text-right px-4 py-3 text-sm hover:bg-blue-50 flex items-center gap-3 font-medium text-blue-700 rounded-t-xl transition-colors"
@@ -777,7 +829,6 @@ const TeacherCardMobile = ({
         </div>
       </div>
 
-      {/* مؤشرات حالة */}
       {hasPermission(PERMISSIONS.VIEW_FINANCIAL_DATA) && teacher.debt > 1000 && (
         <div className="absolute top-3 right-3 bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold animate-pulse">
           مديونية عالية
