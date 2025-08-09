@@ -279,6 +279,25 @@ export const generateReportHTML = (config, data, stats) => {
             size: ${config.formatting?.pageSize || 'A4'};
           }
         }
+          .header {
+  text-align: center;
+  border-bottom: 2px solid #e5e7eb;
+  padding-bottom: 20px;
+  margin-bottom: 20px;
+  position: relative; /* مهم عشان نحدد مكان اللوجو */
+}
+
+.logo-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.company-logo {
+  max-height: 80px;
+  max-width: 150px;
+  object-fit: contain;
+}
       </style>
     </head>
     <body>
@@ -288,14 +307,17 @@ export const generateReportHTML = (config, data, stats) => {
       </div>
 
       <div class="container">
-        <div class="header">
-          <div class="report-title">${config.title}</div>
-          <div class="meta-info">
-            <span>📅 ${formatDate(new Date())}</span>
-            ${config.dateRange?.from ? `<span>📊 ${formatDate(config.dateRange.from)} - ${formatDate(config.dateRange.to)}</span>` : ''}
-            <span>👥 ${stats.teachersCount} مدرس</span>
-          </div>
-        </div>
+<div class="header">
+  <div class="logo-container">
+    <img src="${config.logoUrl || 'https://i.postimg.cc/664vwM9j/logo.png'}" alt="Logo" class="company-logo">
+  </div>
+  <div class="report-title">${config.title}</div>
+  <div class="meta-info">
+    <span>📅 ${formatDate(new Date())}</span>
+    ${config.dateRange?.from ? `<span>📊 ${formatDate(config.dateRange.from)} - ${formatDate(config.dateRange.to)}</span>` : ''}
+    <span>👥 ${stats.teachersCount} مدرس</span>
+  </div>
+</div>
 
         <div class="stats-grid">
           <div class="stat-card">

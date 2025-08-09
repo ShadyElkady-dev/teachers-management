@@ -3,8 +3,14 @@ import { FiFilter, FiSettings, FiFileText, FiSave, FiEye, FiLoader, FiCalendar, 
 import toast from 'react-hot-toast';
 
 // مكون متعدد الاختيار
+// مكون متعدد الاختيار المطور مع شريط بحث
 const MultiSelect = ({ options, value, onChange, placeholder }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const filteredOptions = options.filter(option => 
+    option.label.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const toggleOption = (optionValue) => {
     const newValue = value.includes(optionValue)
@@ -21,14 +27,39 @@ const MultiSelect = ({ options, value, onChange, placeholder }) => {
         className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 transition text-right flex items-center justify-between bg-white"
       >
         <span className="text-gray-700 truncate">
-          {value.length === 0 ? placeholder : `تم اختيار ${value.length} عنصر`}
+          {value.length === 0 ? placeholder : `تم اختيار ${value.length} مدرس`}
         </span>
         <FiChevronDown className={`transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
       
       {isOpen && (
-        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-          <div className="p-2 border-b border-gray-200 flex gap-2">
+        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg">
+          <div className="p-2 border-b border-gray-200">
+            <input
+              type="text"
+              placeholder="ابحث عن مدرس..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+            />
+          </div>
+          <div className="max-h-60 overflow-y-auto">
+            {filteredOptions.map(option => (
+              <label
+                key={option.value}
+                className="flex items-center p-2 hover:bg-gray-50 cursor-pointer"
+              >
+                <input
+                  type="checkbox"
+                  checked={value.includes(option.value)}
+                  onChange={() => toggleOption(option.value)}
+                  className="ml-2"
+                />
+                <span className="text-gray-700">{option.label}</span>
+              </label>
+            ))}
+          </div>
+          <div className="p-2 border-t border-gray-200 flex gap-2">
             <button
               type="button"
               onClick={() => onChange(options.map(opt => opt.value))}
@@ -44,29 +75,16 @@ const MultiSelect = ({ options, value, onChange, placeholder }) => {
               إلغاء التحديد
             </button>
           </div>
-          {options.map(option => (
-            <label
-              key={option.value}
-              className="flex items-center p-2 hover:bg-gray-50 cursor-pointer"
-            >
-              <input
-                type="checkbox"
-                checked={value.includes(option.value)}
-                onChange={() => toggleOption(option.value)}
-                className="ml-2"
-              />
-              <span className="text-gray-700">{option.label}</span>
-            </label>
-          ))}
         </div>
       )}
     </div>
   );
 };
 
+
 // مكون القسم
 const Section = ({ title, icon, children, isCollapsed, onToggle }) => (
-  <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-4 overflow-hidden">
+  <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-4">
     <div 
       className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 transition-colors"
       onClick={onToggle}
