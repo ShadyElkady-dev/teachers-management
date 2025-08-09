@@ -59,7 +59,8 @@ export const validateEmail = (email) => {
 
 // التحقق من صحة رقم الهاتف المصري
 export const validatePhoneNumber = (phone) => {
-  const phoneRegex = /^(\+20|0)?1[0-2]\d{8}$/;
+  if (!phone || phone.trim() === '') return true; // اختياري، يسمح بتركه فارغًا
+  const phoneRegex = /^(010|011|012|015)\d{8}$/;
   return phoneRegex.test(phone);
 };
 
