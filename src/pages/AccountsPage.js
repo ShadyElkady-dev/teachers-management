@@ -26,8 +26,8 @@ const AccountsPage = () => {
   const [showAccountDetails, setShowAccountDetails] = useState(false);
   const [editingPayment, setEditingPayment] = useState(null);
   const [filterType, setFilterType] = useState('all'); // all, debts, paid
-  const [sortBy, setSortBy] = useState('debt'); // debt, name, lastPayment
-  const [sortOrder, setSortOrder] = useState('desc'); // asc, desc
+  const [sortBy, setSortBy] = useState('name'); // <-- تم التعديل هنا
+  const [sortOrder, setSortOrder] = useState('asc');  // <-- تم التعديل هنا
   const [isMobile, setIsMobile] = useState(isSmallScreen());
 
   // مراقبة تغيير حجم الشاشة
@@ -357,8 +357,8 @@ const AccountsPage = () => {
                   onClick={() => {
                     setSearchTerm('');
                     setFilterType('all');
-                    setSortBy('debt');
-                    setSortOrder('desc');
+                    setSortBy('name');
+                    setSortOrder('asc');
                   }}
                   className="px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold rounded-xl transition-all duration-200"
                 >

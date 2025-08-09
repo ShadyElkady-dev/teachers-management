@@ -14,9 +14,7 @@ export const OPERATION_TYPES = [
 export const EXPENSE_TYPES = [
   { value: 'paper', label: 'ورق', color: 'bg-blue-100' },
   { value: 'ink', label: 'أحبار', color: 'bg-purple-100' },
-  { value: 'toner', label: 'تونر', color: 'bg-gray-100' },
   { value: 'maintenance', label: 'صيانة', color: 'bg-red-100' },
-  { value: 'electricity', label: 'كهرباء', color: 'bg-yellow-100' },
   { value: 'rent', label: 'إيجار', color: 'bg-green-100' },
   { value: 'supplies', label: 'مستلزمات', color: 'bg-indigo-100' },
   { value: 'other', label: 'أخرى', color: 'bg-gray-100' }

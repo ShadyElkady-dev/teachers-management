@@ -372,7 +372,7 @@ const TeachersPage = () => {
           <SearchBar
             value={searchTerm}
             onChange={setSearchTerm}
-            placeholder="🔍 البحث في المدرسين (الاسم، الهاتف، المدرسة...)"
+            placeholder="🔍 البحث في المدرسين (الاسم، الهاتف)"
             className="text-lg"
           />
         </div>

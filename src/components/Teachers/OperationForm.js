@@ -60,29 +60,20 @@ const OperationForm = ({
   const validateForm = () => {
     const newErrors = {};
 
-    // اختيار المدرس
     if (!formData.teacherId) {
       newErrors.teacherId = 'اختيار المدرس مطلوب';
     }
-
-    // نوع العملية
     if (!formData.type) {
       newErrors.type = 'نوع العملية مطلوب';
     }
-
-    // النوع المخصص
     if (formData.type === 'other' && !formData.customType.trim()) {
       newErrors.customType = 'يرجى تحديد نوع العملية';
     }
-
-    // وصف العملية
     if (!formData.description.trim()) {
       newErrors.description = 'وصف العملية مطلوب';
     } else if (formData.description.trim().length < 3) {
       newErrors.description = 'وصف العملية يجب أن يكون أكثر من 3 أحرف';
     }
-
-    // المبلغ (للأدمن فقط)
     if (canViewPrices) {
       if (!formData.amount || parseFloat(formData.amount) <= 0) {
         newErrors.amount = 'المبلغ يجب أن يكون أكبر من صفر';
@@ -90,8 +81,6 @@ const OperationForm = ({
         newErrors.amount = 'المبلغ كبير جداً';
       }
     }
-
-    // تاريخ العملية
     if (!formData.operationDate) {
       newErrors.operationDate = 'تاريخ العملية مطلوب';
     } else {
@@ -110,109 +99,77 @@ const OperationForm = ({
     return Object.keys(newErrors).length === 0;
   };
 
-  // معالجة تغيير القيم
-  const handleChange = (field, value) => {
-    let processedValue = value;
+  // معالجة تغيير القيم (تم التعديل هنا)
+  const handleChange = (e) => {
+    const { name, value } = e.target;
     
-if (field === 'notes' || field === 'customType') {
-  processedValue = sanitizeText(value);
-} else if (field === 'amount') {
-  processedValue = Math.max(0, parseFloat(value) || 0);
-} else {
-  processedValue = value; // 👈 خليه يدخل زي ما هو لو description
-}
-
-    setFormData(prev => ({
-      ...prev,
-      [field]: processedValue
-    }));
-
-    // إزالة الخطأ عند تعديل الحقل
-    if (errors[field]) {
-      setErrors(prev => ({
-        ...prev,
-        [field]: ''
-      }));
-    }
-  };
-
-  // معالجة التركيز على الحقل
-const handleBlur = (field) => {
-  setTouched(prev => ({
-    ...prev,
-    [field]: true
-  }));
-
-  // 👇 فقط هنا ننظف description
-  if (field === 'description') {
-    setFormData(prev => ({
-      ...prev,
-      [field]: sanitizeText(prev[field])
-    }));
-  }
-};
-  // معالجة إرسال النموذج
-const handleSubmit = (e) => {
-  e.preventDefault();
-  
-  // تعيين جميع الحقول كـ touched
-  const allTouched = Object.keys(formData).reduce((acc, key) => {
-    acc[key] = true;
-    return acc;
-  }, {});
-  setTouched(allTouched);
-
-  if (validateForm()) {
-    // إعداد البيانات للإرسال
-    const teacherIdToSave = formData.teacherId || teacher?.id;
-    
-    // التأكد من وجود teacherId قبل الإرسال
-    if (!teacherIdToSave) {
-      setErrors({ teacherId: 'يجب اختيار مدرس' });
-      return;
-    }
-
-    const dataToSave = {
-      type: formData.type === 'other' ? formData.customType : formData.type,
-      description: formData.description,
-      operationDate: new Date(formData.operationDate),
-      notes: formData.notes,
-      quantity: 1 // قيمة افتراضية
-    };
-
-    // إضافة المبلغ للأدمن أو قيمة افتراضية للسكرتارية
-    if (canViewPrices) {
-      dataToSave.amount = parseFloat(formData.amount);
-      dataToSave.unitPrice = parseFloat(formData.amount);
+    // الأرقام فقط للمبلغ
+    if (name === 'amount') {
+        setFormData(prev => ({ ...prev, [name]: value.replace(/[^0-9.]/g, '') }));
     } else {
-      // للسكرتارية: قيم افتراضية
-      dataToSave.amount = 1;
-      dataToSave.unitPrice = 1;
+        setFormData(prev => ({ ...prev, [name]: value }));
     }
 
-    // تمرير teacherId بشكل منفصل
-    onSave(teacherIdToSave, dataToSave);
-  }
-};
-
-  // تحديد ما إذا كان الحقل يحتوي على خطأ
-  const hasError = (field) => {
-    return touched[field] && errors[field];
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: null }));
+    }
   };
 
-  // الحصول على نوع العملية المحدد
+  // معالجة التركيز على الحقل (تم التعديل هنا)
+  const handleBlur = (e) => {
+    const { name } = e.target;
+    setTouched(prev => ({ ...prev, [name]: true }));
+
+    // تنظيف النص عند الخروج من الحقل فقط
+    if (name === 'description' || name === 'notes' || name === 'customType') {
+        setFormData(prev => ({
+            ...prev,
+            [name]: sanitizeText(prev[name])
+        }));
+    }
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    
+    const allTouched = Object.keys(formData).reduce((acc, key) => ({...acc, [key]: true}), {});
+    setTouched(allTouched);
+
+    if (validateForm()) {
+        const teacherIdToSave = formData.teacherId || teacher?.id;
+        if (!teacherIdToSave) {
+            setErrors({ teacherId: 'يجب اختيار مدرس' });
+            return;
+        }
+
+        const dataToSave = {
+            type: formData.type === 'other' ? formData.customType.trim() : formData.type,
+            description: formData.description.trim(),
+            operationDate: new Date(formData.operationDate),
+            notes: formData.notes.trim(),
+            quantity: 1
+        };
+
+        if (canViewPrices) {
+            dataToSave.amount = parseFloat(formData.amount);
+            dataToSave.unitPrice = parseFloat(formData.amount);
+        } else {
+            dataToSave.amount = 1;
+            dataToSave.unitPrice = 1;
+        }
+
+        onSave(teacherIdToSave, dataToSave);
+    }
+  };
+
+  const hasError = (field) => touched[field] && errors[field];
   const selectedOperationType = OPERATION_TYPES.find(type => type.value === formData.type);
-
-  // الحصول على المدرس المحدد
   const selectedTeacher = teacher || teachers.find(t => t.id === formData.teacherId);
-
-  // إضافة الدالة
 
   return (
     <div className="p-6">
       <form onSubmit={handleSubmit} className="space-y-6">
         
-        {/* اختيار المدرس - يظهر فقط إذا لم يتم تمرير مدرس محدد */}
         {!teacher && (
           <div>
             <label htmlFor="teacherId" className="block text-sm font-semibold text-gray-800 mb-2">
@@ -220,9 +177,10 @@ const handleSubmit = (e) => {
             </label>
             <select
               id="teacherId"
+              name="teacherId"
               value={formData.teacherId}
-              onChange={(e) => handleChange('teacherId', e.target.value)}
-              onBlur={() => handleBlur('teacherId')}
+              onChange={handleChange}
+              onBlur={handleBlur}
               className={`w-full px-4 py-3 border-2 rounded-xl text-base font-medium bg-white transition-all duration-200 ${
                 hasError('teacherId') 
                   ? 'border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-100' 
@@ -245,7 +203,6 @@ const handleSubmit = (e) => {
           </div>
         )}
 
-        {/* معلومات المدرس */}
         {selectedTeacher && (
           <div className="bg-gradient-to-r from-blue-50 to-blue-100 border-2 border-blue-200 rounded-xl p-4 mb-6">
             <div className="flex items-center gap-3">
@@ -255,24 +212,21 @@ const handleSubmit = (e) => {
               <div>
                 <h3 className="font-bold text-blue-900 text-lg">{selectedTeacher.name}</h3>
                 <p className="text-blue-700 font-medium">📞 {selectedTeacher.phone}</p>
-                {selectedTeacher.school && (
-                  <p className="text-blue-600 text-sm">🏫 {selectedTeacher.school}</p>
-                )}
               </div>
             </div>
           </div>
         )}
 
-        {/* نوع العملية */}
         <div>
           <label htmlFor="type" className="block text-sm font-semibold text-gray-800 mb-2">
             نوع العملية <span className="text-red-500">*</span>
           </label>
           <select
             id="type"
+            name="type"
             value={formData.type}
-            onChange={(e) => handleChange('type', e.target.value)}
-            onBlur={() => handleBlur('type')}
+            onChange={handleChange}
+            onBlur={handleBlur}
             className={`w-full px-4 py-3 border-2 rounded-xl text-base font-medium bg-white transition-all duration-200 ${
               hasError('type') 
                 ? 'border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-100' 
@@ -293,7 +247,6 @@ const handleSubmit = (e) => {
           )}
         </div>
 
-        {/* النوع المخصص (يظهر عند اختيار "أخرى") */}
         {formData.type === 'other' && (
           <div>
             <label htmlFor="customType" className="block text-sm font-semibold text-gray-800 mb-2">
@@ -302,9 +255,10 @@ const handleSubmit = (e) => {
             <input
               type="text"
               id="customType"
+              name="customType"
               value={formData.customType}
-              onChange={(e) => handleChange('customType', e.target.value)}
-              onBlur={() => handleBlur('customType')}
+              onChange={handleChange}
+              onBlur={handleBlur}
               className={`w-full px-4 py-3 border-2 rounded-xl text-base font-medium bg-white transition-all duration-200 ${
                 hasError('customType') 
                   ? 'border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-100' 
@@ -321,16 +275,16 @@ const handleSubmit = (e) => {
           </div>
         )}
 
-        {/* وصف العملية */}
         <div>
           <label htmlFor="description" className="block text-sm font-semibold text-gray-800 mb-2">
             وصف العملية <span className="text-red-500">*</span>
           </label>
           <textarea
             id="description"
+            name="description"
             value={formData.description}
-            onChange={(e) => handleChange('description', e.target.value)}
-            onBlur={() => handleBlur('description')}
+            onChange={handleChange}
+            onBlur={handleBlur}
             className={`w-full px-4 py-3 border-2 rounded-xl text-base font-medium bg-white transition-all duration-200 resize-none ${
               hasError('description') 
                 ? 'border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-100' 
@@ -347,7 +301,6 @@ const handleSubmit = (e) => {
           )}
         </div>
 
-        {/* المبلغ الإجمالي - فقط للأدمن */}
         <PermissionGate 
           permission={PERMISSIONS.VIEW_OPERATION_PRICES}
           fallback={
@@ -367,19 +320,18 @@ const handleSubmit = (e) => {
               المبلغ الإجمالي (جنيه) <span className="text-red-500">*</span>
             </label>
             <input
-              type="number"
+              type="text"
               id="amount"
+              name="amount"
               value={formData.amount}
-              onChange={(e) => handleChange('amount', e.target.value)}
-              onBlur={() => handleBlur('amount')}
+              onChange={handleChange}
+              onBlur={handleBlur}
               className={`w-full px-4 py-3 border-2 rounded-xl text-base font-bold bg-white transition-all duration-200 ${
                 hasError('amount') 
                   ? 'border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-100' 
                   : 'border-gray-300 focus:border-green-500 focus:ring-4 focus:ring-green-100'
               }`}
               placeholder="0.00"
-              min="0"
-              step="0.01"
               disabled={loading}
             />
             {hasError('amount') && (
@@ -390,7 +342,6 @@ const handleSubmit = (e) => {
           </div>
         </PermissionGate>
 
-        {/* تاريخ العملية */}
         <div>
           <label htmlFor="operationDate" className="block text-sm font-semibold text-gray-800 mb-2">
             تاريخ العملية <span className="text-red-500">*</span>
@@ -398,9 +349,10 @@ const handleSubmit = (e) => {
           <input
             type="date"
             id="operationDate"
+            name="operationDate"
             value={formData.operationDate}
-            onChange={(e) => handleChange('operationDate', e.target.value)}
-            onBlur={() => handleBlur('operationDate')}
+            onChange={handleChange}
+            onBlur={handleBlur}
             className={`w-full px-4 py-3 border-2 rounded-xl text-base font-medium bg-white transition-all duration-200 ${
               hasError('operationDate') 
                 ? 'border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-100' 
@@ -415,16 +367,16 @@ const handleSubmit = (e) => {
           )}
         </div>
 
-        {/* ملاحظات */}
         <div>
           <label htmlFor="notes" className="block text-sm font-semibold text-gray-800 mb-2">
             ملاحظات
           </label>
           <textarea
             id="notes"
+            name="notes"
             value={formData.notes}
-            onChange={(e) => handleChange('notes', e.target.value)}
-            onBlur={() => handleBlur('notes')}
+            onChange={handleChange}
+            onBlur={handleBlur}
             className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl text-base font-medium bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 resize-none"
             placeholder="أي ملاحظات إضافية حول العملية"
             disabled={loading}
@@ -432,42 +384,6 @@ const handleSubmit = (e) => {
           />
         </div>
 
-        {/* ملخص العملية */}
-        <div className="bg-gradient-to-r from-green-50 to-green-100 border-2 border-green-200 rounded-xl p-4">
-          <h4 className="font-bold text-green-900 mb-3 text-lg">📋 ملخص العملية</h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-            <div>
-              <span className="text-green-700 font-medium">المدرس:</span>
-              <span className="font-bold mr-2 text-green-900">
-                {selectedTeacher?.name || 'لم يتم اختيار مدرس'}
-              </span>
-            </div>
-            <div>
-              <span className="text-green-700 font-medium">النوع:</span>
-              <span className="font-bold mr-2 text-green-900">
-                {formData.type === 'other' ? formData.customType : selectedOperationType?.label}
-              </span>
-            </div>
-            <div>
-              <span className="text-green-700 font-medium">التاريخ:</span>
-              <span className="font-bold mr-2 text-green-900">
-                {formData.operationDate ? new Date(formData.operationDate).toLocaleDateString('ar-EG') : '-'}
-              </span>
-            </div>
-            
-            {/* إظهار المبلغ فقط للأدمن */}
-            <PermissionGate permission={PERMISSIONS.VIEW_OPERATION_PRICES}>
-              <div>
-                <span className="text-green-700 font-medium">المبلغ الإجمالي:</span>
-                <span className="font-bold text-xl mr-2 text-green-900">
-                  {formData.amount ? `${parseFloat(formData.amount).toFixed(2)} جنيه` : '0.00 جنيه'}
-                </span>
-              </div>
-            </PermissionGate>
-          </div>
-        </div>
-
-        {/* أزرار التحكم */}
         <div className="flex gap-4 pt-6 border-t border-gray-200">
           <button
             type="button"
@@ -475,7 +391,6 @@ const handleSubmit = (e) => {
             disabled={loading}
             className="flex-1 px-6 py-4 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <span className="text-lg ml-2">❌</span>
             إلغاء
           </button>
           
@@ -496,34 +411,6 @@ const handleSubmit = (e) => {
               </>
             )}
           </button>
-        </div>
-
-        {/* معلومات مساعدة */}
-        <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-4">
-          <div className="flex items-start gap-3">
-            <span className="text-blue-500 text-2xl">💡</span>
-            <div className="text-sm text-blue-800">
-              <p className="font-bold mb-2">نصائح مهمة:</p>
-              <ul className="space-y-1 text-blue-700">
-                {canViewPrices ? (
-                  <>
-                    <li>• اختر المدرس المناسب أولاً</li>
-                    <li>• أدخل وصف واضح ومفصل للعملية</li>
-                    <li>• تأكد من دقة المبلغ المدخل</li>
-                    <li>• استخدم "أخرى" لإضافة نوع عملية جديد</li>
-                  </>
-                ) : (
-                  <>
-                    <li>• اختر المدرس المناسب أولاً</li>
-                    <li>• أدخل وصف واضح ومفصل للعملية</li>
-                    <li>• اختر نوع العملية المناسب</li>
-                    <li>• المبلغ سيُحسب تلقائياً من قبل النظام</li>
-                  </>
-                )}
-                <li>• استخدم الملاحظات لأي تفاصيل إضافية مهمة</li>
-              </ul>
-            </div>
-          </div>
         </div>
       </form>
     </div>
