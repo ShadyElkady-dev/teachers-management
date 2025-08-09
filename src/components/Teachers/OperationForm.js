@@ -1,9 +1,108 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth, PERMISSIONS } from '../../context/AuthContext';
 import { PermissionGate } from '../Common/ProtectedRoute';
-import { dateToInputValue, sanitizeText } from '../../utils/helpers';
 import { OPERATION_TYPES } from '../../utils/constants';
 import LoadingSpinner from '../Common/LoadingSpinner';
+import { dateToInputValue, sanitizeText, formatCurrency } from '../../utils/helpers';
+import toast from 'react-hot-toast';
+// ======== بداية كود الحاسبة الكامل (أضف هذا الجزء) =========
+const PriceCalculator = ({ onCopyToAmount }) => {
+    const [calcType, setCalcType] = useState('تصوير');
+    const [sheets, setSheets] = useState('');
+    const [sheetPrice, setSheetPrice] = useState('');
+    const [bshrPrice, setBshrPrice] = useState('');
+    const [copies, setCopies] = useState(1);
+    const [copyPrice, setCopyPrice] = useState(0);
+    const [totalPrice, setTotalPrice] = useState(0);
+
+    const handleCalculate = () => {
+        const numSheets = parseFloat(sheets) || 0;
+        const numSheetPrice = parseFloat(sheetPrice) || 0;
+        const numBshrPrice = parseFloat(bshrPrice) || 0;
+        const numCopies = parseInt(copies, 10) || 1;
+
+        if (numSheets === 0 || numSheetPrice === 0) {
+            toast.error("يجب إدخال عدد الورق وسعر الورقة");
+            return;
+        }
+
+        let calculatedCopyPrice = 0;
+        if (calcType === 'بشر') {
+            calculatedCopyPrice = (numSheets * numSheetPrice) + numBshrPrice;
+        } else {
+            calculatedCopyPrice = numSheets * numSheetPrice;
+        }
+
+        const calculatedTotalPrice = calculatedCopyPrice * numCopies;
+        setCopyPrice(calculatedCopyPrice);
+        setTotalPrice(calculatedTotalPrice);
+    };
+    
+    const handleCopyClick = () => {
+        if (totalPrice > 0) {
+            onCopyToAmount(totalPrice.toString());
+            toast.success(`تم نسخ المبلغ ${formatCurrency(totalPrice)}`);
+        } else {
+            toast.error("يرجى حساب السعر أولاً قبل النسخ");
+        }
+    };
+
+    return (
+        <div className="bg-gray-50 border-2 border-gray-200 rounded-2xl p-4 space-y-4 mb-6">
+            <h4 className="font-bold text-gray-800 text-center text-lg">🧮 الحاسبة </h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* العمود الأيمن: المدخلات */}
+                <div className="space-y-3 p-4 bg-white border rounded-xl">
+                    <div>
+                        <label className="text-sm font-medium">نوع العملية</label>
+                        <select value={calcType} onChange={(e) => setCalcType(e.target.value)} className="input mt-1">
+                            <option value="تصوير">تصوير</option>
+                            <option value="بشر">بشر</option>
+                        </select>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                        <div>
+                            <label className="text-sm font-medium">عدد الورق</label>
+                            <input type="number" placeholder="0" value={sheets} onChange={(e) => setSheets(e.target.value)} className="input mt-1" />
+                        </div>
+                        <div>
+                            <label className="text-sm font-medium">سعر الورقة</label>
+                            <input type="number" placeholder="0.0" value={sheetPrice} onChange={(e) => setSheetPrice(e.target.value)} className="input mt-1" />
+                        </div>
+                    </div>
+                    {calcType === 'بشر' && (
+                        <div>
+                            <label className="text-sm font-medium">سعر البشر</label>
+                            <input type="number" placeholder="0.0" value={bshrPrice} onChange={(e) => setBshrPrice(e.target.value)} className="input mt-1" />
+                        </div>
+                    )}
+                    <div>
+                        <label className="text-sm font-medium">عدد النسخ</label>
+                        <input type="number" placeholder="1" value={copies} onChange={(e) => setCopies(e.target.value)} className="input mt-1" />
+                    </div>
+                    <button type="button" onClick={handleCalculate} className="btn btn-primary w-full">احسب</button>
+                </div>
+
+                {/* العمود الأيسر: النتائج */}
+                <div className="space-y-3 p-4 bg-green-50 border border-green-200 rounded-xl flex flex-col justify-center">
+                    <div className="text-center">
+                        <label className="text-sm font-medium text-green-800">سعر النسخة</label>
+                        <div className="text-2xl font-bold text-green-700 mt-1">{formatCurrency(copyPrice)}</div>
+                    </div>
+                    <div className="text-center mt-4">
+                        <label className="text-sm font-medium text-green-800">السعر الإجمالي</label>
+                        <div className="text-3xl font-bold text-green-700 mt-1">{formatCurrency(totalPrice)}</div>
+                    </div>
+                    <button type="button" onClick={handleCopyClick} className="btn btn-success w-full mt-auto">
+                        نسخ الإجمالي إلى مبلغ العملية
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+// ======== نهاية كود الحاسبة =========
+
 
 const OperationForm = ({ 
   operation = null, 
@@ -128,6 +227,9 @@ const OperationForm = ({
         }));
     }
   };
+    const handleCalculatorResult = (result) => {
+        setFormData(prev => ({ ...prev, amount: result }));
+    };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -169,7 +271,7 @@ const OperationForm = ({
   return (
     <div className="p-6">
       <form onSubmit={handleSubmit} className="space-y-6">
-        
+
         {!teacher && (
           <div>
             <label htmlFor="teacherId" className="block text-sm font-semibold text-gray-800 mb-2">
@@ -412,6 +514,10 @@ const OperationForm = ({
             )}
           </button>
         </div>
+                <PermissionGate permission={PERMISSIONS.VIEW_OPERATION_PRICES}>
+            <PriceCalculator onCopyToAmount={handleCalculatorResult} />
+        </PermissionGate>
+
       </form>
     </div>
   );

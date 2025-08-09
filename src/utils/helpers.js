@@ -42,12 +42,13 @@ export const formatNumber = (number, decimals = 2) => {
   });
 };
 
-// تنسيق العملة
+// تنسيق العملة (تم التعديل هنا)
 export const formatCurrency = (amount, currency = 'EGP') => {
   return new Intl.NumberFormat('ar-EG', {
     style: 'currency',
     currency: currency,
-    minimumFractionDigits: 2
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2 // <-- الإضافة الجديدة لضمان كسرين عشريين فقط
   }).format(amount || 0);
 };
 
@@ -74,9 +75,9 @@ export const sanitizeText = (text) => {
   if (!text) return '';
   
   return text
-    .split('\n') // قسم السطور
-    .map(line => line.trim()) // شيل المسافات الزايدة من أول وآخر كل سطر
-    .join('\n'); // رجّعها زي ما كانت
+    .split('\n')
+    .map(line => line.trim())
+    .join('\n');
 };
 // تحويل التاريخ إلى ISO string للإدخال
 export const dateToInputValue = (date) => {
@@ -187,7 +188,6 @@ export const copyToClipboard = async (text) => {
     await navigator.clipboard.writeText(text);
     return true;
   } catch (error) {
-    // Fallback للمتصفحات القديمة
     const textArea = document.createElement('textarea');
     textArea.value = text;
     document.body.appendChild(textArea);
