@@ -441,47 +441,7 @@ const ExpensesPage = () => {
           )}
         </div>
 
-        {/* نصائح وإرشادات */}
-        <div className="mb-8">
-          <div className="bg-gradient-to-r from-purple-50 to-indigo-100 border-2 border-purple-200 rounded-2xl p-6 shadow-lg">
-            <div className="flex items-start gap-4">
-              <span className="text-purple-500 text-3xl">💡</span>
-              <div>
-                <h4 className="font-bold text-purple-900 text-lg mb-3">نصائح لإدارة المصروفات بفعالية</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-purple-800">
-                  <ul className="space-y-2">
-                    <li className="flex items-center gap-2">
-                      <span>📝</span>
-                      <span>سجل المصروفات فور حدوثها لضمان الدقة</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <span>🏷️</span>
-                      <span>صنف المصروفات بدقة لتسهيل التتبع</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <span>💾</span>
-                      <span>احتفظ بالإيصالات والفواتير كمرجع</span>
-                    </li>
-                  </ul>
-                  <ul className="space-y-2">
-                    <li className="flex items-center gap-2">
-                      <span>📊</span>
-                      <span>راجع تقارير المصروفات شهرياً</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <span>🎯</span>
-                      <span>ضع ميزانية محددة لكل نوع مصروف</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <span>⚠️</span>
-                      <span>انتبه للمصروفات غير المعتادة أو العالية</span>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        
 
         {/* نافذة إضافة/تعديل مصروف */}
         <Modal

@@ -1,9 +1,268 @@
 import { formatCurrency, formatDate } from '../../utils/helpers';
 
 export const generateReportHTML = (config, data, stats) => {
+  // التحقق من نوع التقرير
+  if (config.type === 'expenses_report') {
+    return generateExpensesReportHTML(config, data, stats);
+  }
+  
+  // تقرير المدرسين العادي
+  return generateTeachersReportHTML(config, data, stats);
+};
+
+// تقرير المصروفات الخاصة
+const generateExpensesReportHTML = (config, data, stats) => {
+  const { expenses = [] } = data;
+  const totalExpenses = expenses.reduce((sum, exp) => sum + (exp.amount || 0), 0);
+  
+  return `
+    <!DOCTYPE html>
+    <html dir="rtl" lang="ar">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>${config.title || 'تقرير المصروفات الخاصة'}</title>
+      <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap');
+        
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+        }
+        
+        body {
+          font-family: 'Cairo', sans-serif;
+          line-height: 1.5;
+          color: #333;
+          background: white;
+          font-size: 12px;
+        }
+        
+        .print-toolbar {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          background: #2563eb;
+          color: white;
+          padding: 10px;
+          z-index: 1000;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+        
+        .toolbar-btn {
+          background: rgba(255,255,255,0.2);
+          color: white;
+          border: none;
+          padding: 8px 16px;
+          border-radius: 6px;
+          cursor: pointer;
+          font-weight: 500;
+        }
+        
+        .container {
+          max-width: 1000px;
+          margin: 0 auto;
+          padding: 60px 20px 20px;
+        }
+        
+        .header {
+          text-align: center;
+          border-bottom: 2px solid #e5e7eb;
+          padding-bottom: 20px;
+          margin-bottom: 20px;
+          position: relative;
+        }
+        
+        .logo-container {
+          position: absolute;
+          top: 0;
+          left: 0;
+        }
+        
+        .company-logo {
+          max-height: 80px;
+          max-width: 150px;
+          object-fit: contain;
+        }
+        
+        .report-title {
+          font-size: 24px;
+          font-weight: 700;
+          color: #1f2937;
+          margin-bottom: 10px;
+        }
+        
+        .meta-info {
+          display: flex;
+          justify-content: center;
+          gap: 20px;
+          font-size: 11px;
+          color: #6b7280;
+        }
+        
+        .stats-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 15px;
+          margin-bottom: 25px;
+        }
+        
+        .stat-card {
+          background: #f9fafb;
+          border: 1px solid #e5e7eb;
+          border-radius: 8px;
+          padding: 15px;
+          text-align: center;
+        }
+        
+        .stat-value {
+          font-size: 20px;
+          font-weight: 700;
+          margin-bottom: 5px;
+        }
+        
+        .stat-label {
+          font-size: 11px;
+          color: #6b7280;
+        }
+        
+        table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-bottom: 15px;
+          background: white;
+          border: 1px solid #e5e7eb;
+          border-radius: 8px;
+          overflow: hidden;
+        }
+        
+        th {
+          background: #f9fafb;
+          padding: 10px;
+          text-align: right;
+          font-weight: 600;
+          font-size: 11px;
+          border-bottom: 2px solid #e5e7eb;
+        }
+        
+        td {
+          padding: 10px;
+          text-align: right;
+          font-size: 11px;
+          border-bottom: 1px solid #f3f4f6;
+        }
+        
+        .col-date { width: 100px; }
+        .col-desc { min-width: 250px; }
+        .col-vendor { width: 150px; }
+        .col-payment { width: 100px; }
+        .col-amount { 
+          width: 100px;
+          text-align: left;
+          font-weight: 600;
+        }
+        
+        .totals-row {
+          background: #f9fafb;
+          font-weight: 700;
+        }
+        
+        @media print {
+          .print-toolbar {
+            display: none !important;
+          }
+          
+          .container {
+            padding: 10px;
+          }
+          
+          @page {
+            margin: 1cm;
+            size: ${config.formatting?.pageSize || 'A4'};
+          }
+        }
+      </style>
+    </head>
+    <body>
+      <div class="print-toolbar">
+        <div>${config.title || 'تقرير المصروفات الخاصة'}</div>
+        <button class="toolbar-btn" onclick="window.print()">🖨️ طباعة</button>
+      </div>
+
+      <div class="container">
+        <div class="header">
+          <div class="logo-container">
+            <img src="${config.logoUrl || 'https://i.postimg.cc/664vwM9j/logo.png'}" alt="Logo" class="company-logo">
+          </div>
+          <div class="report-title">${config.title || 'تقرير المصروفات الخاصة'}</div>
+          <div class="meta-info">
+            <span>📅 ${formatDate(new Date())}</span>
+            ${config.dateRange?.from ? `<span>📊 ${formatDate(config.dateRange.from)} - ${formatDate(config.dateRange.to)}</span>` : ''}
+            <span>💰 ${expenses.length} مصروف</span>
+          </div>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-value" style="color: #dc2626;">${formatCurrency(totalExpenses)}</div>
+            <div class="stat-label">إجمالي المصروفات</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" style="color: #2563eb;">${expenses.length}</div>
+            <div class="stat-label">عدد المصروفات</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" style="color: #9333ea;">${formatCurrency(totalExpenses / (expenses.length || 1))}</div>
+            <div class="stat-label">متوسط المصروف</div>
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th class="col-date">التاريخ</th>
+              <th class="col-desc">الوصف</th>
+              <th class="col-vendor">المورد/الجهة</th>
+              <th class="col-payment">طريقة الدفع</th>
+              <th class="col-amount">المبلغ</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${expenses.map((expense, index) => `
+              <tr>
+                <td>${index + 1}</td>
+                <td>${formatDate(expense.date || expense.expenseDate || new Date())}</td>
+                <td>${expense.description || '-'}</td>
+                <td>${expense.vendor || expense.recipient || '-'}</td>
+                <td>${expense.paymentMethod || '-'}</td>
+                <td class="col-amount">${formatCurrency(expense.amount)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+          <tfoot>
+            <tr class="totals-row">
+              <td colspan="5" style="text-align: left; font-weight: 700;">الإجمالي</td>
+              <td class="col-amount">${formatCurrency(totalExpenses)}</td>
+            </tr>
+          </tfoot>
+        </table>
+
+        ${expenses.length === 0 ? '<div style="text-align: center; padding: 40px; color: #9ca3af;">لا توجد مصروفات في الفترة المحددة</div>' : ''}
+      </div>
+    </body>
+    </html>
+  `;
+};
+
+// تقرير المدرسين
+const generateTeachersReportHTML = (config, data, stats) => {
   const { teachers, operations, payments } = data;
   
-  // دالة لحساب بيانات كل مدرس
   const getTeacherData = (teacher) => {
     const teacherOps = operations.filter(op => op.teacherId === teacher.id);
     const teacherPays = payments.filter(p => p.teacherId === teacher.id);
@@ -18,12 +277,9 @@ export const generateReportHTML = (config, data, stats) => {
     };
   };
 
-  const showOperations = config.includedSections?.operations === true || 
-                        (config.includedSections?.operations === undefined && true);
-  const showPayments = config.includedSections?.payments === true || 
-                      (config.includedSections?.payments === undefined && true);
-  const showBalance = config.includedSections?.balance === true || 
-                     (config.includedSections?.balance === undefined && true);
+  const showOperations = config.includedSections?.operations !== false;
+  const showPayments = config.includedSections?.payments !== false;
+  const showBalance = config.includedSections?.balance !== false;
 
   return `
     <!DOCTYPE html>
@@ -73,10 +329,6 @@ export const generateReportHTML = (config, data, stats) => {
           font-weight: 500;
         }
         
-        .toolbar-btn:hover {
-          background: rgba(255,255,255,0.3);
-        }
-        
         .container {
           max-width: 1000px;
           margin: 0 auto;
@@ -88,6 +340,19 @@ export const generateReportHTML = (config, data, stats) => {
           border-bottom: 2px solid #e5e7eb;
           padding-bottom: 20px;
           margin-bottom: 20px;
+          position: relative;
+        }
+        
+        .logo-container {
+          position: absolute;
+          top: 0;
+          left: 0;
+        }
+        
+        .company-logo {
+          max-height: 80px;
+          max-width: 150px;
+          object-fit: contain;
         }
         
         .report-title {
@@ -177,7 +442,6 @@ export const generateReportHTML = (config, data, stats) => {
           width: 100%;
           border-collapse: collapse;
           margin-bottom: 15px;
-          table-layout: auto;
         }
         
         th {
@@ -187,7 +451,6 @@ export const generateReportHTML = (config, data, stats) => {
           font-weight: 600;
           font-size: 11px;
           border-bottom: 1px solid #e5e7eb;
-          white-space: nowrap;
         }
         
         td {
@@ -195,32 +458,11 @@ export const generateReportHTML = (config, data, stats) => {
           text-align: right;
           font-size: 11px;
           border-bottom: 1px solid #f3f4f6;
-          vertical-align: top;
         }
         
-        .col-date { 
-          width: 80px;
-          white-space: nowrap;
-        }
-        .col-type { 
-          width: 80px;
-        }
-        .col-desc { 
-          min-width: 200px;
-          word-wrap: break-word;
-          word-break: break-word;
-          white-space: pre-wrap;
-          line-height: 1.4;
-        }
-        .col-qty { 
-          width: 50px;
-          text-align: center;
-        }
         .col-amount { 
-          width: 100px;
           text-align: left;
           font-weight: 600;
-          white-space: nowrap;
         }
         
         .totals-row {
@@ -251,12 +493,6 @@ export const generateReportHTML = (config, data, stats) => {
           color: #6b7280;
         }
         
-        .empty-message {
-          text-align: center;
-          padding: 30px;
-          color: #9ca3af;
-        }
-        
         @media print {
           .print-toolbar {
             display: none !important;
@@ -264,10 +500,6 @@ export const generateReportHTML = (config, data, stats) => {
           
           .container {
             padding: 10px;
-          }
-          
-          body {
-            font-size: 10px;
           }
           
           .teacher-card {
@@ -279,25 +511,6 @@ export const generateReportHTML = (config, data, stats) => {
             size: ${config.formatting?.pageSize || 'A4'};
           }
         }
-          .header {
-  text-align: center;
-  border-bottom: 2px solid #e5e7eb;
-  padding-bottom: 20px;
-  margin-bottom: 20px;
-  position: relative; /* مهم عشان نحدد مكان اللوجو */
-}
-
-.logo-container {
-  position: absolute;
-  top: 0;
-  left: 0;
-}
-
-.company-logo {
-  max-height: 80px;
-  max-width: 150px;
-  object-fit: contain;
-}
       </style>
     </head>
     <body>
@@ -307,17 +520,17 @@ export const generateReportHTML = (config, data, stats) => {
       </div>
 
       <div class="container">
-<div class="header">
-  <div class="logo-container">
-    <img src="${config.logoUrl || 'https://i.postimg.cc/664vwM9j/logo.png'}" alt="Logo" class="company-logo">
-  </div>
-  <div class="report-title">${config.title}</div>
-  <div class="meta-info">
-    <span>📅 ${formatDate(new Date())}</span>
-    ${config.dateRange?.from ? `<span>📊 ${formatDate(config.dateRange.from)} - ${formatDate(config.dateRange.to)}</span>` : ''}
-    <span>👥 ${stats.teachersCount} مدرس</span>
-  </div>
-</div>
+        <div class="header">
+          <div class="logo-container">
+            <img src="${config.logoUrl || 'https://i.postimg.cc/664vwM9j/logo.png'}" alt="Logo" class="company-logo">
+          </div>
+          <div class="report-title">${config.title}</div>
+          <div class="meta-info">
+            <span>📅 ${formatDate(new Date())}</span>
+            ${config.dateRange?.from ? `<span>📊 ${formatDate(config.dateRange.from)} - ${formatDate(config.dateRange.to)}</span>` : ''}
+            <span>👥 ${stats.teachersCount} مدرس</span>
+          </div>
+        </div>
 
         <div class="stats-grid">
           <div class="stat-card">
@@ -354,27 +567,27 @@ export const generateReportHTML = (config, data, stats) => {
                   <table>
                     <thead>
                       <tr>
-                        <th class="col-date">التاريخ</th>
-                        <th class="col-type">النوع</th>
-                        <th class="col-desc">الوصف</th>
-                        <th class="col-qty">الكمية</th>
+                        <th>التاريخ</th>
+                        <th>النوع</th>
+                        <th>الوصف</th>
+                        <th>الكمية</th>
                         <th class="col-amount">المبلغ</th>
                       </tr>
                     </thead>
                     <tbody>
                       ${teacherData.operations.map(op => `
                         <tr>
-                          <td class="col-date">${formatDate(op.operationDate)}</td>
-                          <td class="col-type">${op.type || '-'}</td>
-                          <td class="col-desc">${op.description || '-'}</td>
-                          <td class="col-qty">${op.quantity || 0}</td>
+                          <td>${formatDate(op.operationDate)}</td>
+                          <td>${op.type || '-'}</td>
+                          <td>${op.description || '-'}</td>
+                          <td>${op.quantity || 0}</td>
                           <td class="col-amount">${formatCurrency(op.amount)}</td>
                         </tr>
                       `).join('')}
                     </tbody>
                     <tfoot>
                       <tr class="totals-row">
-                        <td colspan="4" style="text-align: left; font-weight: 600;">الإجمالي</td>
+                        <td colspan="4">الإجمالي</td>
                         <td class="col-amount">${formatCurrency(teacherData.totalOperations)}</td>
                       </tr>
                     </tfoot>
@@ -386,25 +599,25 @@ export const generateReportHTML = (config, data, stats) => {
                   <table>
                     <thead>
                       <tr>
-                        <th class="col-date">التاريخ</th>
-                        <th class="col-type">طريقة الدفع</th>
-                        <th class="col-desc">ملاحظات</th>
+                        <th>التاريخ</th>
+                        <th>طريقة الدفع</th>
+                        <th>ملاحظات</th>
                         <th class="col-amount">المبلغ</th>
                       </tr>
                     </thead>
                     <tbody>
                       ${teacherData.payments.map(payment => `
                         <tr>
-                          <td class="col-date">${formatDate(payment.paymentDate)}</td>
-                          <td class="col-type">${payment.paymentMethod || '-'}</td>
-                          <td class="col-desc">${payment.notes || '-'}</td>
+                          <td>${formatDate(payment.paymentDate)}</td>
+                          <td>${payment.paymentMethod || '-'}</td>
+                          <td>${payment.notes || '-'}</td>
                           <td class="col-amount">${formatCurrency(payment.amount)}</td>
                         </tr>
                       `).join('')}
                     </tbody>
                     <tfoot>
                       <tr class="totals-row">
-                        <td colspan="3" style="text-align: left; font-weight: 600;">الإجمالي</td>
+                        <td colspan="3">الإجمالي</td>
                         <td class="col-amount">${formatCurrency(teacherData.totalPayments)}</td>
                       </tr>
                     </tfoot>
@@ -429,7 +642,7 @@ export const generateReportHTML = (config, data, stats) => {
                 ` : ''}
 
                 ${teacherData.operations.length === 0 && teacherData.payments.length === 0 ? `
-                  <div class="empty-message">لا توجد بيانات لهذا المدرس</div>
+                  <div style="text-align: center; padding: 30px; color: #9ca3af;">لا توجد بيانات لهذا المدرس</div>
                 ` : ''}
               </div>
             </div>

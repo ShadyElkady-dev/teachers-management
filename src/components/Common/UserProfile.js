@@ -117,25 +117,6 @@ const UserProfile = () => {
             </div>
           </div>
 
-          {/* الصلاحيات */}
-          <div>
-            <h3 className="font-medium text-gray-900 mb-3">الصلاحيات المتاحة</h3>
-            <div className="max-h-40 overflow-y-auto">
-              {user?.permissions && user.permissions.length > 0 ? (
-                <div className="grid grid-cols-1 gap-2">
-                  {user.permissions.map((permission, index) => (
-                    <div key={index} className="flex items-center gap-2 text-sm">
-                      <span className="text-green-500">✓</span>
-                      <span className="text-gray-700">{getPermissionLabel(permission)}</span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-gray-500 text-sm">لا توجد صلاحيات محددة</div>
-              )}
-            </div>
-          </div>
-
           {/* أزرار الإجراءات */}
           <div className="flex gap-3 pt-4 border-t border-gray-200">
             <button
