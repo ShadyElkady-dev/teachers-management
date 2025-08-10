@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { FiX, FiPrinter } from 'react-icons/fi';
 import { formatCurrency, formatDate } from '../../utils/helpers';
 import { generateReportHTML } from './ReportHTMLGenerator';
+import { translateOperationType, translatePaymentMethod, translateExpenseType, safeTranslate } from '../../utils/translations';
 
 const ReportPreview = ({ reportData, onClose }) => {
   const [isPrinting, setIsPrinting] = useState(false);
@@ -223,7 +224,7 @@ const ReportPreview = ({ reportData, onClose }) => {
                       <td className="px-3 py-2">{formatDate(expense.date || expense.expenseDate || new Date())}</td>
                       <td className="px-3 py-2">{expense.description || '-'}</td>
                       <td className="px-3 py-2">{expense.vendor || expense.recipient || '-'}</td>
-                      <td className="px-3 py-2">{expense.paymentMethod || '-'}</td>
+                      <td className="px-3 py-2">{safeTranslate(expense.paymentMethod, translatePaymentMethod)}</td>
                       <td className="px-3 py-2 font-semibold text-left">{formatCurrency(expense.amount)}</td>
                     </tr>
                   ))}
@@ -376,7 +377,7 @@ const ReportPreview = ({ reportData, onClose }) => {
                             {teacherData.operations.map((op, i) => (
                               <tr key={i} className="border-t border-gray-100">
                                 <td className="px-2 py-2">{formatDate(op.operationDate)}</td>
-                                <td className="px-2 py-2">{op.type || '-'}</td>
+                                <td className="px-2 py-2">{safeTranslate(op.type, translateOperationType)}</td>
                                 <td className="px-2 py-2">{op.description || '-'}</td>
                                 <td className="px-2 py-2 text-center">{op.quantity || 0}</td>
                                 <td className="px-2 py-2 font-semibold text-left">{formatCurrency(op.amount)}</td>
@@ -411,7 +412,7 @@ const ReportPreview = ({ reportData, onClose }) => {
                             {teacherData.payments.map((payment, i) => (
                               <tr key={i} className="border-t border-gray-100">
                                 <td className="px-2 py-2">{formatDate(payment.paymentDate)}</td>
-                                <td className="px-2 py-2">{payment.paymentMethod || '-'}</td>
+                                <td className="px-2 py-2">{safeTranslate(payment.paymentMethod, translatePaymentMethod)}</td>
                                 <td className="px-2 py-2">{payment.notes || '-'}</td>
                                 <td className="px-2 py-2 font-semibold text-left">{formatCurrency(payment.amount)}</td>
                               </tr>

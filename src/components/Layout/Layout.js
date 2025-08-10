@@ -91,7 +91,7 @@ const Layout = ({ children }) => {
           </div>
         </main>
 
-        {/* الشريط الجانبي المنبثق للهواتف المحمولة */}
+        {/* الشريط الجانبي المنبثق للهواتف المحمولة (تم التعديل هنا) */}
         {isMobile && (
           <>
             {sidebarOpen && (
@@ -102,36 +102,35 @@ const Layout = ({ children }) => {
             )}
             <div 
               className={`
-                fixed w-80 max-w-[90vw] bg-white shadow-2xl z-50 
+                fixed top-0 right-0 h-full w-80 max-w-[90vw] bg-white shadow-2xl z-50 
                 transition-all duration-300 ease-in-out border-l-2 border-gray-200
                 ${sidebarOpen ? 'transform translate-x-0' : 'transform translate-x-full'}
-                overflow-y-auto
               `}
-              style={{ 
-                top: getHeaderHeight(), 
-                right: 0,
-                height: `calc(100vh - ${getHeaderHeight()})` 
-              }}
             >
-              <div className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-4 border-b-2 border-blue-300">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl">📱</span>
-                    <h3 className="text-lg font-bold">قائمة التنقل</h3>
+              <div className="flex flex-col h-full">
+                  <div className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-4 border-b-2 border-blue-300">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className="text-2xl">📱</span>
+                        <h3 className="text-lg font-bold">قائمة التنقل</h3>
+                      </div>
+                      <button
+                        onClick={() => setSidebarOpen(false)}
+                        className="p-2 hover:bg-white hover:bg-opacity-20 rounded-lg transition-colors"
+                      >
+                        <span className="text-xl">✕</span>
+                      </button>
+                    </div>
                   </div>
-                  <button
-                    onClick={() => setSidebarOpen(false)}
-                    className="p-2 hover:bg-white hover:bg-opacity-20 rounded-lg transition-colors"
-                  >
-                    <span className="text-xl">✕</span>
-                  </button>
-                </div>
+                  <div className="flex-grow overflow-y-auto">
+                    <Navigation onNavigate={() => setSidebarOpen(false)} />
+                  </div>
               </div>
-              <Navigation onNavigate={() => setSidebarOpen(false)} />
             </div>
           </>
         )}
       </div>
+
 
       {/* الملاحة السفلية المحدثة للهواتف المحمولة */}
       {isMobile && (

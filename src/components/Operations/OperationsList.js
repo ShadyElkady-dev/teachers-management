@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { formatCurrency, formatDate, timeAgo, isSmallScreen } from '../../utils/helpers';
+import { formatCurrency, formatDate, formatDateTime, isSmallScreen } from '../../utils/helpers';
 import { OPERATION_TYPES } from '../../utils/constants';
 import Modal from '../Common/Modal';
 
@@ -241,7 +241,7 @@ const OperationCardEnhanced = ({
             <div>
               <h3 className="font-bold text-xl leading-tight mb-1">{operationType?.label || operation.type}</h3>
               <p className="text-sm opacity-90 mb-1">👨‍🏫 {teacher?.name || 'مدرس غير معروف'}</p>
-              <p className="text-xs opacity-80">📅 {formatDate(operation.operationDate)}</p>
+<p className="text-xs opacity-80">📅 {formatDateTime(operation.operationDate)}</p>
             </div>
           </div>
           {showPrices && (
@@ -267,10 +267,7 @@ const OperationCardEnhanced = ({
             <div className="text-xl font-bold text-blue-700">{operation.quantity || 1}</div>
             <div className="text-xs text-blue-600 font-medium">الكمية</div>
           </div>
-          <div className="text-center p-3 bg-purple-50 rounded-xl border border-purple-200">
-            <div className="text-xs text-purple-600 font-medium">{timeAgo(operation.operationDate)}</div>
-            <div className="text-xs text-purple-500">منذ</div>
-          </div>
+          
         </div>
 
         {operation.notes && (
@@ -373,10 +370,10 @@ const OperationTableRow = ({
 
   return (
     <tr className="hover:bg-gray-50 transition-colors">
-      <td className="px-6 py-4 whitespace-nowrap">
-        <div className="text-sm font-medium text-gray-900">{formatDate(operation.operationDate)}</div>
-        <div className="text-xs text-gray-500">{timeAgo(operation.operationDate)}</div>
-      </td>
+<td className="px-6 py-4 whitespace-nowrap">
+    <div className="text-sm font-medium text-gray-900">{formatDateTime(operation.operationDate)}</div>
+</td>
+
       <td className="px-6 py-4 whitespace-nowrap">
         <div className="flex items-center">
           <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center ml-3 shadow-md">

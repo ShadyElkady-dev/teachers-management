@@ -243,6 +243,13 @@ const OperationForm = ({
             setErrors({ teacherId: 'يجب اختيار مدرس' });
             return;
         }
+      // --- بداية التعديل: دمج التاريخ مع الوقت الحالي ---
+      const finalOperationDate = new Date(formData.operationDate);
+      if (!operation) { // طبق الوقت الحالي فقط عند إنشاء عملية جديدة
+        const now = new Date();
+        finalOperationDate.setHours(now.getHours(), now.getMinutes(), now.getSeconds());
+      }
+      // --- نهاية التعديل ---
 
         const dataToSave = {
             type: formData.type === 'other' ? formData.customType.trim() : formData.type,

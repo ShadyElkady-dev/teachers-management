@@ -1,4 +1,5 @@
 import { formatCurrency, formatDate } from '../../utils/helpers';
+import { translateOperationType, translatePaymentMethod, translateExpenseType, safeTranslate } from '../../utils/translations';
 
 export const generateReportHTML = (config, data, stats) => {
   // التحقق من نوع التقرير
@@ -239,7 +240,7 @@ const generateExpensesReportHTML = (config, data, stats) => {
                 <td>${formatDate(expense.date || expense.expenseDate || new Date())}</td>
                 <td>${expense.description || '-'}</td>
                 <td>${expense.vendor || expense.recipient || '-'}</td>
-                <td>${expense.paymentMethod || '-'}</td>
+                <td>${safeTranslate(expense.paymentMethod, translatePaymentMethod)}</td>
                 <td class="col-amount">${formatCurrency(expense.amount)}</td>
               </tr>
             `).join('')}
@@ -578,7 +579,7 @@ const generateTeachersReportHTML = (config, data, stats) => {
                       ${teacherData.operations.map(op => `
                         <tr>
                           <td>${formatDate(op.operationDate)}</td>
-                          <td>${op.type || '-'}</td>
+                          <td>${safeTranslate(op.type, translateOperationType)}</td>
                           <td>${op.description || '-'}</td>
                           <td>${op.quantity || 0}</td>
                           <td class="col-amount">${formatCurrency(op.amount)}</td>
@@ -609,7 +610,7 @@ const generateTeachersReportHTML = (config, data, stats) => {
                       ${teacherData.payments.map(payment => `
                         <tr>
                           <td>${formatDate(payment.paymentDate)}</td>
-                          <td>${payment.paymentMethod || '-'}</td>
+                          <td>${safeTranslate(payment.paymentMethod, translatePaymentMethod)}</td>
                           <td>${payment.notes || '-'}</td>
                           <td class="col-amount">${formatCurrency(payment.amount)}</td>
                         </tr>

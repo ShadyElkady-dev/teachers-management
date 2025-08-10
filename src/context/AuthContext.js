@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import { getFromLocalStorage, saveToLocalStorage, removeFromLocalStorage } from '../utils/helpers';
+import { db } from '../services/firebase'; // <-- (1) استيراد قاعدة البيانات
+import { doc, setDoc } from 'firebase/firestore'; // <-- (2) استيراد دوال Firestore
 
 // أنواع المستخدمين
 export const USER_ROLES = {
@@ -44,45 +46,16 @@ export const PERMISSIONS = {
   VIEW_SYSTEM_SETTINGS: 'view_system_settings'
 };
 
-// إعداد الصلاحيات لكل دور - تم تحديث صلاحيات السكرتارية
+// إعداد الصلاحيات لكل دور
 const ROLE_PERMISSIONS = {
-  [USER_ROLES.ADMIN]: [
-    // جميع الصلاحيات للأدمن
+  [USER_ROLES.ADMIN]: Object.values(PERMISSIONS), // الأدمن يملك كل الصلاحيات
+  [USER_ROLES.SECRETARY]: [
     PERMISSIONS.VIEW_TEACHERS,
-    PERMISSIONS.ADD_TEACHER,
-    PERMISSIONS.EDIT_TEACHER,
-    PERMISSIONS.DELETE_TEACHER,
     PERMISSIONS.VIEW_OPERATIONS,
     PERMISSIONS.ADD_OPERATION,
     PERMISSIONS.EDIT_OPERATION,
     PERMISSIONS.DELETE_OPERATION,
-    PERMISSIONS.VIEW_OPERATION_PRICES,
-    PERMISSIONS.VIEW_PAYMENTS,
-    PERMISSIONS.ADD_PAYMENT,
-    PERMISSIONS.EDIT_PAYMENT,
-    PERMISSIONS.DELETE_PAYMENT,
-    PERMISSIONS.VIEW_EXPENSES,
-    PERMISSIONS.ADD_EXPENSE,
-    PERMISSIONS.EDIT_EXPENSE,
-    PERMISSIONS.DELETE_EXPENSE,
-    PERMISSIONS.VIEW_REPORTS,
-    PERMISSIONS.VIEW_FINANCIAL_DATA,
-    PERMISSIONS.EXPORT_DATA,
-    PERMISSIONS.MANAGE_USERS,
-    PERMISSIONS.VIEW_SYSTEM_SETTINGS
-  ],
-  [USER_ROLES.SECRETARY]: [
-    // صلاحيات محدودة جداً للسكرتارية
-    PERMISSIONS.VIEW_TEACHERS,        // عرض المدرسين
-    PERMISSIONS.VIEW_OPERATIONS,      // عرض العمليات
-    PERMISSIONS.ADD_OPERATION,        // إضافة العمليات
-    PERMISSIONS.EDIT_OPERATION,       // **تمت الإضافة: تعديل العمليات**
-    PERMISSIONS.DELETE_OPERATION,     // **تمت الإضافة: حذف العمليات**
-    PERMISSIONS.VIEW_OPERATION_PRICES // عرض سعر العملية
-    // لا يمكن للسكرتارية:
-    // - إضافة أو تعديل أو حذف المدرسين
-    // - تعديل أو حذف العمليات
-    // - الوصول للمدفوعات أو المصروفات أو التقارير المالية
+    PERMISSIONS.VIEW_OPERATION_PRICES
   ]
 };
 
@@ -91,9 +64,10 @@ const PREDEFINED_USERS = [
   {
     id: 'admin_001',
     username: 'admin',
-    password: 'admin123', // في التطبيق الحقيقي يجب تشفير كلمة المرور
+    password: 'admin123',
     role: USER_ROLES.ADMIN,
     name: 'شادى الأدمن',
+    email: 'admin@example.com'
   },
   {
     id: 'secretary_001',
@@ -101,6 +75,7 @@ const PREDEFINED_USERS = [
     password: 'secretary123',
     role: USER_ROLES.SECRETARY,
     name: 'حساب السكرتير',
+    email: 'secretary@example.com'
   }
 ];
 
@@ -111,7 +86,7 @@ const AuthContext = createContext();
 const initialState = {
   user: null,
   isAuthenticated: false,
-  isLoading: false,
+  isLoading: true, // يبدأ التحميل من البداية
   error: null
 };
 
@@ -121,52 +96,30 @@ const ACTIONS = {
   LOGIN_SUCCESS: 'LOGIN_SUCCESS',
   LOGIN_ERROR: 'LOGIN_ERROR',
   LOGOUT: 'LOGOUT',
-  CLEAR_ERROR: 'CLEAR_ERROR'
+  CLEAR_ERROR: 'CLEAR_ERROR',
+  INITIALIZE: 'INITIALIZE' // أكشن جديد للتهيئة
 };
 
 // Reducer
 const authReducer = (state, action) => {
   switch (action.type) {
+    case ACTIONS.INITIALIZE:
+      return {
+          ...state,
+          user: action.payload,
+          isAuthenticated: !!action.payload,
+          isLoading: false
+      };
     case ACTIONS.LOGIN_START:
-      return {
-        ...state,
-        isLoading: true,
-        error: null
-      };
-    
+      return { ...state, isLoading: true, error: null };
     case ACTIONS.LOGIN_SUCCESS:
-      return {
-        ...state,
-        user: action.payload,
-        isAuthenticated: true,
-        isLoading: false,
-        error: null
-      };
-    
+      return { ...state, user: action.payload, isAuthenticated: true, isLoading: false, error: null };
     case ACTIONS.LOGIN_ERROR:
-      return {
-        ...state,
-        user: null,
-        isAuthenticated: false,
-        isLoading: false,
-        error: action.payload
-      };
-    
+      return { ...state, user: null, isAuthenticated: false, isLoading: false, error: action.payload };
     case ACTIONS.LOGOUT:
-      return {
-        ...state,
-        user: null,
-        isAuthenticated: false,
-        isLoading: false,
-        error: null
-      };
-    
+      return { ...state, user: null, isAuthenticated: false, isLoading: false, error: null };
     case ACTIONS.CLEAR_ERROR:
-      return {
-        ...state,
-        error: null
-      };
-    
+      return { ...state, error: null };
     default:
       return state;
   }
@@ -176,32 +129,22 @@ const authReducer = (state, action) => {
 export const AuthProvider = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
 
-  // التحقق من وجود جلسة مسبقة عند تحميل التطبيق
   useEffect(() => {
     const savedUser = getFromLocalStorage('auth_user');
-    if (savedUser) {
-      dispatch({ type: ACTIONS.LOGIN_SUCCESS, payload: savedUser });
-    }
+    dispatch({ type: ACTIONS.INITIALIZE, payload: savedUser });
   }, []);
 
-  // دالة تسجيل الدخول
+  // دالة تسجيل الدخول (تم التعديل هنا)
   const login = async (username, password) => {
     dispatch({ type: ACTIONS.LOGIN_START });
-
     try {
-      // محاكاة تأخير الشبكة
       await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // البحث عن المستخدم
-      const user = PREDEFINED_USERS.find(
-        u => u.username === username && u.password === password
-      );
+      const user = PREDEFINED_USERS.find(u => u.username === username && u.password === password);
 
       if (!user) {
         throw new Error('اسم المستخدم أو كلمة المرور غير صحيحة');
       }
 
-      // إنشاء بيانات المستخدم (بدون كلمة المرور)
       const userData = {
         id: user.id,
         username: user.username,
@@ -211,12 +154,19 @@ export const AuthProvider = ({ children }) => {
         permissions: ROLE_PERMISSIONS[user.role] || [],
         loginTime: new Date().toISOString()
       };
-
-      // حفظ في التخزين المحلي
-      saveToLocalStorage('auth_user', userData);
-
-      dispatch({ type: ACTIONS.LOGIN_SUCCESS, payload: userData });
       
+      // <-- (3) بداية التعديل الجديد
+      // إنشاء أو تحديث سجل المستخدم في Firestore
+      await setDoc(doc(db, "users", user.id), {
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          username: user.username
+      }, { merge: true }); // merge: true تمنع الكتابة فوق البيانات الموجودة مثل الصورة
+      // <-- نهاية التعديل الجديد
+
+      saveToLocalStorage('auth_user', userData);
+      dispatch({ type: ACTIONS.LOGIN_SUCCESS, payload: userData });
       return userData;
     } catch (error) {
       dispatch({ type: ACTIONS.LOGIN_ERROR, payload: error.message });
@@ -224,38 +174,24 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // دالة تسجيل الخروج
   const logout = () => {
     removeFromLocalStorage('auth_user');
     dispatch({ type: ACTIONS.LOGOUT });
   };
 
-  // دالة التحقق من الصلاحية
   const hasPermission = (permission) => {
     if (!state.user) return false;
     return state.user.permissions.includes(permission);
   };
 
-  // دالة التحقق من الدور
   const hasRole = (role) => {
     if (!state.user) return false;
     return state.user.role === role;
   };
-
-  // دالة التحقق من كون المستخدم أدمن
-  const isAdmin = () => {
-    return hasRole(USER_ROLES.ADMIN);
-  };
-
-  // دالة التحقق من كون المستخدم سكرتارية
-  const isSecretary = () => {
-    return hasRole(USER_ROLES.SECRETARY);
-  };
-
-  // دالة مسح الأخطاء
-  const clearError = () => {
-    dispatch({ type: ACTIONS.CLEAR_ERROR });
-  };
+  
+  const isAdmin = () => hasRole(USER_ROLES.ADMIN);
+  const isSecretary = () => hasRole(USER_ROLES.SECRETARY);
+  const clearError = () => dispatch({ type: ACTIONS.CLEAR_ERROR });
 
   const value = {
     ...state,
