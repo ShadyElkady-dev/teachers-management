@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { formatCurrency, formatDate, formatDateTime, isSmallScreen } from '../../utils/helpers';
+import { formatCurrency, formatDate, isSmallScreen, formatTime12Hour, formatDateWithDay, getTimeAgo } from '../../utils/helpers';
 import { OPERATION_TYPES } from '../../utils/constants';
 import Modal from '../Common/Modal';
 
@@ -59,7 +59,7 @@ const OperationsList = ({
         <table className="min-w-full table-auto">
           <thead className="bg-gray-50 border-b-2 border-gray-200">
             <tr>
-              <th className="px-6 py-4 text-right text-sm font-bold text-gray-700">التاريخ</th>
+              <th className="px-6 py-4 text-right text-sm font-bold text-gray-700">التاريخ والوقت</th>
               <th className="px-6 py-4 text-right text-sm font-bold text-gray-700">المدرس</th>
               <th className="px-6 py-4 text-right text-sm font-bold text-gray-700">النوع</th>
               <th className="px-6 py-4 text-right text-sm font-bold text-gray-700">الوصف</th>
@@ -147,7 +147,11 @@ const OperationsList = ({
                 {OPERATION_TYPES.find(t => t.value === showNotesModal.type)?.label || showNotesModal.type}
               </h3>
               <p className="text-blue-700 mb-3 text-lg break-all" style={{wordBreak: 'break-all'}}>{showNotesModal.description}</p>
-              <p className="text-blue-600 text-sm">📅 {formatDate(showNotesModal.operationDate)}</p>
+              <div className="space-y-1">
+                <p className="text-blue-600 text-sm">📅 {formatDateWithDay(showNotesModal.operationDate)}</p>
+                <p className="text-blue-600 text-sm">⏰ {formatTime12Hour(showNotesModal.operationDate)}</p>
+                <p className="text-blue-500 text-xs font-medium">🕐 {getTimeAgo(showNotesModal.operationDate)}</p>
+              </div>
             </div>
             
             <div className="bg-yellow-50 border-2 border-yellow-200 rounded-2xl p-6">
@@ -241,7 +245,13 @@ const OperationCardEnhanced = ({
             <div>
               <h3 className="font-bold text-xl leading-tight mb-1">{operationType?.label || operation.type}</h3>
               <p className="text-sm opacity-90 mb-1">👨‍🏫 {teacher?.name || 'مدرس غير معروف'}</p>
-<p className="text-xs opacity-80">📅 {formatDateTime(operation.operationDate)}</p>
+              <div className="space-y-1">
+                <p className="text-xs opacity-80">📅 {formatDateWithDay(operation.operationDate)}</p>
+                <p className="text-xs opacity-80">⏰ {formatTime12Hour(operation.operationDate)}</p>
+                <p className="text-xs opacity-70 bg-white bg-opacity-20 rounded-full px-2 py-1 inline-block">
+                  🕐 {getTimeAgo(operation.operationDate)}
+                </p>
+              </div>
             </div>
           </div>
           {showPrices && (
@@ -370,9 +380,21 @@ const OperationTableRow = ({
 
   return (
     <tr className="hover:bg-gray-50 transition-colors">
-<td className="px-6 py-4 whitespace-nowrap">
-    <div className="text-sm font-medium text-gray-900">{formatDateTime(operation.operationDate)}</div>
-</td>
+      <td className="px-6 py-4">
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-sm font-medium text-gray-900">
+            <span>📅</span>
+            <span>{formatDateWithDay(operation.operationDate)}</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm text-gray-700">
+            <span>⏰</span>
+            <span>{formatTime12Hour(operation.operationDate)}</span>
+          </div>
+          <div className="inline-block bg-blue-100 text-blue-800 text-xs font-medium px-2 py-1 rounded-full">
+            🕐 {getTimeAgo(operation.operationDate)}
+          </div>
+        </div>
+      </td>
 
       <td className="px-6 py-4 whitespace-nowrap">
         <div className="flex items-center">

@@ -20,7 +20,97 @@ export const formatDateTime = (date) => {
   return format(dateObj, 'yyyy/MM/dd HH:mm', { locale: ar });
 };
 
-// حساب المدة منذ التاريخ
+// تحويل الوقت إلى نظام 12 ساعة (إضافة جديدة)
+export const formatTime12Hour = (date) => {
+  if (!date) return '';
+  
+  try {
+    const dateObj = date.toDate ? date.toDate() : new Date(date);
+    
+    // التحقق من صحة التاريخ
+    if (isNaN(dateObj.getTime())) {
+      console.log('Invalid date in formatTime12Hour:', date);
+      return '';
+    }
+    
+    const hours = dateObj.getHours();
+    const minutes = dateObj.getMinutes();
+    const ampm = hours >= 12 ? 'مساءً' : 'صباحاً';
+    const hours12 = hours % 12 || 12;
+    const minutesStr = String(minutes).padStart(2, '0');
+    const hoursStr = String(hours12);
+    
+    const result = `${hoursStr}:${minutesStr} ${ampm}`;
+    console.log('formatTime12Hour result:', result, 'from date:', dateObj);
+    return result;
+  } catch (error) {
+    console.error('Error in formatTime12Hour:', error, 'date:', date);
+    return '';
+  }
+};
+
+// تنسيق التاريخ مع اليوم (إضافة جديدة)
+export const formatDateWithDay = (date) => {
+  if (!date) return '';
+  
+  const dateObj = date.toDate ? date.toDate() : new Date(date);
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(today.getDate() - 1);
+  
+  const isToday = dateObj.toDateString() === today.toDateString();
+  const isYesterday = dateObj.toDateString() === yesterday.toDateString();
+  
+  if (isToday) return 'اليوم';
+  if (isYesterday) return 'أمس';
+  
+  return dateObj.toLocaleDateString('ar-EG', {
+    day: 'numeric',
+    month: 'numeric',
+    year: 'numeric'
+  });
+};
+
+// حساب الوقت المنقضي بدقة أكبر (إضافة جديدة)
+export const getTimeAgo = (date) => {
+  if (!date) return '';
+  
+  const dateObj = date.toDate ? date.toDate() : new Date(date);
+  
+  // التحقق من صحة التاريخ
+  if (isNaN(dateObj.getTime())) return '';
+  
+  const now = new Date();
+  const diffMs = now - dateObj;
+  
+  // إذا كان التاريخ في المستقبل
+  if (diffMs < 0) return 'في المستقبل';
+  
+  const diffSecs = Math.floor(diffMs / 1000);
+  const diffMins = Math.floor(diffMs / (1000 * 60));
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  const diffWeeks = Math.floor(diffDays / 7);
+  const diffMonths = Math.floor(diffDays / 30);
+  const diffYears = Math.floor(diffDays / 365);
+
+  if (diffSecs < 30) return 'الآن';
+  if (diffMins < 1) return 'منذ لحظات';
+  if (diffMins === 1) return 'منذ دقيقة';
+  if (diffMins < 60) return `منذ ${diffMins} دقيقة`;
+  if (diffHours === 1) return 'منذ ساعة';
+  if (diffHours < 24) return `منذ ${diffHours} ساعة`;
+  if (diffDays === 1) return 'منذ يوم';
+  if (diffDays < 7) return `منذ ${diffDays} أيام`;
+  if (diffWeeks === 1) return 'منذ أسبوع';
+  if (diffWeeks < 4) return `منذ ${diffWeeks} أسابيع`;
+  if (diffMonths === 1) return 'منذ شهر';
+  if (diffMonths < 12) return `منذ ${diffMonths} أشهر`;
+  if (diffYears === 1) return 'منذ سنة';
+  return `منذ ${diffYears} سنوات`;
+};
+
+// حساب المدة منذ التاريخ (الدالة الأصلية)
 export const timeAgo = (date) => {
   if (!date) return '';
   
@@ -30,6 +120,16 @@ export const timeAgo = (date) => {
     addSuffix: true, 
     locale: ar 
   });
+};
+
+// تحويل الوقت إلى تنسيق input time (إضافة جديدة)
+export const timeToInputValue = (date) => {
+  if (!date) return '';
+  
+  const dateObj = date.toDate ? date.toDate() : new Date(date);
+  const hours = String(dateObj.getHours()).padStart(2, '0');
+  const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+  return `${hours}:${minutes}`;
 };
 
 // تنسيق الأرقام بالفاصلة العشرية
@@ -42,13 +142,13 @@ export const formatNumber = (number, decimals = 2) => {
   });
 };
 
-// تنسيق العملة (تم التعديل هنا)
+// تنسيق العملة
 export const formatCurrency = (amount, currency = 'EGP') => {
   return new Intl.NumberFormat('ar-EG', {
     style: 'currency',
     currency: currency,
     minimumFractionDigits: 2,
-    maximumFractionDigits: 2 // <-- الإضافة الجديدة لضمان كسرين عشريين فقط
+    maximumFractionDigits: 2
   }).format(amount || 0);
 };
 
@@ -79,6 +179,7 @@ export const sanitizeText = (text) => {
     .map(line => line.trim())
     .join('\n');
 };
+
 // تحويل التاريخ إلى ISO string للإدخال
 export const dateToInputValue = (date) => {
   if (!date) return '';

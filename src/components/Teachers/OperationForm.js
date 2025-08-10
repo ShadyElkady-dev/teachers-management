@@ -5,7 +5,15 @@ import { OPERATION_TYPES } from '../../utils/constants';
 import LoadingSpinner from '../Common/LoadingSpinner';
 import { dateToInputValue, sanitizeText, formatCurrency } from '../../utils/helpers';
 import toast from 'react-hot-toast';
-// ======== بداية كود الحاسبة الكامل (أضف هذا الجزء) =========
+
+// دالة مساعدة لتحويل الوقت إلى تنسيق input time
+const timeToInputValue = (date) => {
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${hours}:${minutes}`;
+};
+
+// ======== بداية كود الحاسبة الكامل =========
 const PriceCalculator = ({ onCopyToAmount }) => {
     const [calcType, setCalcType] = useState('تصوير');
     const [sheets, setSheets] = useState('');
@@ -103,11 +111,10 @@ const PriceCalculator = ({ onCopyToAmount }) => {
 };
 // ======== نهاية كود الحاسبة =========
 
-
 const OperationForm = ({ 
   operation = null, 
   teacher = null,
-  teachers = [], // قائمة المدرسين
+  teachers = [], 
   onSave, 
   onCancel, 
   loading = false 
@@ -117,12 +124,13 @@ const OperationForm = ({
 
   // حالة النموذج
   const [formData, setFormData] = useState({
-    teacherId: teacher?.id || '', // إضافة teacherId
+    teacherId: teacher?.id || '', 
     type: 'printing',
     customType: '',
     description: '',
     amount: '',
     operationDate: dateToInputValue(new Date()),
+    operationTime: timeToInputValue(new Date()), // إضافة حقل الوقت
     notes: ''
   });
 
@@ -132,24 +140,28 @@ const OperationForm = ({
   // تعبئة النموذج عند التعديل
   useEffect(() => {
     if (operation) {
+      const operationDate = new Date(operation.operationDate);
       setFormData({
         teacherId: operation.teacherId || teacher?.id || '',
         type: operation.type || 'printing',
         customType: OPERATION_TYPES.find(t => t.value === operation.type) ? '' : operation.type,
         description: operation.description || '',
         amount: operation.amount?.toString() || '',
-        operationDate: dateToInputValue(operation.operationDate),
+        operationDate: dateToInputValue(operationDate),
+        operationTime: timeToInputValue(operationDate), // استخراج الوقت من التاريخ المحفوظ
         notes: operation.notes || ''
       });
     } else {
-      // إعادة تعيين النموذج مع المدرس المحدد
+      // إعادة تعيين النموذج مع المدرس المحدد والوقت الحالي
+      const now = new Date();
       setFormData({
         teacherId: teacher?.id || '',
         type: 'printing',
         customType: '',
         description: '',
         amount: '',
-        operationDate: dateToInputValue(new Date()),
+        operationDate: dateToInputValue(now),
+        operationTime: timeToInputValue(now), // الوقت الحالي
         notes: ''
       });
     }
@@ -193,12 +205,15 @@ const OperationForm = ({
         newErrors.operationDate = 'تاريخ العملية قديم جداً';
       }
     }
+    if (!formData.operationTime) {
+      newErrors.operationTime = 'وقت العملية مطلوب';
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  // معالجة تغيير القيم (تم التعديل هنا)
+  // معالجة تغيير القيم
   const handleChange = (e) => {
     const { name, value } = e.target;
     
@@ -214,7 +229,7 @@ const OperationForm = ({
     }
   };
 
-  // معالجة التركيز على الحقل (تم التعديل هنا)
+  // معالجة التركيز على الحقل
   const handleBlur = (e) => {
     const { name } = e.target;
     setTouched(prev => ({ ...prev, [name]: true }));
@@ -227,9 +242,10 @@ const OperationForm = ({
         }));
     }
   };
-    const handleCalculatorResult = (result) => {
-        setFormData(prev => ({ ...prev, amount: result }));
-    };
+
+  const handleCalculatorResult = (result) => {
+      setFormData(prev => ({ ...prev, amount: result }));
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -243,18 +259,16 @@ const OperationForm = ({
             setErrors({ teacherId: 'يجب اختيار مدرس' });
             return;
         }
-      // --- بداية التعديل: دمج التاريخ مع الوقت الحالي ---
-      const finalOperationDate = new Date(formData.operationDate);
-      if (!operation) { // طبق الوقت الحالي فقط عند إنشاء عملية جديدة
-        const now = new Date();
-        finalOperationDate.setHours(now.getHours(), now.getMinutes(), now.getSeconds());
-      }
-      // --- نهاية التعديل ---
+
+        // دمج التاريخ والوقت
+        const [hours, minutes] = formData.operationTime.split(':');
+        const finalOperationDate = new Date(formData.operationDate);
+        finalOperationDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
 
         const dataToSave = {
             type: formData.type === 'other' ? formData.customType.trim() : formData.type,
             description: formData.description.trim(),
-            operationDate: new Date(formData.operationDate),
+            operationDate: finalOperationDate, // التاريخ مع الوقت المحدد
             notes: formData.notes.trim(),
             quantity: 1
         };
@@ -451,29 +465,57 @@ const OperationForm = ({
           </div>
         </PermissionGate>
 
-        <div>
-          <label htmlFor="operationDate" className="block text-sm font-semibold text-gray-800 mb-2">
-            تاريخ العملية <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="date"
-            id="operationDate"
-            name="operationDate"
-            value={formData.operationDate}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            className={`w-full px-4 py-3 border-2 rounded-xl text-base font-medium bg-white transition-all duration-200 ${
-              hasError('operationDate') 
-                ? 'border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-100' 
-                : 'border-gray-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-100'
-            }`}
-            disabled={loading}
-          />
-          {hasError('operationDate') && (
-            <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
-              <span>⚠️</span> {errors.operationDate}
-            </p>
-          )}
+        {/* حقلي التاريخ والوقت */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label htmlFor="operationDate" className="block text-sm font-semibold text-gray-800 mb-2">
+              تاريخ العملية <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="date"
+              id="operationDate"
+              name="operationDate"
+              value={formData.operationDate}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              className={`w-full px-4 py-3 border-2 rounded-xl text-base font-medium bg-white transition-all duration-200 ${
+                hasError('operationDate') 
+                  ? 'border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-100' 
+                  : 'border-gray-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-100'
+              }`}
+              disabled={loading}
+            />
+            {hasError('operationDate') && (
+              <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
+                <span>⚠️</span> {errors.operationDate}
+              </p>
+            )}
+          </div>
+
+          <div>
+            <label htmlFor="operationTime" className="block text-sm font-semibold text-gray-800 mb-2">
+              وقت العملية <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="time"
+              id="operationTime"
+              name="operationTime"
+              value={formData.operationTime}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              className={`w-full px-4 py-3 border-2 rounded-xl text-base font-medium bg-white transition-all duration-200 ${
+                hasError('operationTime') 
+                  ? 'border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-100' 
+                  : 'border-gray-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-100'
+              }`}
+              disabled={loading}
+            />
+            {hasError('operationTime') && (
+              <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
+                <span>⚠️</span> {errors.operationTime}
+              </p>
+            )}
+          </div>
         </div>
 
         <div>
@@ -492,6 +534,10 @@ const OperationForm = ({
             rows="3"
           />
         </div>
+
+        <PermissionGate permission={PERMISSIONS.VIEW_OPERATION_PRICES}>
+          <PriceCalculator onCopyToAmount={handleCalculatorResult} />
+        </PermissionGate>
 
         <div className="flex gap-4 pt-6 border-t border-gray-200">
           <button
@@ -521,10 +567,6 @@ const OperationForm = ({
             )}
           </button>
         </div>
-                <PermissionGate permission={PERMISSIONS.VIEW_OPERATION_PRICES}>
-            <PriceCalculator onCopyToAmount={handleCalculatorResult} />
-        </PermissionGate>
-
       </form>
     </div>
   );
