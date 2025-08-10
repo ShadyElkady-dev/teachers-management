@@ -51,7 +51,7 @@ const PaymentForm = ({
     amount: '',
     paymentMethod: 'cash',
     paymentDate: dateToInputValue(new Date()),
-    paymentTime: timeToInputValue(new Date()), // إضافة حقل الوقت
+    paymentTime: timeToInputValue(new Date()),
     notes: '',
     reference: ''
   });
@@ -62,6 +62,10 @@ const PaymentForm = ({
 
   // تعبئة النموذج عند التعديل
   useEffect(() => {
+    console.log('🔍 PaymentForm: useEffect triggered');
+    console.log('  - payment:', payment);
+    console.log('  - teacher:', teacher);
+    
     if (payment) {
       try {
         const paymentDate = payment.paymentDate ? new Date(payment.paymentDate) : new Date();
@@ -69,21 +73,23 @@ const PaymentForm = ({
         // التحقق من صحة التاريخ
         const validDate = isNaN(paymentDate.getTime()) ? new Date() : paymentDate;
         
-        setFormData({
-          teacherId: payment.teacherId || '',
+        const newFormData = {
+          teacherId: payment.teacherId || teacher?.id || '',
           amount: payment.amount?.toString() || '',
           paymentMethod: payment.paymentMethod || 'cash',
           paymentDate: dateToInputValue(validDate),
-          paymentTime: timeToInputValue(validDate), // استخراج الوقت من التاريخ المحفوظ
+          paymentTime: timeToInputValue(validDate),
           notes: payment.notes || '',
           reference: payment.reference || ''
-        });
+        };
+        
+        console.log('✅ PaymentForm: Setting form data from payment:', newFormData);
+        setFormData(newFormData);
       } catch (error) {
         console.error('Error processing payment data:', error);
-        // استخدام البيانات الافتراضية في حالة الخطأ
         const now = new Date();
         setFormData({
-          teacherId: payment.teacherId || '',
+          teacherId: payment.teacherId || teacher?.id || '',
           amount: payment.amount?.toString() || '',
           paymentMethod: payment.paymentMethod || 'cash',
           paymentDate: dateToInputValue(now),
@@ -92,15 +98,30 @@ const PaymentForm = ({
           reference: payment.reference || ''
         });
       }
+    } else if (teacher) {
+      // عند إضافة دفعة جديدة للمدرس المحدد
+      const now = new Date();
+      const newFormData = {
+        teacherId: teacher.id,
+        amount: '',
+        paymentMethod: 'cash',
+        paymentDate: dateToInputValue(now),
+        paymentTime: timeToInputValue(now),
+        notes: '',
+        reference: ''
+      };
+      
+      console.log('✅ PaymentForm: Setting form data for new payment:', newFormData);
+      setFormData(newFormData);
     } else {
       // إعادة تعيين النموذج مع الوقت الحالي
       const now = new Date();
       setFormData({
-        teacherId: teacher?.id || '',
+        teacherId: '',
         amount: '',
         paymentMethod: 'cash',
         paymentDate: dateToInputValue(now),
-        paymentTime: timeToInputValue(now), // الوقت الحالي
+        paymentTime: timeToInputValue(now),
         notes: '',
         reference: ''
       });
@@ -109,13 +130,24 @@ const PaymentForm = ({
 
   // تحديث المدرس المحدد عند تغيير teacherId
   useEffect(() => {
+    console.log('🔍 PaymentForm: teacherId changed:', formData.teacherId);
+    
     if (formData.teacherId) {
-      const teacher = teachers.find(t => t.id === formData.teacherId);
-      setSelectedTeacher(teacher);
+      const foundTeacher = teachers.find(t => t.id === formData.teacherId);
+      console.log('✅ PaymentForm: Found teacher:', foundTeacher);
+      setSelectedTeacher(foundTeacher);
     } else {
       setSelectedTeacher(null);
     }
   }, [formData.teacherId, teachers]);
+
+  // مراقبة تغييرات الحالة للتشخيص
+  useEffect(() => {
+    console.log('🔍 PaymentForm: State monitoring');
+    console.log('  - formData.teacherId:', formData.teacherId);
+    console.log('  - teacher prop:', teacher?.id);
+    console.log('  - selectedTeacher:', selectedTeacher?.id);
+  }, [formData.teacherId, teacher, selectedTeacher]);
 
   // حساب المديونية للمدرس المحدد
   const teacherDebt = selectedTeacher ? calculateTeacherDebt(selectedTeacher.id) : 0;
@@ -124,8 +156,8 @@ const PaymentForm = ({
   const validateForm = () => {
     const newErrors = {};
 
-    // المدرس
-    if (!formData.teacherId) {
+    // المدرس - التحقق المحسن
+    if (!formData.teacherId || formData.teacherId.trim() === '') {
       newErrors.teacherId = 'اختيار المدرس مطلوب';
     }
 
@@ -178,6 +210,8 @@ const PaymentForm = ({
       processedValue = value.replace(/[^0-9.]/g, '');
     }
 
+    console.log(`🔍 PaymentForm: Field ${field} changed to:`, processedValue);
+
     setFormData(prev => ({
       ...prev,
       [field]: processedValue
@@ -208,9 +242,13 @@ const PaymentForm = ({
     }
   };
 
-  // معالجة إرسال النموذج
+  // معالجة إرسال النموذج - المحسن
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    console.log('🔍 PaymentForm: Form submitted');
+    console.log('🔍 PaymentForm: Current formData:', formData);
+    console.log('🔍 PaymentForm: Teacher prop:', teacher);
     
     // تعيين جميع الحقول كـ touched
     const allTouched = Object.keys(formData).reduce((acc, key) => {
@@ -220,16 +258,79 @@ const PaymentForm = ({
     setTouched(allTouched);
 
     if (validateForm()) {
-      // دمج التاريخ والوقت
-      const [hours, minutes] = formData.paymentTime.split(':');
-      const finalPaymentDate = new Date(formData.paymentDate);
-      finalPaymentDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+      // تحديد teacherId بوضوح
+      let finalTeacherId = null;
+      
+      // جرب من formData أولاً
+      if (formData.teacherId && formData.teacherId !== '') {
+        finalTeacherId = formData.teacherId;
+        console.log('✅ PaymentForm: Using teacherId from formData:', finalTeacherId);
+      }
+      // إذا لم يوجد، جرب من teacher prop
+      else if (teacher?.id) {
+        finalTeacherId = teacher.id;
+        console.log('✅ PaymentForm: Using teacherId from teacher prop:', finalTeacherId);
+      }
+      
+      console.log('🔍 PaymentForm: Final teacherId:', finalTeacherId);
+      
+      if (!finalTeacherId) {
+        const error = 'لا يمكن تحديد المدرس المطلوب';
+        console.error('❌ PaymentForm:', error);
+        setErrors(prev => ({ 
+          ...prev, 
+          teacherId: error 
+        }));
+        return;
+      }
 
-      onSave({
-        ...formData,
+      // دمج التاريخ والوقت
+      let finalPaymentDate;
+      
+      if (formData.paymentTime) {
+        const [hours, minutes] = formData.paymentTime.split(':');
+        finalPaymentDate = new Date(formData.paymentDate);
+        finalPaymentDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+      } else {
+        finalPaymentDate = new Date(formData.paymentDate);
+      }
+
+      // إنشاء البيانات النهائية - تنظيف من undefined
+      const paymentData = {
+        teacherId: finalTeacherId,
         amount: parseFloat(formData.amount),
-        paymentDate: finalPaymentDate // التاريخ مع الوقت المحدد
+        paymentMethod: formData.paymentMethod,
+        paymentDate: finalPaymentDate
+      };
+
+      // إضافة البيانات الاختيارية فقط إذا كانت موجودة
+      if (formData.notes && formData.notes.trim()) {
+        paymentData.notes = formData.notes.trim();
+      }
+
+      if (formData.reference && formData.reference.trim()) {
+        paymentData.reference = formData.reference.trim();
+      }
+
+      console.log('✅ PaymentForm: Sending payment data:', paymentData);
+      
+      // التحقق النهائي من عدم وجود undefined
+      const hasUndefined = Object.entries(paymentData).some(([key, value]) => {
+        if (value === undefined) {
+          console.error(`❌ PaymentForm: ${key} is undefined!`);
+          return true;
+        }
+        return false;
       });
+      
+      if (hasUndefined) {
+        console.error('❌ PaymentForm: Payment data contains undefined values');
+        return;
+      }
+
+      onSave(paymentData);
+    } else {
+      console.error('❌ PaymentForm: Form validation failed:', errors);
     }
   };
 
@@ -278,6 +379,13 @@ const PaymentForm = ({
         </select>
         {hasError('teacherId') && (
           <p className="mt-1 text-sm text-red-600">{errors.teacherId}</p>
+        )}
+        
+        {/* عرض معلومات إضافية للمطور */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="mt-1 text-xs text-gray-500">
+            Debug: teacherId = {formData.teacherId || 'undefined'}, teacher prop = {teacher?.id || 'undefined'}
+          </div>
         )}
       </div>
 

@@ -188,27 +188,36 @@ export const AppProvider = ({ children }) => {
     addOperation: async (teacherId, operationData) => {
       try {
         setLoading('operations', true);
+        
+        console.log('🔍 AppContext: Adding operation for teacher:', teacherId);
+        console.log('🔍 AppContext: Operation data:', operationData);
+        
         if (!teacherId) {
           throw new Error('معرف المدرس مطلوب');
         }
         if (!operationData || typeof operationData !== 'object') {
           throw new Error('بيانات العملية غير صحيحة');
         }
+        
+        // تنظيف البيانات من undefined values
         const cleanData = {};
         Object.keys(operationData).forEach(key => {
           if (operationData[key] !== undefined && operationData[key] !== null) {
             cleanData[key] = operationData[key];
           }
         });
+        
+        console.log('✅ AppContext: Clean operation data:', cleanData);
+        
         await operationsService.addOperation(teacherId, cleanData);
         clearError();
       } catch (error) {
+        console.error('❌ AppContext: Error adding operation:', error);
         setError(error.message);
         throw error;
       }
     },
     
-    // -->> الإضافة تبدأ من هنا <<--
     updateOperation: async (operationId, updateData) => {
       try {
         setLoading('operations', true);
@@ -230,31 +239,104 @@ export const AppProvider = ({ children }) => {
         throw error;
       }
     }
-    // -->> الإضافة تنتهي هنا <<--
   };
 
-
-  // وظائف المدفوعات
+  // وظائف المدفوعات - محسنة لحل مشكلة teacherId
   const paymentActions = {
-    addPayment: async (teacherId, paymentData) => {
+    addPayment: async (paymentData) => {
       try {
         setLoading('payments', true);
-        await paymentsService.addPayment(teacherId, paymentData);
+        
+        console.log('🔍 AppContext: Adding payment with data:', paymentData);
+        
+        // التحقق من وجود teacherId
+        if (!paymentData || !paymentData.teacherId) {
+          console.error('❌ AppContext: teacherId is missing!', paymentData);
+          throw new Error('معرف المدرس مطلوب');
+        }
+        
+        // التحقق من أن teacherId ليس undefined أو null أو string فارغ
+        if (paymentData.teacherId === undefined || 
+            paymentData.teacherId === null || 
+            paymentData.teacherId === '') {
+          console.error('❌ AppContext: teacherId is invalid:', paymentData.teacherId);
+          throw new Error('معرف المدرس غير صحيح');
+        }
+        
+        // إنشاء كائن البيانات النظيف (بدون undefined values)
+        const cleanPaymentData = {
+          teacherId: paymentData.teacherId,
+          amount: Number(paymentData.amount),
+          paymentMethod: paymentData.paymentMethod || 'cash',
+          paymentDate: paymentData.paymentDate || new Date(),
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
+        
+        // إضافة البيانات الاختيارية فقط إذا كانت موجودة وليست undefined
+        if (paymentData.notes && paymentData.notes.trim()) {
+          cleanPaymentData.notes = paymentData.notes.trim();
+        }
+        
+        if (paymentData.reference && paymentData.reference.trim()) {
+          cleanPaymentData.reference = paymentData.reference.trim();
+        }
+        
+        console.log('✅ AppContext: Clean payment data:', cleanPaymentData);
+        
+        // التحقق مرة أخيرة من عدم وجود undefined values
+        const hasUndefined = Object.entries(cleanPaymentData).some(([key, value]) => {
+          if (value === undefined) {
+            console.error(`❌ AppContext: ${key} is undefined!`);
+            return true;
+          }
+          return false;
+        });
+        
+        if (hasUndefined) {
+          throw new Error('البيانات تحتوي على قيم غير صحيحة');
+        }
+        
+        // إرسال البيانات إلى Firebase
+        const docRef = await paymentsService.addPayment(cleanPaymentData);
+        console.log('✅ AppContext: Payment added successfully with ID:', docRef.id);
+        
         clearError();
+        return docRef.id;
+        
       } catch (error) {
+        console.error('❌ AppContext: Error adding payment:', error);
         setError(error.message);
         throw error;
+      } finally {
+        setLoading('payments', false);
       }
     },
 
     updatePayment: async (paymentId, updateData) => {
       try {
         setLoading('payments', true);
-        await paymentsService.updatePayment(paymentId, updateData);
+        
+        // تنظيف البيانات المحدثة
+        const cleanUpdateData = {};
+        Object.keys(updateData).forEach(key => {
+          if (updateData[key] !== undefined && updateData[key] !== null) {
+            cleanUpdateData[key] = updateData[key];
+          }
+        });
+        
+        cleanUpdateData.updatedAt = new Date();
+        
+        console.log('🔄 AppContext: Updating payment with clean data:', cleanUpdateData);
+        
+        await paymentsService.updatePayment(paymentId, cleanUpdateData);
         clearError();
       } catch (error) {
+        console.error('❌ AppContext: Error updating payment:', error);
         setError(error.message);
         throw error;
+      } finally {
+        setLoading('payments', false);
       }
     },
 
@@ -266,6 +348,8 @@ export const AppProvider = ({ children }) => {
       } catch (error) {
         setError(error.message);
         throw error;
+      } finally {
+        setLoading('payments', false);
       }
     }
   };
@@ -275,7 +359,19 @@ export const AppProvider = ({ children }) => {
     addExpense: async (expenseData) => {
       try {
         setLoading('expenses', true);
-        await expensesService.addExpense(expenseData);
+        
+        // تنظيف البيانات من undefined values
+        const cleanData = {};
+        Object.keys(expenseData).forEach(key => {
+          if (expenseData[key] !== undefined && expenseData[key] !== null) {
+            cleanData[key] = expenseData[key];
+          }
+        });
+        
+        cleanData.createdAt = new Date();
+        cleanData.updatedAt = new Date();
+        
+        await expensesService.addExpense(cleanData);
         clearError();
       } catch (error) {
         setError(error.message);
@@ -286,7 +382,18 @@ export const AppProvider = ({ children }) => {
     updateExpense: async (expenseId, updateData) => {
       try {
         setLoading('expenses', true);
-        await expensesService.updateExpense(expenseId, updateData);
+        
+        // تنظيف البيانات المحدثة
+        const cleanUpdateData = {};
+        Object.keys(updateData).forEach(key => {
+          if (updateData[key] !== undefined && updateData[key] !== null) {
+            cleanUpdateData[key] = updateData[key];
+          }
+        });
+        
+        cleanUpdateData.updatedAt = new Date();
+        
+        await expensesService.updateExpense(expenseId, cleanUpdateData);
         clearError();
       } catch (error) {
         setError(error.message);
@@ -378,20 +485,14 @@ export const AppProvider = ({ children }) => {
   };
 
   // حساب إجمالي الأرباح
-//  const calculateTotalProfit = () => {
-  //  const totalRevenue = state.payments.reduce((sum, payment) => sum + (payment.amount || 0), 0);
- //   const totalExpenses = state.expenses.reduce((sum, expense) => sum + (expense.amount || 0), 0);
+  const calculateTotalProfit = () => {
+    const totalRevenue = state.payments.reduce((sum, payment) => sum + (payment.amount || 0), 0);
+    const totalExpenses = state.expenses.reduce((sum, expense) => sum + (expense.amount || 0), 0);
+    // إضافة تكلفة العمليات (إذا كانت موجودة)
+    const operationsCost = state.operations.reduce((sum, op) => sum + ((op.cost || 0)), 0);
     
-  //  return totalRevenue - totalExpenses;
- // };
-const calculateTotalProfit = () => {
-  const totalRevenue = state.payments.reduce((sum, payment) => sum + (payment.amount || 0), 0);
-  const totalExpenses = state.expenses.reduce((sum, expense) => sum + (expense.amount || 0), 0);
-  // إضافة تكلفة العمليات (إذا كانت موجودة)
-  const operationsCost = state.operations.reduce((sum, op) => sum + ((op.cost || 0)), 0);
-  
-  return totalRevenue - totalExpenses - operationsCost;
-};
+    return totalRevenue - totalExpenses - operationsCost;
+  };
 
   const value = {
     state,

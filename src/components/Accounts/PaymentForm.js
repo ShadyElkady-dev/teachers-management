@@ -30,23 +30,42 @@ const PaymentForm = ({
 
   // تعبئة النموذج عند التعديل
   useEffect(() => {
+    console.log('🔍 AccountsPaymentForm: useEffect triggered');
+    console.log('  - payment:', payment);
+    console.log('  - teacher:', teacher);
+    
     if (payment) {
-      setFormData({
-        teacherId: payment.teacherId || '',
+      const newFormData = {
+        teacherId: payment.teacherId || teacher?.id || '',
         amount: payment.amount?.toString() || '',
         paymentMethod: payment.paymentMethod || 'cash',
         paymentDate: dateToInputValue(payment.paymentDate),
         notes: payment.notes || '',
         reference: payment.reference || ''
-      });
+      };
+      
+      console.log('✅ AccountsPaymentForm: Setting form data from payment:', newFormData);
+      setFormData(newFormData);
+    } else if (teacher) {
+      // عند إضافة دفعة جديدة للمدرس المحدد
+      const newFormData = {
+        ...formData,
+        teacherId: teacher.id
+      };
+      
+      console.log('✅ AccountsPaymentForm: Setting form data for teacher:', newFormData);
+      setFormData(newFormData);
     }
-  }, [payment]);
+  }, [payment, teacher]);
 
   // تحديث المدرس المحدد عند تغيير teacherId
   useEffect(() => {
+    console.log('🔍 AccountsPaymentForm: teacherId changed:', formData.teacherId);
+    
     if (formData.teacherId) {
-      const teacher = teachers.find(t => t.id === formData.teacherId);
-      setSelectedTeacher(teacher);
+      const foundTeacher = teachers.find(t => t.id === formData.teacherId);
+      console.log('✅ AccountsPaymentForm: Found teacher:', foundTeacher);
+      setSelectedTeacher(foundTeacher);
     } else {
       setSelectedTeacher(null);
     }
@@ -59,8 +78,8 @@ const PaymentForm = ({
   const validateForm = () => {
     const newErrors = {};
 
-    // المدرس
-    if (!formData.teacherId) {
+    // المدرس - التحقق المحسن
+    if (!formData.teacherId || formData.teacherId.trim() === '') {
       newErrors.teacherId = 'اختيار المدرس مطلوب';
     }
 
@@ -105,8 +124,10 @@ const PaymentForm = ({
     let processedValue = value;
     
     if (field === 'amount') {
-      processedValue = Math.max(0, parseFloat(value) || 0);
+      processedValue = value.replace(/[^0-9.]/g, '');
     }
+
+    console.log(`🔍 AccountsPaymentForm: Field ${field} changed to:`, processedValue);
 
     setFormData(prev => ({
       ...prev,
@@ -130,9 +151,13 @@ const PaymentForm = ({
     }));
   };
 
-  // معالجة إرسال النموذج
+  // معالجة إرسال النموذج - المحسن
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    console.log('🔍 AccountsPaymentForm: Form submitted');
+    console.log('🔍 AccountsPaymentForm: Current formData:', formData);
+    console.log('🔍 AccountsPaymentForm: Teacher prop:', teacher);
     
     // تعيين جميع الحقول كـ touched
     const allTouched = Object.keys(formData).reduce((acc, key) => {
@@ -142,11 +167,57 @@ const PaymentForm = ({
     setTouched(allTouched);
 
     if (validateForm()) {
-      onSave({
-        ...formData,
+      // التحقق النهائي من وجود teacherId
+      const finalTeacherId = formData.teacherId || teacher?.id;
+      
+      if (!finalTeacherId) {
+        setErrors(prev => ({ 
+          ...prev, 
+          teacherId: 'يجب اختيار مدرس صحيح' 
+        }));
+        console.error('❌ AccountsPaymentForm: No teacherId found:', { 
+          formDataTeacherId: formData.teacherId, 
+          teacherProp: teacher?.id 
+        });
+        return;
+      }
+
+      // إنشاء البيانات النهائية - تنظيف من undefined
+      const paymentData = {
+        teacherId: finalTeacherId,
         amount: parseFloat(formData.amount),
+        paymentMethod: formData.paymentMethod,
         paymentDate: new Date(formData.paymentDate)
+      };
+
+      // إضافة البيانات الاختيارية فقط إذا كانت موجودة
+      if (formData.notes && formData.notes.trim()) {
+        paymentData.notes = formData.notes.trim();
+      }
+
+      if (formData.reference && formData.reference.trim()) {
+        paymentData.reference = formData.reference.trim();
+      }
+
+      console.log('✅ AccountsPaymentForm: Sending payment data:', paymentData);
+      
+      // التحقق النهائي من عدم وجود undefined
+      const hasUndefined = Object.entries(paymentData).some(([key, value]) => {
+        if (value === undefined) {
+          console.error(`❌ AccountsPaymentForm: ${key} is undefined!`);
+          return true;
+        }
+        return false;
       });
+      
+      if (hasUndefined) {
+        console.error('❌ AccountsPaymentForm: Payment data contains undefined values');
+        return;
+      }
+
+      onSave(paymentData);
+    } else {
+      console.error('❌ AccountsPaymentForm: Form validation failed:', errors);
     }
   };
 
@@ -195,6 +266,13 @@ const PaymentForm = ({
         </select>
         {hasError('teacherId') && (
           <p className="mt-1 text-sm text-red-600">{errors.teacherId}</p>
+        )}
+        
+        {/* عرض معلومات إضافية للمطور */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="mt-1 text-xs text-gray-500">
+            Debug: teacherId = {formData.teacherId || 'undefined'}, teacher prop = {teacher?.id || 'undefined'}
+          </div>
         )}
       </div>
 
@@ -254,15 +332,13 @@ const PaymentForm = ({
           مبلغ الدفعة (جنيه) <span className="text-red-500">*</span>
         </label>
         <input
-          type="number"
+          type="text"
           id="amount"
           value={formData.amount}
           onChange={(e) => handleChange('amount', e.target.value)}
           onBlur={() => handleBlur('amount')}
           className={`input ${hasError('amount') ? 'border-red-500 focus:border-red-500' : ''} font-bold text-lg`}
           placeholder="0.00"
-          min="0"
-          step="0.01"
           disabled={loading}
           autoFocus
         />
