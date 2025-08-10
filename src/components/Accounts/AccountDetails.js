@@ -443,120 +443,6 @@ const AccountDetails = ({
     </div>
   );
 
-  // عرض الملخص
-  const renderSummary = () => (
-    <div className="space-y-6">
-      
-      {/* ملخص العمليات حسب النوع */}
-      {operationsStats.length > 0 && (
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            العمليات حسب النوع
-          </h3>
-          <div className="space-y-3">
-            {operationsStats.map(stat => (
-              <div key={stat.value} className="bg-white border border-gray-200 rounded-lg p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-4 h-4 rounded-full ${stat.color}`}></div>
-                    <div>
-                      <div className="font-medium text-gray-900">{stat.label}</div>
-                      <div className="text-sm text-gray-600">{stat.count} عملية</div>
-                    </div>
-                  </div>
-                  <div className="text-left">
-                    <div className="font-bold text-blue-600">
-                      {formatCurrency(stat.total)}
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      {stat.percentage.toFixed(1)}%
-                    </div>
-                  </div>
-                </div>
-                <div className="mt-2">
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div 
-                      className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-                      style={{ width: `${Math.min(stat.percentage, 100)}%` }}
-                    ></div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* ملخص المدفوعات حسب الطريقة */}
-      {paymentsStats.length > 0 && (
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            المدفوعات حسب الطريقة
-          </h3>
-          <div className="space-y-3">
-            {paymentsStats.map(stat => (
-              <div key={stat.value} className="bg-white border border-gray-200 rounded-lg p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="text-lg">{stat.icon}</div>
-                    <div>
-                      <div className="font-medium text-gray-900">{stat.label}</div>
-                      <div className="text-sm text-gray-600">{stat.count} دفعة</div>
-                    </div>
-                  </div>
-                  <div className="text-left">
-                    <div className="font-bold text-green-600">
-                      {formatCurrency(stat.total)}
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      {stat.percentage.toFixed(1)}%
-                    </div>
-                  </div>
-                </div>
-                <div className="mt-2">
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div 
-                      className="bg-green-500 h-2 rounded-full transition-all duration-300"
-                      style={{ width: `${Math.min(stat.percentage, 100)}%` }}
-                    ></div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* إحصائيات إضافية */}
-      <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          إحصائيات إضافية
-        </h3>
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <div>
-            <span className="text-gray-600">متوسط العملية:</span>
-            <span className="font-semibold mr-2">{formatCurrency(statistics.averageOperation)}</span>
-          </div>
-          <div>
-            <span className="text-gray-600">متوسط الدفعة:</span>
-            <span className="font-semibold mr-2">{formatCurrency(statistics.averagePayment)}</span>
-          </div>
-          <div>
-            <span className="text-gray-600">نسبة السداد:</span>
-            <span className="font-semibold mr-2">
-              {totalOperations > 0 ? ((totalPayments / totalOperations) * 100).toFixed(1) : 0}%
-            </span>
-          </div>
-          <div>
-            <span className="text-gray-600">تاريخ التسجيل:</span>
-            <span className="font-semibold mr-2">
-              {teacher.createdAt ? formatDate(teacher.createdAt) : '-'}
-            </span>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
 
   return (
     <div>
@@ -566,7 +452,6 @@ const AccountDetails = ({
           { id: 'overview', label: 'نظرة عامة', icon: '📊' },
           { id: 'operations', label: 'العمليات', icon: '📋' },
           { id: 'payments', label: 'المدفوعات', icon: '💳' },
-          { id: 'summary', label: 'الملخص', icon: '📈' }
         ].map(tab => (
           <button
             key={tab.id}
@@ -588,7 +473,6 @@ const AccountDetails = ({
         {activeTab === 'overview' && renderOverview()}
         {activeTab === 'operations' && renderOperations()}
         {activeTab === 'payments' && renderPayments()}
-        {activeTab === 'summary' && renderSummary()}
       </div>
     </div>
   );
