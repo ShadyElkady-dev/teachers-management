@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { formatCurrency, isSmallScreen, formatTime12Hour, formatDateWithDay, getTimeAgo } from '../../utils/helpers';
 
-const AccountsList = ({ 
-  teachers, 
-  onAddPayment, 
-  onEditPayment, 
-  onDeletePayment, 
-  onViewDetails 
+const AccountsList = ({
+  teachers,
+  onAddPayment,
+  onEditPayment,
+  onDeletePayment,
+  onViewDetails
 }) => {
   const [isMobile, setIsMobile] = useState(isSmallScreen());
   const [viewMode, setViewMode] = useState(isMobile ? 'cards' : 'table');
@@ -367,7 +367,7 @@ const TeacherAccountCard = ({
   );
 };
 
-// مكون صف جدول الحسابات المحسن
+// ========== بداية التعديل الرئيسي ==========
 const TeacherAccountTableRow = ({ 
   teacher, 
   onAddPayment, 
@@ -402,7 +402,7 @@ const TeacherAccountTableRow = ({
       </td>
       
       {/* إجمالي العمليات */}
-      <td className="px-6 py-4 whitespace-nowrap text-center">
+      <td className="px-6 py-4 text-center">
         <div className="bg-blue-100 rounded-full px-3 py-2 inline-block">
           <div className="text-lg font-bold text-blue-700">
             {formatCurrency(teacher.totalOperations)}
@@ -412,7 +412,7 @@ const TeacherAccountTableRow = ({
       </td>
       
       {/* إجمالي المدفوعات */}
-      <td className="px-6 py-4 whitespace-nowrap text-center">
+      <td className="px-6 py-4 text-center">
         <div className="bg-green-100 rounded-full px-3 py-2 inline-block">
           <div className="text-lg font-bold text-green-700">
             {formatCurrency(teacher.totalPayments)}
@@ -422,7 +422,7 @@ const TeacherAccountTableRow = ({
       </td>
       
       {/* المديونية */}
-      <td className="px-6 py-4 whitespace-nowrap text-center">
+      <td className="px-6 py-4 text-center">
         <div className={`rounded-full px-3 py-2 inline-block ${
           teacher.debt > 0 ? 'bg-red-100' :
           teacher.debt === 0 ? 'bg-green-100' : 'bg-blue-100'
@@ -443,8 +443,8 @@ const TeacherAccountTableRow = ({
         </div>
       </td>
       
-      {/* آخر دفعة مع نظام 12 ساعة ومنذ متى */}
-      <td className="px-6 py-4 whitespace-nowrap text-center">
+      {/* آخر دفعة */}
+      <td className="px-6 py-4 text-center">
         {teacher.lastPayment ? (
           <div className="bg-purple-100 rounded-lg px-3 py-2 inline-block">
             <div className="text-sm font-bold text-purple-700">
@@ -470,7 +470,7 @@ const TeacherAccountTableRow = ({
       </td>
       
       {/* الحالة */}
-      <td className="px-6 py-4 whitespace-nowrap text-center">
+      <td className="px-6 py-4 text-center">
         <span className={`inline-flex items-center px-3 py-2 rounded-full text-sm font-bold ${
           teacher.debt > 0 
             ? 'bg-red-100 text-red-800' 
@@ -485,7 +485,6 @@ const TeacherAccountTableRow = ({
            teacher.debt === 0 ? 'مسدد' : 'دفع زائد'}
         </span>
         
-        {/* مؤشرات إضافية */}
         <div className="flex justify-center gap-1 mt-2">
           {teacher.debt > 1000 && (
             <span className="inline-block w-3 h-3 bg-red-500 rounded-full animate-pulse" title="دين عالي"></span>
@@ -497,9 +496,8 @@ const TeacherAccountTableRow = ({
       </td>
       
       {/* الإجراءات */}
-      <td className="px-6 py-4 whitespace-nowrap text-center">
-        <div className="flex items-center justify-center gap-2">
-          {/* إضافة دفعة */}
+      <td className="px-6 py-4 text-center">
+        <div className="flex items-center justify-center flex-wrap gap-2">
           <button
             onClick={() => onAddPayment(teacher)}
             className="px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold rounded-lg transition-all duration-200 shadow-md hover:shadow-lg"
@@ -508,7 +506,6 @@ const TeacherAccountTableRow = ({
             💳 دفعة
           </button>
           
-          {/* عرض التفاصيل */}
           <button
             onClick={() => onViewDetails(teacher)}
             className="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold rounded-lg transition-all duration-200 shadow-md hover:shadow-lg"
@@ -517,7 +514,6 @@ const TeacherAccountTableRow = ({
             👁️ تفاصيل
           </button>
           
-          {/* قائمة إضافية */}
           <div className="relative">
             <button
               onClick={toggleActions}
@@ -567,5 +563,6 @@ const TeacherAccountTableRow = ({
     </tr>
   );
 };
+// ========== نهاية التعديل الرئيسي ==========
 
 export default AccountsList;

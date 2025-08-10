@@ -1,8 +1,39 @@
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../../context/AppContext';
-import { dateToInputValue, formatCurrency } from '../../utils/helpers';
+import { dateToInputValue, formatCurrency, sanitizeText } from '../../utils/helpers';
 import { PAYMENT_METHODS } from '../../utils/constants';
 import LoadingSpinner from '../Common/LoadingSpinner';
+
+// دالة مساعدة لتحويل الوقت إلى تنسيق input time (محسنة)
+const timeToInputValue = (date) => {
+  if (!date) {
+    const now = new Date();
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    return `${hours}:${minutes}`;
+  }
+  
+  try {
+    const dateObj = date.toDate ? date.toDate() : new Date(date);
+    
+    if (isNaN(dateObj.getTime())) {
+      const now = new Date();
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      return `${hours}:${minutes}`;
+    }
+    
+    const hours = String(dateObj.getHours()).padStart(2, '0');
+    const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+    return `${hours}:${minutes}`;
+  } catch (error) {
+    console.error('Error in timeToInputValue:', error);
+    const now = new Date();
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    return `${hours}:${minutes}`;
+  }
+};
 
 const PaymentForm = ({ 
   payment = null, 
@@ -20,6 +51,7 @@ const PaymentForm = ({
     amount: '',
     paymentMethod: 'cash',
     paymentDate: dateToInputValue(new Date()),
+    paymentTime: timeToInputValue(new Date()),
     notes: '',
     reference: ''
   });
@@ -30,87 +62,61 @@ const PaymentForm = ({
 
   // تعبئة النموذج عند التعديل
   useEffect(() => {
-    console.log('🔍 AccountsPaymentForm: useEffect triggered');
-    console.log('  - payment:', payment);
-    console.log('  - teacher:', teacher);
-    
     if (payment) {
-      const newFormData = {
-        teacherId: payment.teacherId || teacher?.id || '',
-        amount: payment.amount?.toString() || '',
-        paymentMethod: payment.paymentMethod || 'cash',
-        paymentDate: dateToInputValue(payment.paymentDate),
-        notes: payment.notes || '',
-        reference: payment.reference || ''
-      };
-      
-      console.log('✅ AccountsPaymentForm: Setting form data from payment:', newFormData);
-      setFormData(newFormData);
-    } else if (teacher) {
-      // عند إضافة دفعة جديدة للمدرس المحدد
-      const newFormData = {
-        ...formData,
-        teacherId: teacher.id
-      };
-      
-      console.log('✅ AccountsPaymentForm: Setting form data for teacher:', newFormData);
-      setFormData(newFormData);
+      try {
+        const paymentDate = payment.paymentDate ? new Date(payment.paymentDate) : new Date();
+        const validDate = isNaN(paymentDate.getTime()) ? new Date() : paymentDate;
+        
+        setFormData({
+          teacherId: payment.teacherId || teacher?.id || '',
+          amount: payment.amount?.toString() || '',
+          paymentMethod: payment.paymentMethod || 'cash',
+          paymentDate: dateToInputValue(validDate),
+          paymentTime: timeToInputValue(validDate),
+          notes: payment.notes || '',
+          reference: payment.reference || ''
+        });
+      } catch (error) {
+        console.error('Error processing payment data:', error);
+        const now = new Date();
+        setFormData(prev => ({
+            ...prev,
+            paymentDate: dateToInputValue(now),
+            paymentTime: timeToInputValue(now),
+        }));
+      }
+    } else {
+      const now = new Date();
+      setFormData(prev => ({
+        ...prev,
+        teacherId: teacher?.id || '',
+        paymentDate: dateToInputValue(now),
+        paymentTime: timeToInputValue(now),
+      }));
     }
   }, [payment, teacher]);
 
-  // تحديث المدرس المحدد عند تغيير teacherId
+  // تحديث المدرس المحدد
   useEffect(() => {
-    console.log('🔍 AccountsPaymentForm: teacherId changed:', formData.teacherId);
-    
     if (formData.teacherId) {
       const foundTeacher = teachers.find(t => t.id === formData.teacherId);
-      console.log('✅ AccountsPaymentForm: Found teacher:', foundTeacher);
       setSelectedTeacher(foundTeacher);
     } else {
       setSelectedTeacher(null);
     }
   }, [formData.teacherId, teachers]);
 
-  // حساب المديونية للمدرس المحدد
   const teacherDebt = selectedTeacher ? calculateTeacherDebt(selectedTeacher.id) : 0;
 
-  // التحقق من صحة البيانات
   const validateForm = () => {
     const newErrors = {};
+    if (!formData.teacherId) newErrors.teacherId = 'اختيار المدرس مطلوب';
+    if (!formData.amount || parseFloat(formData.amount) <= 0) newErrors.amount = 'المبلغ يجب أن يكون أكبر من صفر';
+    if (parseFloat(formData.amount) > 999999) newErrors.amount = 'المبلغ كبير جداً';
+    if (!formData.paymentMethod) newErrors.paymentMethod = 'طريقة الدفع مطلوبة';
+    if (!formData.paymentDate) newErrors.paymentDate = 'تاريخ الدفع مطلوب';
+    if (!formData.paymentTime) newErrors.paymentTime = 'وقت الدفع مطلوب';
 
-    // المدرس - التحقق المحسن
-    if (!formData.teacherId || formData.teacherId.trim() === '') {
-      newErrors.teacherId = 'اختيار المدرس مطلوب';
-    }
-
-    // المبلغ
-    if (!formData.amount || formData.amount <= 0) {
-      newErrors.amount = 'المبلغ يجب أن يكون أكبر من صفر';
-    } else if (parseFloat(formData.amount) > 999999) {
-      newErrors.amount = 'المبلغ كبير جداً';
-    }
-
-    // طريقة الدفع
-    if (!formData.paymentMethod) {
-      newErrors.paymentMethod = 'طريقة الدفع مطلوبة';
-    }
-
-    // تاريخ الدفع
-    if (!formData.paymentDate) {
-      newErrors.paymentDate = 'تاريخ الدفع مطلوب';
-    } else {
-      const selectedDate = new Date(formData.paymentDate);
-      const today = new Date();
-      const oneYearAgo = new Date(today.getFullYear() - 1, today.getMonth(), today.getDate());
-      
-      if (selectedDate > today) {
-        newErrors.paymentDate = 'لا يمكن أن يكون تاريخ الدفع في المستقبل';
-      } else if (selectedDate < oneYearAgo) {
-        newErrors.paymentDate = 'تاريخ الدفع قديم جداً';
-      }
-    }
-
-    // المرجع (اختياري ولكن إذا تم إدخاله يجب أن يكون صحيحاً)
     if (formData.reference && formData.reference.trim().length < 3) {
       newErrors.reference = 'المرجع يجب أن يكون أكثر من 3 أحرف';
     }
@@ -119,125 +125,53 @@ const PaymentForm = ({
     return Object.keys(newErrors).length === 0;
   };
 
-  // معالجة تغيير القيم
-  const handleChange = (field, value) => {
-    let processedValue = value;
-    
-    if (field === 'amount') {
-      processedValue = value.replace(/[^0-9.]/g, '');
-    }
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    const processedValue = name === 'amount' ? value.replace(/[^0-9.]/g, '') : value;
+    setFormData(prev => ({ ...prev, [name]: processedValue }));
+    if (errors[name]) setErrors(prev => ({ ...prev, [name]: null }));
+  };
 
-    console.log(`🔍 AccountsPaymentForm: Field ${field} changed to:`, processedValue);
-
-    setFormData(prev => ({
-      ...prev,
-      [field]: processedValue
-    }));
-
-    // إزالة الخطأ عند تعديل الحقل
-    if (errors[field]) {
-      setErrors(prev => ({
-        ...prev,
-        [field]: ''
-      }));
+  const handleBlur = (e) => {
+    const { name } = e.target;
+    setTouched(prev => ({ ...prev, [name]: true }));
+    if (name === 'notes' || name === 'reference') {
+        setFormData(prev => ({ ...prev, [name]: sanitizeText(prev[name]) }));
     }
   };
 
-  // معالجة التركيز على الحقل
-  const handleBlur = (field) => {
-    setTouched(prev => ({
-      ...prev,
-      [field]: true
-    }));
-  };
-
-  // معالجة إرسال النموذج - المحسن
   const handleSubmit = (e) => {
     e.preventDefault();
-    
-    console.log('🔍 AccountsPaymentForm: Form submitted');
-    console.log('🔍 AccountsPaymentForm: Current formData:', formData);
-    console.log('🔍 AccountsPaymentForm: Teacher prop:', teacher);
-    
-    // تعيين جميع الحقول كـ touched
-    const allTouched = Object.keys(formData).reduce((acc, key) => {
-      acc[key] = true;
-      return acc;
-    }, {});
-    setTouched(allTouched);
+    setTouched(Object.keys(formData).reduce((acc, key) => ({...acc, [key]: true}), {}));
 
     if (validateForm()) {
-      // التحقق النهائي من وجود teacherId
-      const finalTeacherId = formData.teacherId || teacher?.id;
-      
-      if (!finalTeacherId) {
-        setErrors(prev => ({ 
-          ...prev, 
-          teacherId: 'يجب اختيار مدرس صحيح' 
-        }));
-        console.error('❌ AccountsPaymentForm: No teacherId found:', { 
-          formDataTeacherId: formData.teacherId, 
-          teacherProp: teacher?.id 
-        });
-        return;
-      }
+        const [hours, minutes] = formData.paymentTime.split(':');
+        const finalPaymentDate = new Date(formData.paymentDate);
+        finalPaymentDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
 
-      // إنشاء البيانات النهائية - تنظيف من undefined
-      const paymentData = {
-        teacherId: finalTeacherId,
-        amount: parseFloat(formData.amount),
-        paymentMethod: formData.paymentMethod,
-        paymentDate: new Date(formData.paymentDate)
-      };
-
-      // إضافة البيانات الاختيارية فقط إذا كانت موجودة
-      if (formData.notes && formData.notes.trim()) {
-        paymentData.notes = formData.notes.trim();
-      }
-
-      if (formData.reference && formData.reference.trim()) {
-        paymentData.reference = formData.reference.trim();
-      }
-
-      console.log('✅ AccountsPaymentForm: Sending payment data:', paymentData);
-      
-      // التحقق النهائي من عدم وجود undefined
-      const hasUndefined = Object.entries(paymentData).some(([key, value]) => {
-        if (value === undefined) {
-          console.error(`❌ AccountsPaymentForm: ${key} is undefined!`);
-          return true;
-        }
-        return false;
-      });
-      
-      if (hasUndefined) {
-        console.error('❌ AccountsPaymentForm: Payment data contains undefined values');
-        return;
-      }
-
-      onSave(paymentData);
-    } else {
-      console.error('❌ AccountsPaymentForm: Form validation failed:', errors);
+        const dataToSave = {
+            teacherId: formData.teacherId,
+            amount: parseFloat(formData.amount),
+            paymentMethod: formData.paymentMethod,
+            paymentDate: finalPaymentDate,
+            notes: formData.notes.trim(),
+            reference: formData.reference.trim()
+        };
+        onSave(dataToSave);
     }
   };
 
-  // تحديد ما إذا كان الحقل يحتوي على خطأ
-  const hasError = (field) => {
-    return touched[field] && errors[field];
-  };
+  const hasError = (field) => touched[field] && errors[field];
 
-  // دفع المبلغ الكامل للمديونية
   const handlePayFullDebt = () => {
     if (teacherDebt > 0) {
-      handleChange('amount', teacherDebt.toString());
+      setFormData(prev => ({...prev, amount: teacherDebt.toString()}));
     }
   };
 
-  // دفع نصف المبلغ
   const handlePayHalfDebt = () => {
     if (teacherDebt > 0) {
-      const halfAmount = (teacherDebt / 2).toFixed(2);
-      handleChange('amount', halfAmount);
+      setFormData(prev => ({...prev, amount: (teacherDebt / 2).toFixed(2)}));
     }
   };
 
@@ -251,28 +185,22 @@ const PaymentForm = ({
         </label>
         <select
           id="teacherId"
+          name="teacherId"
           value={formData.teacherId}
-          onChange={(e) => handleChange('teacherId', e.target.value)}
-          onBlur={() => handleBlur('teacherId')}
+          onChange={handleChange}
+          onBlur={handleBlur}
           className={`input ${hasError('teacherId') ? 'border-red-500 focus:border-red-500' : ''}`}
           disabled={loading || (teacher && !payment)}
         >
           <option value="">اختر المدرس</option>
-          {teachers.map(teacher => (
-            <option key={teacher.id} value={teacher.id}>
-              {teacher.name} - {teacher.phone}
+          {teachers.map(t => (
+            <option key={t.id} value={t.id}>
+              {t.name} - {t.phone}
             </option>
           ))}
         </select>
         {hasError('teacherId') && (
           <p className="mt-1 text-sm text-red-600">{errors.teacherId}</p>
-        )}
-        
-        {/* عرض معلومات إضافية للمطور */}
-        {process.env.NODE_ENV === 'development' && (
-          <div className="mt-1 text-xs text-gray-500">
-            Debug: teacherId = {formData.teacherId || 'undefined'}, teacher prop = {teacher?.id || 'undefined'}
-          </div>
         )}
       </div>
 
@@ -304,7 +232,6 @@ const PaymentForm = ({
             </div>
           </div>
 
-          {/* أزرار دفع سريع */}
           {teacherDebt > 0 && (
             <div className="flex gap-2 mt-3">
               <button
@@ -334,9 +261,10 @@ const PaymentForm = ({
         <input
           type="text"
           id="amount"
+          name="amount"
           value={formData.amount}
-          onChange={(e) => handleChange('amount', e.target.value)}
-          onBlur={() => handleBlur('amount')}
+          onChange={handleChange}
+          onBlur={handleBlur}
           className={`input ${hasError('amount') ? 'border-red-500 focus:border-red-500' : ''} font-bold text-lg`}
           placeholder="0.00"
           disabled={loading}
@@ -346,7 +274,6 @@ const PaymentForm = ({
           <p className="mt-1 text-sm text-red-600">{errors.amount}</p>
         )}
         
-        {/* معاينة الرصيد بعد الدفع */}
         {selectedTeacher && formData.amount && (
           <div className="mt-2 p-2 bg-gray-50 rounded border">
             <div className="text-sm text-gray-600">
@@ -371,9 +298,10 @@ const PaymentForm = ({
         </label>
         <select
           id="paymentMethod"
+          name="paymentMethod"
           value={formData.paymentMethod}
-          onChange={(e) => handleChange('paymentMethod', e.target.value)}
-          onBlur={() => handleBlur('paymentMethod')}
+          onChange={handleChange}
+          onBlur={handleBlur}
           className={`input ${hasError('paymentMethod') ? 'border-red-500 focus:border-red-500' : ''}`}
           disabled={loading}
         >
@@ -388,23 +316,41 @@ const PaymentForm = ({
         )}
       </div>
 
-      {/* تاريخ الدفع */}
-      <div>
-        <label htmlFor="paymentDate" className="block text-sm font-medium text-gray-700 mb-2">
-          تاريخ الدفع <span className="text-red-500">*</span>
-        </label>
-        <input
-          type="date"
-          id="paymentDate"
-          value={formData.paymentDate}
-          onChange={(e) => handleChange('paymentDate', e.target.value)}
-          onBlur={() => handleBlur('paymentDate')}
-          className={`input ${hasError('paymentDate') ? 'border-red-500 focus:border-red-500' : ''}`}
-          disabled={loading}
-        />
-        {hasError('paymentDate') && (
-          <p className="mt-1 text-sm text-red-600">{errors.paymentDate}</p>
-        )}
+      {/* حقلي التاريخ والوقت */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label htmlFor="paymentDate" className="block text-sm font-medium text-gray-700 mb-2">
+            تاريخ الدفع <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="date"
+            id="paymentDate"
+            name="paymentDate"
+            value={formData.paymentDate}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            className={`input ${hasError('paymentDate') ? 'border-red-500' : ''}`}
+            disabled={loading}
+          />
+          {hasError('paymentDate') && <p className="mt-1 text-sm text-red-600">{errors.paymentDate}</p>}
+        </div>
+
+        <div>
+          <label htmlFor="paymentTime" className="block text-sm font-medium text-gray-700 mb-2">
+            وقت الدفع <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="time"
+            id="paymentTime"
+            name="paymentTime"
+            value={formData.paymentTime}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            className={`input ${hasError('paymentTime') ? 'border-red-500' : ''}`}
+            disabled={loading}
+          />
+          {hasError('paymentTime') && <p className="mt-1 text-sm text-red-600">{errors.paymentTime}</p>}
+        </div>
       </div>
 
       {/* رقم المرجع */}
@@ -415,10 +361,11 @@ const PaymentForm = ({
         <input
           type="text"
           id="reference"
+          name="reference"
           value={formData.reference}
-          onChange={(e) => handleChange('reference', e.target.value)}
-          onBlur={() => handleBlur('reference')}
-          className={`input ${hasError('reference') ? 'border-red-500 focus:border-red-500' : ''}`}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          className={`input ${hasError('reference') ? 'border-red-500' : ''}`}
           placeholder="رقم الإيصال أو المرجع"
           disabled={loading}
         />
@@ -437,9 +384,10 @@ const PaymentForm = ({
         </label>
         <textarea
           id="notes"
+          name="notes"
           value={formData.notes}
-          onChange={(e) => handleChange('notes', e.target.value)}
-          onBlur={() => handleBlur('notes')}
+          onChange={handleChange}
+          onBlur={handleBlur}
           className="input min-h-[80px] resize-y"
           placeholder="أي ملاحظات إضافية حول الدفعة"
           disabled={loading}
@@ -469,9 +417,9 @@ const PaymentForm = ({
               </span>
             </div>
             <div>
-              <span className="text-green-700">التاريخ:</span>
+              <span className="text-green-700">التاريخ والوقت:</span>
               <span className="font-medium mr-2">
-                {new Date(formData.paymentDate).toLocaleDateString('ar-EG')}
+                {new Date(formData.paymentDate + 'T' + formData.paymentTime).toLocaleString('ar-EG')}
               </span>
             </div>
           </div>
@@ -503,22 +451,6 @@ const PaymentForm = ({
             payment ? 'تحديث الدفعة' : 'تسجيل الدفعة'
           )}
         </button>
-      </div>
-
-      {/* معلومات مساعدة */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <div className="flex items-start gap-3">
-          <span className="text-blue-500 text-lg">💡</span>
-          <div className="text-sm text-blue-800">
-            <p className="font-medium mb-2">نصائح:</p>
-            <ul className="space-y-1 text-blue-700">
-              <li>• استخدم أزرار الدفع السريع لسداد المديونية كاملة أو جزئياً</li>
-              <li>• تأكد من تسجيل طريقة الدفع الصحيحة للمتابعة</li>
-              <li>• أضف رقم المرجع إذا كان لديك إيصال أو مرجع رسمي</li>
-              <li>• يمكنك دفع أكثر من المديونية (دفع مقدم)</li>
-            </ul>
-          </div>
-        </div>
       </div>
     </form>
   );

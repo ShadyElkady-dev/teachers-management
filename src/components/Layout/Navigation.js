@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAppContext } from '../../context/AppContext';
-import { useAuth, PERMISSIONS } from '../../context/AuthContext';
+import { useAuth, PERMISSIONS, USER_ROLES } from '../../context/AuthContext';
 import { PermissionGate } from '../Common/ProtectedRoute';
 import { formatCurrency } from '../../utils/helpers';
 
@@ -35,7 +35,8 @@ const Navigation = ({ onNavigate }) => {
       bgColor: 'bg-green-50',
       borderColor: 'border-green-200',
       textColor: 'text-green-700',
-      hoverBg: 'hover:bg-green-100'
+      hoverBg: 'hover:bg-green-100',
+      hideFor: USER_ROLES.SECRETARY
     },
     {
       id: 'accounts',
@@ -79,7 +80,7 @@ const Navigation = ({ onNavigate }) => {
   ];
 
   const availableSections = mainSections.filter(section => 
-    !section.permission || hasPermission(section.permission)
+    (!section.permission || hasPermission(section.permission)) && section.hideFor !== user.role
   );
 
   return (

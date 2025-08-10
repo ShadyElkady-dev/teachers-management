@@ -26,8 +26,8 @@ const AccountsPage = () => {
   const [showAccountDetails, setShowAccountDetails] = useState(false);
   const [editingPayment, setEditingPayment] = useState(null);
   const [filterType, setFilterType] = useState('all'); // all, debts, paid
-  const [sortBy, setSortBy] = useState('name'); // <-- تم التعديل هنا
-  const [sortOrder, setSortOrder] = useState('asc');  // <-- تم التعديل هنا
+  const [sortBy, setSortBy] = useState('name');
+  const [sortOrder, setSortOrder] = useState('asc');
   const [isMobile, setIsMobile] = useState(isSmallScreen());
 
   // مراقبة تغيير حجم الشاشة
@@ -44,7 +44,6 @@ const AccountsPage = () => {
   useEffect(() => {
     const action = searchParams.get('action');
     if (action === 'payment') {
-      // فتح نافذة الدفع السريع
       setShowPaymentForm(true);
     }
   }, [searchParams]);
@@ -73,13 +72,11 @@ const AccountsPage = () => {
   // تصفية المدرسين
   const filteredTeachers = teachersWithDebts
     .filter(teacher => {
-      // فلتر البحث
       const matchesSearch = !searchTerm.trim() || 
         searchInText(teacher.name, searchTerm) ||
         searchInText(teacher.phone, searchTerm) ||
         searchInText(teacher.school, searchTerm);
 
-      // فلتر النوع
       const matchesFilter = filterType === 'all' || 
         (filterType === 'debts' && teacher.debt > 0) ||
         (filterType === 'paid' && teacher.debt <= 0);
@@ -146,13 +143,15 @@ const AccountsPage = () => {
     }
   };
 
+  // ========== بداية التعديل الرئيسي ==========
   const handleSavePayment = async (paymentData) => {
     try {
       if (editingPayment) {
         await paymentActions.updatePayment(editingPayment.id, paymentData);
         toast.success(MESSAGES.SUCCESS.PAYMENT_UPDATED);
       } else {
-        await paymentActions.addPayment(selectedTeacher?.id, paymentData);
+        // تم التعديل هنا: نرسل paymentData مباشرة
+        await paymentActions.addPayment(paymentData);
         toast.success(MESSAGES.SUCCESS.PAYMENT_ADDED);
       }
       
@@ -163,6 +162,7 @@ const AccountsPage = () => {
       toast.error(error.message || MESSAGES.ERROR.GENERAL);
     }
   };
+  // ========== نهاية التعديل الرئيسي ==========
 
   // عرض تفاصيل الحساب
   const handleViewAccountDetails = (teacher) => {
@@ -210,92 +210,53 @@ const AccountsPage = () => {
 
         {/* الإحصائيات الرئيسية */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-6 rounded-2xl shadow-lg">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-sm font-medium opacity-90">إجمالي المدرسين</div>
-                <div className="text-3xl font-bold">{statistics.totalTeachers}</div>
-                <div className="text-xs opacity-80">في النظام</div>
-              </div>
-              <div className="text-4xl opacity-80">👥</div>
-            </div>
-          </div>
-          
-          <div className="bg-gradient-to-br from-red-500 to-red-600 text-white p-6 rounded-2xl shadow-lg">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-sm font-medium opacity-90">لديهم ديون</div>
-                <div className="text-3xl font-bold">{statistics.teachersWithDebts}</div>
-                <div className="text-xs opacity-80">مدرس</div>
-              </div>
-              <div className="text-4xl opacity-80">⚠️</div>
-            </div>
-          </div>
-          
-          <div className="bg-gradient-to-br from-yellow-500 to-yellow-600 text-white p-6 rounded-2xl shadow-lg">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-sm font-medium opacity-90">إجمالي الديون</div>
-                <div className="text-lg font-bold">{formatCurrency(statistics.totalDebts)}</div>
-                <div className="text-xs opacity-80">مستحق الدفع</div>
-              </div>
-              <div className="text-4xl opacity-80">💸</div>
-            </div>
-          </div>
-          
-          <div className="bg-gradient-to-br from-green-500 to-green-600 text-white p-6 rounded-2xl shadow-lg">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-sm font-medium opacity-90">إجمالي المدفوعات</div>
-                <div className="text-lg font-bold">{formatCurrency(statistics.totalPayments)}</div>
-                <div className="text-xs opacity-80">تم تحصيلها</div>
-              </div>
-              <div className="text-4xl opacity-80">✅</div>
-            </div>
-          </div>
-        </div>
-
-        {/* إحصائيات إضافية */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <div className="bg-white rounded-2xl shadow-lg p-6 border-2 border-gray-100">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-sm font-medium text-gray-600">متوسط الدين</div>
-                <div className="text-xl font-bold text-orange-600">{formatCurrency(statistics.averageDebt)}</div>
-              </div>
-              <div className="text-3xl">📊</div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-2xl shadow-lg p-6 border-2 border-gray-100">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-sm font-medium text-gray-600">مدرسين مسددين</div>
-                <div className="text-xl font-bold text-green-600">{statistics.paidTeachers}</div>
-              </div>
-              <div className="text-3xl">✅</div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-2xl shadow-lg p-6 border-2 border-gray-100">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-sm font-medium text-gray-600">نسبة السداد</div>
-                <div className="text-xl font-bold text-purple-600">
-                  {statistics.totalTeachers > 0 
-                    ? Math.round((statistics.paidTeachers / statistics.totalTeachers) * 100)
-                    : 0}%
+            <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-6 rounded-2xl shadow-lg">
+                <div className="flex items-center justify-between">
+                <div>
+                    <div className="text-sm font-medium opacity-90">إجمالي المدرسين</div>
+                    <div className="text-3xl font-bold">{statistics.totalTeachers}</div>
+                    <div className="text-xs opacity-80">في النظام</div>
                 </div>
-              </div>
-              <div className="text-3xl">📈</div>
+                <div className="text-4xl opacity-80">👥</div>
+                </div>
             </div>
-          </div>
+            
+            <div className="bg-gradient-to-br from-red-500 to-red-600 text-white p-6 rounded-2xl shadow-lg">
+                <div className="flex items-center justify-between">
+                <div>
+                    <div className="text-sm font-medium opacity-90">لديهم ديون</div>
+                    <div className="text-3xl font-bold">{statistics.teachersWithDebts}</div>
+                    <div className="text-xs opacity-80">مدرس</div>
+                </div>
+                <div className="text-4xl opacity-80">⚠️</div>
+                </div>
+            </div>
+            
+            <div className="bg-gradient-to-br from-yellow-500 to-yellow-600 text-white p-6 rounded-2xl shadow-lg">
+                <div className="flex items-center justify-between">
+                <div>
+                    <div className="text-sm font-medium opacity-90">إجمالي الديون</div>
+                    <div className="text-lg font-bold">{formatCurrency(statistics.totalDebts)}</div>
+                    <div className="text-xs opacity-80">مستحق الدفع</div>
+                </div>
+                <div className="text-4xl opacity-80">💸</div>
+                </div>
+            </div>
+            
+            <div className="bg-gradient-to-br from-green-500 to-green-600 text-white p-6 rounded-2xl shadow-lg">
+                <div className="flex items-center justify-between">
+                <div>
+                    <div className="text-sm font-medium opacity-90">إجمالي المدفوعات</div>
+                    <div className="text-lg font-bold">{formatCurrency(statistics.totalPayments)}</div>
+                    <div className="text-xs opacity-80">تم تحصيلها</div>
+                </div>
+                <div className="text-4xl opacity-80">✅</div>
+                </div>
+            </div>
         </div>
 
         {/* أدوات التصفية والبحث */}
         <div className="mb-6 space-y-4">
-          
-          {/* شريط البحث */}
           <SearchBar
             value={searchTerm}
             onChange={setSearchTerm}
@@ -303,13 +264,9 @@ const AccountsPage = () => {
             className="text-lg"
           />
 
-          {/* الفلاتر */}
           <div className="bg-white rounded-2xl border-2 border-gray-200 p-6 shadow-lg space-y-4">
             <h3 className="text-lg font-bold text-gray-900">🔍 البحث والتصفية المتقدمة</h3>
-            
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              
-              {/* فلتر النوع */}
               <div>
                 <label className="block text-sm font-bold text-gray-700 mb-2">عرض:</label>
                 <select 
@@ -322,8 +279,6 @@ const AccountsPage = () => {
                   <option value="paid">مسددين ({statistics.paidTeachers})</option>
                 </select>
               </div>
-
-              {/* الترتيب */}
               <div>
                 <label className="block text-sm font-bold text-gray-700 mb-2">ترتيب حسب:</label>
                 <select 
@@ -336,8 +291,6 @@ const AccountsPage = () => {
                   <option value="lastPayment">آخر دفعة</option>
                 </select>
               </div>
-
-              {/* اتجاه الترتيب */}
               <div>
                 <label className="block text-sm font-bold text-gray-700 mb-2">الاتجاه:</label>
                 <button
@@ -349,8 +302,6 @@ const AccountsPage = () => {
                 </button>
               </div>
             </div>
-
-            {/* أدوات التحكم */}
             <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t-2 border-gray-200">
               <div className="flex items-center gap-2">
                 <button
@@ -365,7 +316,6 @@ const AccountsPage = () => {
                   مسح جميع الفلاتر
                 </button>
               </div>
-              
               <div className="bg-blue-50 px-4 py-2 rounded-xl">
                 <span className="text-sm font-bold text-blue-800">
                   عرض {filteredTeachers.length} حساب
@@ -377,15 +327,7 @@ const AccountsPage = () => {
 
         {/* قائمة الحسابات */}
         <div className="mb-6">
-          {filteredTeachers.length === 0 && searchTerm ? (
-            <div className="text-center py-16 bg-white rounded-2xl shadow-lg">
-              <div className="text-6xl mb-4">🔍</div>
-              <div className="text-2xl font-bold text-gray-700 mb-2">لا توجد نتائج</div>
-              <div className="text-gray-500 text-lg">
-                لم يتم العثور على حسابات مطابقة لكلمة البحث "{searchTerm}"
-              </div>
-            </div>
-          ) : filteredTeachers.length === 0 ? (
+          {filteredTeachers.length === 0 ? (
             <div className="text-center py-16 bg-white rounded-2xl shadow-lg">
               <div className="text-6xl mb-4">💰</div>
               <div className="text-2xl font-bold text-gray-700 mb-2">لا توجد حسابات</div>
@@ -404,9 +346,6 @@ const AccountsPage = () => {
           )}
         </div>
 
-
-        {/* النوافذ المنبثقة */}
-        
         {/* نافذة إضافة/تعديل دفعة */}
         <Modal
           isOpen={showPaymentForm}
