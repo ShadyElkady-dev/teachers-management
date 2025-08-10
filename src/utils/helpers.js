@@ -182,20 +182,48 @@ export const sanitizeText = (text) => {
 
 // تحويل التاريخ إلى ISO string للإدخال
 export const dateToInputValue = (date) => {
-  if (!date) return '';
+  if (!date) {
+    // إرجاع التاريخ الحالي إذا لم يتم تمرير تاريخ
+    return new Date().toISOString().split('T')[0];
+  }
   
-  const dateObj = date.toDate ? date.toDate() : new Date(date);
-  
-  return dateObj.toISOString().split('T')[0];
+  try {
+    const dateObj = date.toDate ? date.toDate() : new Date(date);
+    
+    // التحقق من صحة التاريخ
+    if (isNaN(dateObj.getTime())) {
+      console.warn('Invalid date in dateToInputValue:', date, 'using current date instead');
+      return new Date().toISOString().split('T')[0];
+    }
+    
+    return dateObj.toISOString().split('T')[0];
+  } catch (error) {
+    console.error('Error in dateToInputValue:', error, 'date:', date);
+    // إرجاع التاريخ الحالي في حالة الخطأ
+    return new Date().toISOString().split('T')[0];
+  }
 };
 
 // تحويل التاريخ والوقت إلى datetime-local input
 export const dateTimeToInputValue = (date) => {
-  if (!date) return '';
+  if (!date) {
+    return new Date().toISOString().slice(0, 16);
+  }
   
-  const dateObj = date.toDate ? date.toDate() : new Date(date);
-  
-  return dateObj.toISOString().slice(0, 16);
+  try {
+    const dateObj = date.toDate ? date.toDate() : new Date(date);
+    
+    // التحقق من صحة التاريخ
+    if (isNaN(dateObj.getTime())) {
+      console.warn('Invalid date in dateTimeToInputValue:', date, 'using current date instead');
+      return new Date().toISOString().slice(0, 16);
+    }
+    
+    return dateObj.toISOString().slice(0, 16);
+  } catch (error) {
+    console.error('Error in dateTimeToInputValue:', error, 'date:', date);
+    return new Date().toISOString().slice(0, 16);
+  }
 };
 
 // البحث في النصوص باللغة العربية

@@ -6,11 +6,35 @@ import LoadingSpinner from '../Common/LoadingSpinner';
 import { dateToInputValue, sanitizeText, formatCurrency } from '../../utils/helpers';
 import toast from 'react-hot-toast';
 
-// دالة مساعدة لتحويل الوقت إلى تنسيق input time
+// دالة مساعدة لتحويل الوقت إلى تنسيق input time (محسنة)
 const timeToInputValue = (date) => {
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  return `${hours}:${minutes}`;
+  if (!date) {
+    const now = new Date();
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    return `${hours}:${minutes}`;
+  }
+  
+  try {
+    const dateObj = date.toDate ? date.toDate() : new Date(date);
+    
+    if (isNaN(dateObj.getTime())) {
+      const now = new Date();
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      return `${hours}:${minutes}`;
+    }
+    
+    const hours = String(dateObj.getHours()).padStart(2, '0');
+    const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+    return `${hours}:${minutes}`;
+  } catch (error) {
+    console.error('Error in timeToInputValue:', error);
+    const now = new Date();
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    return `${hours}:${minutes}`;
+  }
 };
 
 // ======== بداية كود الحاسبة الكامل =========
@@ -140,17 +164,37 @@ const OperationForm = ({
   // تعبئة النموذج عند التعديل
   useEffect(() => {
     if (operation) {
-      const operationDate = new Date(operation.operationDate);
-      setFormData({
-        teacherId: operation.teacherId || teacher?.id || '',
-        type: operation.type || 'printing',
-        customType: OPERATION_TYPES.find(t => t.value === operation.type) ? '' : operation.type,
-        description: operation.description || '',
-        amount: operation.amount?.toString() || '',
-        operationDate: dateToInputValue(operationDate),
-        operationTime: timeToInputValue(operationDate), // استخراج الوقت من التاريخ المحفوظ
-        notes: operation.notes || ''
-      });
+      try {
+        const operationDate = operation.operationDate ? new Date(operation.operationDate) : new Date();
+        
+        // التحقق من صحة التاريخ
+        const validDate = isNaN(operationDate.getTime()) ? new Date() : operationDate;
+        
+        setFormData({
+          teacherId: operation.teacherId || teacher?.id || '',
+          type: operation.type || 'printing',
+          customType: OPERATION_TYPES.find(t => t.value === operation.type) ? '' : operation.type,
+          description: operation.description || '',
+          amount: operation.amount?.toString() || '',
+          operationDate: dateToInputValue(validDate),
+          operationTime: timeToInputValue(validDate), // استخراج الوقت من التاريخ المحفوظ
+          notes: operation.notes || ''
+        });
+      } catch (error) {
+        console.error('Error processing operation data:', error);
+        // استخدام البيانات الافتراضية في حالة الخطأ
+        const now = new Date();
+        setFormData({
+          teacherId: operation.teacherId || teacher?.id || '',
+          type: operation.type || 'printing',
+          customType: OPERATION_TYPES.find(t => t.value === operation.type) ? '' : operation.type,
+          description: operation.description || '',
+          amount: operation.amount?.toString() || '',
+          operationDate: dateToInputValue(now),
+          operationTime: timeToInputValue(now),
+          notes: operation.notes || ''
+        });
+      }
     } else {
       // إعادة تعيين النموذج مع المدرس المحدد والوقت الحالي
       const now = new Date();

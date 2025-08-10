@@ -3,6 +3,13 @@ import { dateToInputValue, sanitizeText } from '../../utils/helpers';
 import { EXPENSE_TYPES } from '../../utils/constants';
 import LoadingSpinner from '../Common/LoadingSpinner';
 
+// دالة مساعدة لتحويل الوقت إلى تنسيق input time
+const timeToInputValue = (date) => {
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${hours}:${minutes}`;
+};
+
 const ExpenseForm = ({ 
   expense = null, 
   onSave, 
@@ -15,6 +22,7 @@ const ExpenseForm = ({
     description: '',
     amount: '',
     expenseDate: dateToInputValue(new Date()),
+    expenseTime: timeToInputValue(new Date()), // إضافة حقل الوقت
     notes: ''
   });
 
@@ -24,12 +32,25 @@ const ExpenseForm = ({
   // تعبئة النموذج عند التعديل
   useEffect(() => {
     if (expense) {
+      const expenseDate = new Date(expense.expenseDate);
       setFormData({
         type: expense.type || 'paper',
         description: expense.description || '',
         amount: expense.amount?.toString() || '',
-        expenseDate: dateToInputValue(expense.expenseDate),
+        expenseDate: dateToInputValue(expenseDate),
+        expenseTime: timeToInputValue(expenseDate), // استخراج الوقت من التاريخ المحفوظ
         notes: expense.notes || ''
+      });
+    } else {
+      // إعادة تعيين النموذج مع الوقت الحالي
+      const now = new Date();
+      setFormData({
+        type: 'paper',
+        description: '',
+        amount: '',
+        expenseDate: dateToInputValue(now),
+        expenseTime: timeToInputValue(now), // الوقت الحالي
+        notes: ''
       });
     }
   }, [expense]);
@@ -64,12 +85,15 @@ const ExpenseForm = ({
         newErrors.expenseDate = 'تاريخ المصروف قديم جداً';
       }
     }
+    if (!formData.expenseTime) {
+      newErrors.expenseTime = 'وقت المصروف مطلوب';
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  // معالجة تغيير القيم (تم التعديل هنا)
+  // معالجة تغيير القيم
   const handleChange = (e) => {
     const { name, value } = e.target;
     
@@ -84,7 +108,7 @@ const ExpenseForm = ({
     }
   };
 
-  // معالجة التركيز على الحقل (تم التعديل هنا)
+  // معالجة التركيز على الحقل
   const handleBlur = (e) => {
     const { name } = e.target;
     setTouched(prev => ({ ...prev, [name]: true }));
@@ -105,10 +129,15 @@ const ExpenseForm = ({
     setTouched(allTouched);
 
     if (validateForm()) {
+      // دمج التاريخ والوقت
+      const [hours, minutes] = formData.expenseTime.split(':');
+      const finalExpenseDate = new Date(formData.expenseDate);
+      finalExpenseDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+
       onSave({
         ...formData,
         amount: parseFloat(formData.amount),
-        expenseDate: new Date(formData.expenseDate)
+        expenseDate: finalExpenseDate // التاريخ مع الوقت المحدد
       });
     }
   };
@@ -183,23 +212,45 @@ const ExpenseForm = ({
         )}
       </div>
 
-      <div>
-        <label htmlFor="expenseDate" className="block text-sm font-medium text-gray-700 mb-2">
-          تاريخ المصروف <span className="text-red-500">*</span>
-        </label>
-        <input
-          type="date"
-          id="expenseDate"
-          name="expenseDate"
-          value={formData.expenseDate}
-          onChange={handleChange}
-          onBlur={handleBlur}
-          className={`input ${hasError('expenseDate') ? 'border-red-500 focus:border-red-500' : ''}`}
-          disabled={loading}
-        />
-        {hasError('expenseDate') && (
-          <p className="mt-1 text-sm text-red-600">{errors.expenseDate}</p>
-        )}
+      {/* حقلي التاريخ والوقت */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label htmlFor="expenseDate" className="block text-sm font-medium text-gray-700 mb-2">
+            تاريخ المصروف <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="date"
+            id="expenseDate"
+            name="expenseDate"
+            value={formData.expenseDate}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            className={`input ${hasError('expenseDate') ? 'border-red-500 focus:border-red-500' : ''}`}
+            disabled={loading}
+          />
+          {hasError('expenseDate') && (
+            <p className="mt-1 text-sm text-red-600">{errors.expenseDate}</p>
+          )}
+        </div>
+
+        <div>
+          <label htmlFor="expenseTime" className="block text-sm font-medium text-gray-700 mb-2">
+            وقت المصروف <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="time"
+            id="expenseTime"
+            name="expenseTime"
+            value={formData.expenseTime}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            className={`input ${hasError('expenseTime') ? 'border-red-500 focus:border-red-500' : ''}`}
+            disabled={loading}
+          />
+          {hasError('expenseTime') && (
+            <p className="mt-1 text-sm text-red-600">{errors.expenseTime}</p>
+          )}
+        </div>
       </div>
 
       <div>
@@ -243,6 +294,22 @@ const ExpenseForm = ({
             expense ? 'تحديث المصروف' : 'حفظ المصروف'
           )}
         </button>
+      </div>
+
+      {/* معلومات مساعدة */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="flex items-start gap-3">
+          <span className="text-blue-500 text-lg">💡</span>
+          <div className="text-sm text-blue-800">
+            <p className="font-medium mb-2">نصائح:</p>
+            <ul className="space-y-1 text-blue-700">
+              <li>• اختر نوع المصروف بدقة لسهولة التصنيف</li>
+              <li>• أضف وصف مفصل يوضح سبب المصروف</li>
+              <li>• الوقت الحالي يُضاف تلقائياً ويمكن تعديله</li>
+              <li>• استخدم الملاحظات لإضافة تفاصيل إضافية</li>
+            </ul>
+          </div>
+        </div>
       </div>
     </form>
   );

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { formatCurrency, formatDate, timeAgo, isSmallScreen } from '../../utils/helpers';
+import { formatCurrency, isSmallScreen, formatTime12Hour, formatDateWithDay, getTimeAgo } from '../../utils/helpers';
 import { EXPENSE_TYPES } from '../../utils/constants';
 
 const ExpensesList = ({ 
@@ -48,7 +48,7 @@ const ExpensesList = ({
         <table className="min-w-full">
           <thead className="bg-gray-50 border-b-2 border-gray-200">
             <tr>
-              <th className="px-6 py-4 text-right text-sm font-bold text-gray-700">التاريخ</th>
+              <th className="px-6 py-4 text-right text-sm font-bold text-gray-700">التاريخ والوقت</th>
               <th className="px-6 py-4 text-right text-sm font-bold text-gray-700">النوع</th>
               <th className="px-6 py-4 text-right text-sm font-bold text-gray-700">الوصف</th>
               <th className="px-6 py-4 text-center text-sm font-bold text-gray-700">المبلغ</th>
@@ -196,12 +196,13 @@ const ExpenseCardEnhanced = ({ expense, onEdit, onDelete }) => {
               <h3 className="font-bold text-xl leading-tight mb-1">
                 {expenseType?.label || expense.type}
               </h3>
-              <p className="text-sm opacity-90 mb-1">
-                📅 {formatDate(expense.expenseDate)}
-              </p>
-              <p className="text-xs opacity-80">
-                {timeAgo(expense.expenseDate)}
-              </p>
+              <div className="space-y-1">
+                <p className="text-xs opacity-80">📅 {formatDateWithDay(expense.expenseDate)}</p>
+                <p className="text-xs opacity-80">⏰ {formatTime12Hour(expense.expenseDate)}</p>
+                <p className="text-xs opacity-70 bg-white bg-opacity-20 rounded-full px-2 py-1 inline-block">
+                  🕐 {getTimeAgo(expense.expenseDate)}
+                </p>
+              </div>
             </div>
           </div>
 
@@ -322,9 +323,20 @@ const ExpenseTableRow = ({ expense, onEdit, onDelete }) => {
 
   return (
     <tr className="hover:bg-gray-50 transition-colors">
-      <td className="px-6 py-4 whitespace-nowrap">
-        <div className="text-sm font-medium text-gray-900">{formatDate(expense.expenseDate)}</div>
-        <div className="text-xs text-gray-500">{timeAgo(expense.expenseDate)}</div>
+      <td className="px-6 py-4">
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-sm font-medium text-gray-900">
+            <span>📅</span>
+            <span>{formatDateWithDay(expense.expenseDate)}</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm text-gray-700">
+            <span>⏰</span>
+            <span>{formatTime12Hour(expense.expenseDate)}</span>
+          </div>
+          <div className="inline-block bg-blue-100 text-blue-800 text-xs font-medium px-2 py-1 rounded-full">
+            🕐 {getTimeAgo(expense.expenseDate)}
+          </div>
+        </div>
       </td>
       <td className="px-6 py-4 whitespace-nowrap">
         <div className="flex items-center">

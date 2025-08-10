@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { formatCurrency, formatDate, timeAgo, isSmallScreen } from '../../utils/helpers';
+import { formatCurrency, isSmallScreen, formatTime12Hour, formatDateWithDay, getTimeAgo } from '../../utils/helpers';
 
 const AccountsList = ({ 
   teachers, 
@@ -261,7 +261,7 @@ const TeacherAccountCard = ({
           </div>
         </div>
 
-        {/* آخر دفعة */}
+        {/* آخر دفعة مع نظام 12 ساعة */}
         <div className="mb-6 bg-gray-50 border border-gray-200 rounded-xl p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -273,11 +273,16 @@ const TeacherAccountCard = ({
                 <div className="text-sm font-bold text-green-700">
                   {formatCurrency(teacher.lastPayment.amount)}
                 </div>
-                <div className="text-xs text-gray-500">
-                  {formatDate(teacher.lastPayment.paymentDate)}
-                </div>
-                <div className="text-xs text-gray-400">
-                  {timeAgo(teacher.lastPayment.paymentDate)}
+                <div className="space-y-1">
+                  <div className="text-xs text-gray-600">
+                    📅 {formatDateWithDay(teacher.lastPayment.paymentDate)}
+                  </div>
+                  <div className="text-xs text-gray-600">
+                    ⏰ {formatTime12Hour(teacher.lastPayment.paymentDate)}
+                  </div>
+                  <div className="text-xs text-gray-500 bg-blue-100 text-blue-800 px-2 py-1 rounded-full inline-block">
+                    🕐 {getTimeAgo(teacher.lastPayment.paymentDate)}
+                  </div>
                 </div>
               </div>
             ) : (
@@ -438,18 +443,23 @@ const TeacherAccountTableRow = ({
         </div>
       </td>
       
-      {/* آخر دفعة */}
+      {/* آخر دفعة مع نظام 12 ساعة ومنذ متى */}
       <td className="px-6 py-4 whitespace-nowrap text-center">
         {teacher.lastPayment ? (
           <div className="bg-purple-100 rounded-lg px-3 py-2 inline-block">
             <div className="text-sm font-bold text-purple-700">
               {formatCurrency(teacher.lastPayment.amount)}
             </div>
-            <div className="text-xs text-purple-600">
-              {formatDate(teacher.lastPayment.paymentDate)}
-            </div>
-            <div className="text-xs text-purple-500">
-              {timeAgo(teacher.lastPayment.paymentDate)}
+            <div className="space-y-1">
+              <div className="text-xs text-purple-600">
+                📅 {formatDateWithDay(teacher.lastPayment.paymentDate)}
+              </div>
+              <div className="text-xs text-purple-600">
+                ⏰ {formatTime12Hour(teacher.lastPayment.paymentDate)}
+              </div>
+              <div className="text-xs text-purple-500 bg-purple-50 px-2 py-1 rounded-full">
+                🕐 {getTimeAgo(teacher.lastPayment.paymentDate)}
+              </div>
             </div>
           </div>
         ) : (
