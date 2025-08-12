@@ -1,7 +1,8 @@
-import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, useRef } from 'react';
 import { getFromLocalStorage, saveToLocalStorage, removeFromLocalStorage } from '../utils/helpers';
-import { db } from '../services/firebase'; // <-- (1) استيراد قاعدة البيانات
-import { doc, setDoc } from 'firebase/firestore'; // <-- (2) استيراد دوال Firestore
+import { db } from '../services/firebase';
+import { doc, setDoc } from 'firebase/firestore';
+import toast from 'react-hot-toast';
 
 // أنواع المستخدمين
 export const USER_ROLES = {
@@ -23,8 +24,8 @@ export const PERMISSIONS = {
   EDIT_OPERATION: 'edit_operation',
   DELETE_OPERATION: 'delete_operation',
   VIEW_OPERATION_PRICES: 'view_operation_prices',
-  VIEW_OPERATION_PRICES_AFTER_SAVE: 'view_operation_prices_after_save', // 🔥 صلاحية جديدة
-  VIEW_ALL_OPERATIONS: 'view_all_operations', // 🔥 صلاحية جديدة لرؤية كل العمليات
+  VIEW_OPERATION_PRICES_AFTER_SAVE: 'view_operation_prices_after_save',
+  VIEW_ALL_OPERATIONS: 'view_all_operations',
   
   // صلاحيات المدفوعات
   VIEW_PAYMENTS: 'view_payments',
@@ -50,18 +51,11 @@ export const PERMISSIONS = {
 
 // إعداد الصلاحيات لكل دور
 const ROLE_PERMISSIONS = {
-  [USER_ROLES.ADMIN]: Object.values(PERMISSIONS), // الأدمن يملك كل الصلاحيات
+  [USER_ROLES.ADMIN]: Object.values(PERMISSIONS),
   [USER_ROLES.SECRETARY]: [
-    // السكرتيرة تقدر تشوف المدرسين وتضيف عمليات من خلالهم فقط
     PERMISSIONS.VIEW_TEACHERS,
     PERMISSIONS.ADD_OPERATION,
-    PERMISSIONS.VIEW_OPERATION_PRICES, // 🔥 تقدر تشوف الأسعار عند الإضافة فقط
-    // 🔥 تم حذف:
-    // - VIEW_OPERATIONS (لا تستطيع الوصول لصفحة العمليات)
-    // - VIEW_OPERATION_PRICES_AFTER_SAVE (لا تشوف الأسعار بعد الحفظ)
-    // - VIEW_ALL_OPERATIONS (لا تشوف جميع العمليات)
-    // - EDIT_OPERATION (لا تقدر تعدل)
-    // - DELETE_OPERATION (لا تقدر تمسح)
+    PERMISSIONS.VIEW_OPERATION_PRICES,
   ]
 };
 
@@ -85,6 +79,14 @@ const PREDEFINED_USERS = [
   }
 ];
 
+// ⏰ إعدادات انتهاء الجلسة
+const SESSION_CONFIG = {
+  DURATION: 30 * 60 * 1000, // 30 دقيقة بالميلي ثانية
+  WARNING_TIME: 5 * 60 * 1000, // تحذير قبل 5 دقائق من انتهاء الجلسة
+  CHECK_INTERVAL: 60 * 1000, // فحص كل دقيقة
+  STORAGE_KEY: 'auth_session_timestamp'
+};
+
 // إنشاء Context
 const AuthContext = createContext();
 
@@ -92,8 +94,10 @@ const AuthContext = createContext();
 const initialState = {
   user: null,
   isAuthenticated: false,
-  isLoading: true, // يبدأ التحميل من البداية
-  error: null
+  isLoading: true,
+  error: null,
+  sessionTimeLeft: 0,
+  showSessionWarning: false
 };
 
 // Actions
@@ -102,8 +106,13 @@ const ACTIONS = {
   LOGIN_SUCCESS: 'LOGIN_SUCCESS',
   LOGIN_ERROR: 'LOGIN_ERROR',
   LOGOUT: 'LOGOUT',
+  SESSION_EXPIRED: 'SESSION_EXPIRED',
   CLEAR_ERROR: 'CLEAR_ERROR',
-  INITIALIZE: 'INITIALIZE' // أكشن جديد للتهيئة
+  INITIALIZE: 'INITIALIZE',
+  UPDATE_SESSION_TIME: 'UPDATE_SESSION_TIME',
+  SHOW_SESSION_WARNING: 'SHOW_SESSION_WARNING',
+  HIDE_SESSION_WARNING: 'HIDE_SESSION_WARNING',
+  EXTEND_SESSION: 'EXTEND_SESSION'
 };
 
 // Reducer
@@ -111,19 +120,66 @@ const authReducer = (state, action) => {
   switch (action.type) {
     case ACTIONS.INITIALIZE:
       return {
-          ...state,
-          user: action.payload,
-          isAuthenticated: !!action.payload,
-          isLoading: false
+        ...state,
+        user: action.payload.user,
+        isAuthenticated: !!action.payload.user,
+        sessionTimeLeft: action.payload.timeLeft,
+        isLoading: false
       };
     case ACTIONS.LOGIN_START:
       return { ...state, isLoading: true, error: null };
     case ACTIONS.LOGIN_SUCCESS:
-      return { ...state, user: action.payload, isAuthenticated: true, isLoading: false, error: null };
+      return { 
+        ...state, 
+        user: action.payload, 
+        isAuthenticated: true, 
+        isLoading: false, 
+        error: null,
+        sessionTimeLeft: SESSION_CONFIG.DURATION,
+        showSessionWarning: false
+      };
     case ACTIONS.LOGIN_ERROR:
-      return { ...state, user: null, isAuthenticated: false, isLoading: false, error: action.payload };
+      return { 
+        ...state, 
+        user: null, 
+        isAuthenticated: false, 
+        isLoading: false, 
+        error: action.payload,
+        sessionTimeLeft: 0,
+        showSessionWarning: false
+      };
     case ACTIONS.LOGOUT:
-      return { ...state, user: null, isAuthenticated: false, isLoading: false, error: null };
+    case ACTIONS.SESSION_EXPIRED:
+      return { 
+        ...state, 
+        user: null, 
+        isAuthenticated: false, 
+        isLoading: false, 
+        error: null,
+        sessionTimeLeft: 0,
+        showSessionWarning: false
+      };
+    case ACTIONS.UPDATE_SESSION_TIME:
+      return {
+        ...state,
+        sessionTimeLeft: action.payload
+      };
+    case ACTIONS.SHOW_SESSION_WARNING:
+      return {
+        ...state,
+        showSessionWarning: true
+      };
+    case ACTIONS.HIDE_SESSION_WARNING:
+      return {
+        ...state,
+        showSessionWarning: false
+      };
+    case ACTIONS.EXTEND_SESSION:
+      return {
+        ...state,
+        sessionTimeLeft: SESSION_CONFIG.DURATION,
+        showSessionWarning: false
+      };
     case ACTIONS.CLEAR_ERROR:
       return { ...state, error: null };
     default:
@@ -134,13 +190,173 @@ const authReducer = (state, action) => {
 // Provider Component
 export const AuthProvider = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
+  const sessionIntervalRef = useRef(null);
+  const warningShownRef = useRef(false);
 
+  // ⏰ دالة للحصول على وقت انتهاء الجلسة
+  const getSessionExpiration = () => {
+    const timestamp = getFromLocalStorage(SESSION_CONFIG.STORAGE_KEY);
+    return timestamp ? new Date(timestamp) : null;
+  };
+
+  // ⏰ دالة لحفظ وقت انتهاء الجلسة
+  const setSessionExpiration = () => {
+    const expirationTime = new Date(Date.now() + SESSION_CONFIG.DURATION);
+    saveToLocalStorage(SESSION_CONFIG.STORAGE_KEY, expirationTime.toISOString());
+    return expirationTime;
+  };
+
+  // ⏰ دالة لحساب الوقت المتبقي في الجلسة
+  const calculateTimeLeft = () => {
+    const expiration = getSessionExpiration();
+    if (!expiration) return 0;
+    
+    const now = new Date();
+    const timeLeft = expiration.getTime() - now.getTime();
+    return Math.max(0, timeLeft);
+  };
+
+  // ⏰ دالة تسجيل الخروج بسبب انتهاء الجلسة
+  const handleSessionExpired = () => {
+    console.log('🔒 الجلسة انتهت - تسجيل خروج تلقائي');
+    
+    // إيقاف المؤقت
+    if (sessionIntervalRef.current) {
+      clearInterval(sessionIntervalRef.current);
+      sessionIntervalRef.current = null;
+    }
+    
+    // مسح البيانات
+    removeFromLocalStorage('auth_user');
+    removeFromLocalStorage(SESSION_CONFIG.STORAGE_KEY);
+    
+    // تحديث الحالة
+    dispatch({ type: ACTIONS.SESSION_EXPIRED });
+    
+    // إظهار رسالة
+    toast.error('انتهت مدة الجلسة، يرجى تسجيل الدخول مرة أخرى', {
+      duration: 5000,
+      position: 'top-center'
+    });
+  };
+
+  // ⏰ دالة إظهار تحذير انتهاء الجلسة
+  const showSessionWarning = () => {
+    if (warningShownRef.current) return;
+    
+    warningShownRef.current = true;
+    dispatch({ type: ACTIONS.SHOW_SESSION_WARNING });
+    
+    toast((t) => (
+      <div className="text-center">
+        <div className="font-bold text-orange-600 mb-2">⚠️ تحذير انتهاء الجلسة</div>
+        <div className="text-sm text-gray-700 mb-3">
+          ستنتهي جلستك خلال 5 دقائق. هل تريد تمديد الجلسة؟
+        </div>
+        <div className="flex gap-2 justify-center">
+          <button
+            onClick={() => {
+              extendSession();
+              toast.dismiss(t.id);
+            }}
+            className="px-3 py-1 bg-blue-600 text-white rounded text-sm font-medium"
+          >
+            تمديد الجلسة
+          </button>
+          <button
+            onClick={() => {
+              handleSessionExpired();
+              toast.dismiss(t.id);
+            }}
+            className="px-3 py-1 bg-gray-500 text-white rounded text-sm font-medium"
+          >
+            تسجيل الخروج
+          </button>
+        </div>
+      </div>
+    ), {
+      duration: Infinity,
+      position: 'top-center'
+    });
+  };
+
+  // ⏰ دالة تمديد الجلسة
+  const extendSession = () => {
+      console.log('تمديد الجلسة تم تعطيله');
+
+  };
+
+  // ⏰ دالة فحص الجلسة
+  const checkSession = () => {
+    if (!state.isAuthenticated) return;
+    
+    const timeLeft = calculateTimeLeft();
+    
+    if (timeLeft <= 0) {
+      handleSessionExpired();
+      return;
+    }
+    
+    dispatch({ type: ACTIONS.UPDATE_SESSION_TIME, payload: timeLeft });
+    
+    // إظهار التحذير قبل 5 دقائق من انتهاء الجلسة
+    if (timeLeft <= SESSION_CONFIG.WARNING_TIME && !warningShownRef.current) {
+      showSessionWarning();
+    }
+  };
+
+  // ⏰ بدء مراقبة الجلسة
+  const startSessionMonitoring = () => {
+    if (sessionIntervalRef.current) {
+      clearInterval(sessionIntervalRef.current);
+    }
+    
+    sessionIntervalRef.current = setInterval(checkSession, SESSION_CONFIG.CHECK_INTERVAL);
+    console.log('🕐 بدء مراقبة الجلسة - فحص كل دقيقة');
+  };
+
+  // ⏰ إيقاف مراقبة الجلسة
+  const stopSessionMonitoring = () => {
+    if (sessionIntervalRef.current) {
+      clearInterval(sessionIntervalRef.current);
+      sessionIntervalRef.current = null;
+      console.log('⏹️ إيقاف مراقبة الجلسة');
+    }
+  };
+
+  // ⏰ التهيئة عند تحميل المكون
   useEffect(() => {
     const savedUser = getFromLocalStorage('auth_user');
-    dispatch({ type: ACTIONS.INITIALIZE, payload: savedUser });
+    let timeLeft = 0;
+    
+    if (savedUser) {
+      timeLeft = calculateTimeLeft();
+      
+      if (timeLeft <= 0) {
+        // الجلسة منتهية
+        removeFromLocalStorage('auth_user');
+        removeFromLocalStorage(SESSION_CONFIG.STORAGE_KEY);
+        dispatch({ type: ACTIONS.INITIALIZE, payload: { user: null, timeLeft: 0 } });
+        return;
+      }
+    }
+    
+    dispatch({ type: ACTIONS.INITIALIZE, payload: { user: savedUser, timeLeft } });
   }, []);
 
-  // دالة تسجيل الدخول (تم التعديل هنا)
+  // ⏰ بدء/إيقاف مراقبة الجلسة حسب حالة المصادقة
+  useEffect(() => {
+    if (state.isAuthenticated && state.user) {
+      startSessionMonitoring();
+    } else {
+      stopSessionMonitoring();
+      warningShownRef.current = false;
+    }
+    
+    return () => stopSessionMonitoring();
+  }, [state.isAuthenticated, state.user]);
+
+  // دالة تسجيل الدخول (محدثة)
   const login = async (username, password) => {
     dispatch({ type: ACTIONS.LOGIN_START });
     try {
@@ -161,18 +377,25 @@ export const AuthProvider = ({ children }) => {
         loginTime: new Date().toISOString()
       };
       
-      // <-- (3) بداية التعديل الجديد
       // إنشاء أو تحديث سجل المستخدم في Firestore
       await setDoc(doc(db, "users", user.id), {
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          username: user.username
-      }, { merge: true }); // merge: true تمنع الكتابة فوق البيانات الموجودة مثل الصورة
-      // <-- نهاية التعديل الجديد
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        username: user.username
+      }, { merge: true });
 
+      // ⏰ حفظ بيانات المستخدم ووقت انتهاء الجلسة
       saveToLocalStorage('auth_user', userData);
+      setSessionExpiration();
+      
       dispatch({ type: ACTIONS.LOGIN_SUCCESS, payload: userData });
+      
+      toast.success(`مرحباً ${userData.name}! تم تسجيل الدخول بنجاح`, {
+        duration: 3000,
+        position: 'top-center'
+      });
+      
       return userData;
     } catch (error) {
       dispatch({ type: ACTIONS.LOGIN_ERROR, payload: error.message });
@@ -180,9 +403,27 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // دالة تسجيل الخروج (محدثة)
   const logout = () => {
+    console.log('🚪 تسجيل خروج يدوي');
+    
+    stopSessionMonitoring();
     removeFromLocalStorage('auth_user');
+    removeFromLocalStorage(SESSION_CONFIG.STORAGE_KEY);
+    
     dispatch({ type: ACTIONS.LOGOUT });
+    
+    toast.success('تم تسجيل الخروج بنجاح', {
+      duration: 3000,
+      position: 'top-center'
+    });
+  };
+
+  // ⏰ دالة تنسيق الوقت المتبقي للعرض
+  const formatTimeLeft = () => {
+    const minutes = Math.floor(state.sessionTimeLeft / (60 * 1000));
+    const seconds = Math.floor((state.sessionTimeLeft % (60 * 1000)) / 1000);
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
   const hasPermission = (permission) => {
@@ -208,6 +449,11 @@ export const AuthProvider = ({ children }) => {
     isAdmin,
     isSecretary,
     clearError,
+    // ⏰ إضافة وظائف الجلسة
+    extendSession,
+    formatTimeLeft,
+    sessionTimeLeft: state.sessionTimeLeft,
+    showSessionWarning: state.showSessionWarning,
     USER_ROLES,
     PERMISSIONS
   };

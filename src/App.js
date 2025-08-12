@@ -17,6 +17,7 @@ import ExpensesPage from './pages/ExpensesPage';
 import ReportsPage from './pages/ReportsPage';
 import LoadingSpinner from './components/Common/LoadingSpinner';
 import ScrollToTop from './components/Common/ScrollToTop'; // <-- (التعديل الأول) قم باستيراد المكون
+import SessionWarningModal from './components/Common/SessionWarningModal';
 
 // Styles
 import './styles/globals.css';
@@ -155,6 +156,8 @@ function AppContent() {
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </Layout>
+      {/* ⏰ مكون تحذير انتهاء الجلسة */}
+      <SessionWarningModal />
 
         <Toaster
           position="top-center"
