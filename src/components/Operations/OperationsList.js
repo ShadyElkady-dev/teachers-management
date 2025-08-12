@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { formatCurrency, formatDate, isSmallScreen, formatTime12Hour, formatDateWithDay, getTimeAgo } from '../../utils/helpers';
+import { formatCurrency, isSmallScreen, formatTime12Hour, formatDateWithDay, getTimeAgo } from '../../utils/helpers';
 import { OPERATION_TYPES } from '../../utils/constants';
+import { useAuth, PERMISSIONS } from '../../context/AuthContext';
 import Modal from '../Common/Modal';
 
 const OperationsList = ({ 
@@ -12,9 +13,14 @@ const OperationsList = ({
   canEdit = false,
   canDelete = false
 }) => {
+  const { hasPermission } = useAuth();
   const [showNotesModal, setShowNotesModal] = useState(null);
   const [isMobile, setIsMobile] = useState(isSmallScreen());
   const [viewMode, setViewMode] = useState(isMobile ? 'cards' : 'table');
+
+  // 🔥 تحديد عرض الأسعار بناءً على الصلاحيات
+  const canViewPricesAfterSave = hasPermission(PERMISSIONS.VIEW_OPERATION_PRICES_AFTER_SAVE);
+  const shouldShowPrices = showPrices && canViewPricesAfterSave;
 
   useEffect(() => {
     const handleResize = () => {
@@ -45,7 +51,7 @@ const OperationsList = ({
           onEdit={onEdit}
           onDelete={onDelete}
           onShowNotes={() => setShowNotesModal(operation)}
-          showPrices={showPrices}
+          showPrices={shouldShowPrices} // 🔥 استخدام الصلاحية المحدثة
           canEdit={canEdit}
           canDelete={canDelete}
         />
@@ -64,7 +70,8 @@ const OperationsList = ({
               <th className="px-6 py-4 text-right text-sm font-bold text-gray-700">النوع</th>
               <th className="px-6 py-4 text-right text-sm font-bold text-gray-700">الوصف</th>
               <th className="px-6 py-4 text-center text-sm font-bold text-gray-700">الكمية</th>
-              {showPrices && (
+              {/* 🔥 إخفاء عمود المبلغ بناءً على الصلاحيات */}
+              {shouldShowPrices && (
                 <th className="px-6 py-4 text-center text-sm font-bold text-gray-700">المبلغ</th>
               )}
               {(canEdit || canDelete) && (
@@ -81,7 +88,7 @@ const OperationsList = ({
                 onEdit={onEdit}
                 onDelete={onDelete}
                 onShowNotes={() => setShowNotesModal(operation)}
-                showPrices={showPrices}
+                showPrices={shouldShowPrices} // 🔥 استخدام الصلاحية المحدثة
                 canEdit={canEdit}
                 canDelete={canDelete}
               />
@@ -254,6 +261,7 @@ const OperationCardEnhanced = ({
               </div>
             </div>
           </div>
+          {/* 🔥 إخفاء المبلغ بناءً على الصلاحيات */}
           {showPrices && (
             <div className="text-center">
               <div className="text-2xl font-bold">{formatCurrency(operation.amount)}</div>
@@ -278,6 +286,13 @@ const OperationCardEnhanced = ({
             <div className="text-xs text-blue-600 font-medium">الكمية</div>
           </div>
           
+          {/* 🔥 إضافة بطاقة إضافية بدلاً من المبلغ للسكرتيرة */}
+          {!showPrices && (
+            <div className="text-center p-3 bg-gray-50 rounded-xl border border-gray-200">
+              <div className="text-xl font-bold text-gray-400">---</div>
+              <div className="text-xs text-gray-400 font-medium">مخفي</div>
+            </div>
+          )}
         </div>
 
         {operation.notes && (
@@ -432,6 +447,7 @@ const OperationTableRow = ({
           <span className="text-sm font-bold text-blue-800">{operation.quantity || 1}</span>
         </div>
       </td>
+      {/* 🔥 إخفاء عمود المبلغ بناءً على الصلاحيات */}
       {showPrices && (
         <td className="px-6 py-4 whitespace-nowrap text-center">
           <div className="bg-green-100 rounded-full px-3 py-1 inline-block">

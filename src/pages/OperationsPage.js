@@ -140,10 +140,10 @@ const OperationsPage = () => {
   const statistics = {
     totalOperations: state.operations.length,
     filteredOperations: filteredOperations.length,
-    totalAmount: hasPermission(PERMISSIONS.VIEW_OPERATION_PRICES) 
+    totalAmount: hasPermission(PERMISSIONS.VIEW_OPERATION_PRICES_AFTER_SAVE) 
       ? filteredOperations.reduce((sum, operation) => sum + (operation.amount || 0), 0)
       : 0,
-    averageAmount: hasPermission(PERMISSIONS.VIEW_OPERATION_PRICES) && filteredOperations.length > 0
+    averageAmount: hasPermission(PERMISSIONS.VIEW_OPERATION_PRICES_AFTER_SAVE) && filteredOperations.length > 0
       ? filteredOperations.reduce((sum, operation) => sum + (operation.amount || 0), 0) / filteredOperations.length 
       : 0,
     todayOperations: filteredOperations.filter(operation => {
@@ -157,7 +157,7 @@ const OperationsPage = () => {
   // إحصائيات حسب النوع
   const operationsByType = OPERATION_TYPES.map(type => {
     const typeOperations = filteredOperations.filter(operation => operation.type === type.value);
-    const total = hasPermission(PERMISSIONS.VIEW_OPERATION_PRICES) 
+    const total = hasPermission(PERMISSIONS.VIEW_OPERATION_PRICES_AFTER_SAVE) 
       ? typeOperations.reduce((sum, operation) => sum + (operation.amount || 0), 0)
       : 0;
     return {
@@ -230,7 +230,9 @@ const handleSaveOperation = async (teacherIdOrData, operationData) => {
   } catch (error) {
     toast.error(error.message || MESSAGES.ERROR.GENERAL);
   }
-};  // إغلاق النوافذ
+};
+
+  // إغلاق النوافذ
   const handleCloseModals = () => {
     setShowOperationForm(false);
     setEditingOperation(null);
@@ -282,8 +284,9 @@ const handleSaveOperation = async (teacherIdOrData, operationData) => {
             </div>
           </div>
           
+          {/* 🔥 تعديل: استخدام الصلاحية الجديدة لإخفاء المبالغ عن السكرتيرة */}
           <PermissionGate 
-            permission={PERMISSIONS.VIEW_OPERATION_PRICES}
+            permission={PERMISSIONS.VIEW_OPERATION_PRICES_AFTER_SAVE}
             fallback={
               <div className="bg-gradient-to-br from-gray-400 to-gray-500 text-white p-6 rounded-2xl shadow-lg">
                 <div className="flex items-center justify-between">
@@ -332,7 +335,7 @@ const handleSaveOperation = async (teacherIdOrData, operationData) => {
           </div>
         </div>
 
-        {/* إحصائيات حسب النوع */}
+        {/* إحصائيات حسب النوع - مع إخفاء المبالغ عن السكرتيرة */}
         {operationsByType.length > 0 && (
           <div className="mb-8">
             <h3 className="text-xl font-bold text-gray-900 mb-4">📈 العمليات حسب النوع</h3>
@@ -346,11 +349,12 @@ const handleSaveOperation = async (teacherIdOrData, operationData) => {
                     </div>
                     <div className="text-sm text-gray-600">{type.count} عملية</div>
                   </div>
-                  {hasPermission(PERMISSIONS.VIEW_OPERATION_PRICES) && (
+                  {/* 🔥 إخفاء المبالغ عن السكرتيرة */}
+                  <PermissionGate permission={PERMISSIONS.VIEW_OPERATION_PRICES_AFTER_SAVE}>
                     <div className="text-lg font-bold text-green-600 mb-1">
                       {formatCurrency(type.total)}
                     </div>
-                  )}
+                  </PermissionGate>
                   <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
                     <div 
                       className="bg-blue-500 h-2 rounded-full transition-all duration-300"
@@ -358,7 +362,10 @@ const handleSaveOperation = async (teacherIdOrData, operationData) => {
                     ></div>
                   </div>
                   <div className="text-xs text-gray-600">
-                    {type.percentage.toFixed(1)}% من الإجمالي
+                    {hasPermission(PERMISSIONS.VIEW_OPERATION_PRICES_AFTER_SAVE) 
+                      ? `${type.percentage.toFixed(1)}% من الإجمالي`
+                      : `${((type.count / filteredOperations.length) * 100).toFixed(1)}% من العدد`
+                    }
                   </div>
                 </div>
               ))}
@@ -445,7 +452,7 @@ const handleSaveOperation = async (teacherIdOrData, operationData) => {
                     <option value="date">التاريخ</option>
                     <option value="teacher">المدرس</option>
                     <option value="type">النوع</option>
-                    {hasPermission(PERMISSIONS.VIEW_OPERATION_PRICES) && (
+                    {hasPermission(PERMISSIONS.VIEW_OPERATION_PRICES_AFTER_SAVE) && (
                       <option value="amount">المبلغ</option>
                     )}
                   </select>
@@ -545,7 +552,7 @@ const handleSaveOperation = async (teacherIdOrData, operationData) => {
          <OperationForm
   operation={editingOperation}
   teacher={selectedTeacher}
-  teachers={state.teachers} // إضافة هذا السطر
+  teachers={state.teachers}
   onSave={handleSaveOperation}
   onCancel={handleCloseModals}
   loading={state.loading.operations}

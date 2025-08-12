@@ -23,6 +23,8 @@ export const PERMISSIONS = {
   EDIT_OPERATION: 'edit_operation',
   DELETE_OPERATION: 'delete_operation',
   VIEW_OPERATION_PRICES: 'view_operation_prices',
+  VIEW_OPERATION_PRICES_AFTER_SAVE: 'view_operation_prices_after_save', // 🔥 صلاحية جديدة
+  VIEW_ALL_OPERATIONS: 'view_all_operations', // 🔥 صلاحية جديدة لرؤية كل العمليات
   
   // صلاحيات المدفوعات
   VIEW_PAYMENTS: 'view_payments',
@@ -50,12 +52,16 @@ export const PERMISSIONS = {
 const ROLE_PERMISSIONS = {
   [USER_ROLES.ADMIN]: Object.values(PERMISSIONS), // الأدمن يملك كل الصلاحيات
   [USER_ROLES.SECRETARY]: [
+    // السكرتيرة تقدر تشوف المدرسين وتضيف عمليات من خلالهم فقط
     PERMISSIONS.VIEW_TEACHERS,
-    PERMISSIONS.VIEW_OPERATIONS,
     PERMISSIONS.ADD_OPERATION,
-    PERMISSIONS.EDIT_OPERATION,
-    PERMISSIONS.DELETE_OPERATION,
-    PERMISSIONS.VIEW_OPERATION_PRICES
+    PERMISSIONS.VIEW_OPERATION_PRICES, // 🔥 تقدر تشوف الأسعار عند الإضافة فقط
+    // 🔥 تم حذف:
+    // - VIEW_OPERATIONS (لا تستطيع الوصول لصفحة العمليات)
+    // - VIEW_OPERATION_PRICES_AFTER_SAVE (لا تشوف الأسعار بعد الحفظ)
+    // - VIEW_ALL_OPERATIONS (لا تشوف جميع العمليات)
+    // - EDIT_OPERATION (لا تقدر تعدل)
+    // - DELETE_OPERATION (لا تقدر تمسح)
   ]
 };
 

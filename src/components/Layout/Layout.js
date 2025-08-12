@@ -144,13 +144,18 @@ const Layout = ({ children }) => {
                 active={location.pathname === '/teachers'}
                 color="indigo"
               />
-              <BottomNavItem 
-                icon="📝" 
-                label="العمليات" 
-                path="/operations"
-                active={location.pathname === '/operations'}
-                color="green"
-              />
+              
+              {/* 🔥 إخفاء زر العمليات عن السكرتيرة */}
+              <PermissionGate permission={PERMISSIONS.VIEW_OPERATIONS}>
+                <BottomNavItem 
+                  icon="📝" 
+                  label="العمليات" 
+                  path="/operations"
+                  active={location.pathname === '/operations'}
+                  color="green"
+                />
+              </PermissionGate>
+              
               <PermissionGate permission={PERMISSIONS.VIEW_PAYMENTS}>
                 <BottomNavItem 
                   icon="💰" 
@@ -160,6 +165,7 @@ const Layout = ({ children }) => {
                   color="purple"
                 />
               </PermissionGate>
+              
               <PermissionGate permission={PERMISSIONS.VIEW_EXPENSES}>
                 <BottomNavItem 
                   icon="💸" 
@@ -169,6 +175,7 @@ const Layout = ({ children }) => {
                   color="red"
                 />
               </PermissionGate>
+              
               <BottomNavItem 
                 icon="☰" 
                 label="القائمة" 

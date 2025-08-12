@@ -296,10 +296,10 @@ const UserProfile = () => {
         >
           <Avatar size="small" />
 
-          <div class="hidden sm:block text-right text-white">
-    <div class="text-sm font-medium">{user?.name}</div>
-    <div class="text-xs text-white">{getUserRoleLabel(user?.role)}</div>
-</div>
+          <div className="hidden sm:block text-right text-white">
+            <div className="text-sm font-medium">{user?.name}</div>
+            <div className="text-xs text-white">{getUserRoleLabel(user?.role)}</div>
+          </div>
         </button>
       </div>
 
