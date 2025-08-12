@@ -254,7 +254,7 @@ const OperationCardEnhanced = ({
               <p className="text-sm opacity-90 mb-1">👨‍🏫 {teacher?.name || 'مدرس غير معروف'}</p>
               <div className="space-y-1">
                 <p className="text-xs opacity-80">📅 {formatDateWithDay(operation.operationDate)}</p>
-                <p className="text-xs opacity-80">⏰ {formatTime12Hour(new Date(operation.operationDate))}</p>
+<p className="text-xs opacity-80">⏰ {formatTime12Hour(operation.operationDate)}</p>
                 <p className="text-xs opacity-70 bg-white bg-opacity-20 rounded-full px-2 py-1 inline-block">
                   🕐 {getTimeAgo(operation.operationDate)}
                 </p>
@@ -403,7 +403,7 @@ const OperationTableRow = ({
           </div>
           <div className="flex items-center gap-2 text-sm text-gray-700">
             <span>⏰</span>
-            <span>{formatTime12Hour(new Date(operation.operationDate))}</span>
+<span>{formatTime12Hour(operation.operationDate)}</span>
           </div>
           <div className="inline-block bg-blue-100 text-blue-800 text-xs font-medium px-2 py-1 rounded-full">
             🕐 {getTimeAgo(operation.operationDate)}

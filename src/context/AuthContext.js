@@ -283,7 +283,6 @@ export const AuthProvider = ({ children }) => {
   // ⏰ دالة تمديد الجلسة
   const extendSession = () => {
       console.log('تمديد الجلسة تم تعطيله');
-
   };
 
   // ⏰ دالة فحص الجلسة
