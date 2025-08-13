@@ -63,19 +63,19 @@ const ROLE_PERMISSIONS = {
 const PREDEFINED_USERS = [
   {
     id: 'admin_001',
-    username: 'admin',
-    password: 'admin123',
+    username: 'mody',
+    password: '2810',
     role: USER_ROLES.ADMIN,
-    name: 'شادى الأدمن',
-    email: 'admin@example.com'
+    name: 'محمد مختار',
+    email: 'modyasdw15@gmail.com'
   },
   {
     id: 'secretary_001',
-    username: 'secretary',
-    password: 'secretary123',
+    username: 'as',
+    password: '3091999',
     role: USER_ROLES.SECRETARY,
-    name: 'حساب السكرتير',
-    email: 'secretary@example.com'
+    name: 'اسماء',
+    email: ''
   }
 ];
 

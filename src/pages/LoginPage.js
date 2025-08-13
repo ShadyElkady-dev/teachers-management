@@ -207,44 +207,6 @@ const LoginPage = () => {
             </button>
           </form>
 
-          {/* الحسابات التجريبية */}
-          <div className="mt-8 pt-6 border-t border-gray-200">
-            <h3 className="text-sm font-medium text-gray-700 mb-4 text-center">
-              حسابات تجريبية للاختبار
-            </h3>
-            <div className="grid grid-cols-1 gap-3">
-              <button
-                type="button"
-                onClick={() => fillDemoAccount('admin')}
-                className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="text-lg">👑</span>
-                  <div className="text-right">
-                    <div className="font-medium text-gray-900">حساب المدير</div>
-                    <div className="text-sm text-gray-500">admin / admin123</div>
-                  </div>
-                </div>
-                <span className="text-blue-500 text-sm">جميع الصلاحيات</span>
-              </button>
-              
-              <button
-                type="button"
-                onClick={() => fillDemoAccount('secretary')}
-                className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="text-lg">📝</span>
-                  <div className="text-right">
-                    <div className="font-medium text-gray-900">حساب السكرتارية</div>
-                    <div className="text-sm text-gray-500">secretary / secretary123</div>
-                  </div>
-                </div>
-                <span className="text-green-500 text-sm">صلاحيات محدودة</span>
-              </button>
-            </div>
-          </div>
-
 {/* معلومات إضافية */}
 {/* معلومات إضافية */}
 <div className="mt-8 text-center animate-fade-in-up">

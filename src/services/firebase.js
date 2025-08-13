@@ -16,12 +16,12 @@ import {
 
 // إعدادات Firebase
 const firebaseConfig = {
-  apiKey: "AIzaSyAFSaPKX-UK79gwZpm-sGSp47dOJvzlvEw",
-  authDomain: "teachersmanagement-6afeb.firebaseapp.com",
-  projectId: "teachersmanagement-6afeb",
-  storageBucket: "teachersmanagement-6afeb.firebasestorage.app",
-  messagingSenderId: "643695842583",
-  appId: "1:643695842583:web:2b77c28056891b2dbc9352",
+  apiKey: "AIzaSyD5oxzCvdD70oZJW3LfsokgzofaMMI9Hf0",
+  authDomain: "teachers-management-syst-7e866.firebaseapp.com",
+  projectId: "teachers-management-syst-7e866",
+  storageBucket: "teachers-management-syst-7e866.firebasestorage.app",
+  messagingSenderId: "995554251925",
+  appId: "1:995554251925:web:6ced0edd2325e7b79d779c",
 };
 
 // تهيئة Firebase
