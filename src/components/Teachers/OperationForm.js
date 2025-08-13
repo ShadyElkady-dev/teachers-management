@@ -37,7 +37,7 @@ const timeToInputValue = (date) => {
   }
 };
 
-// ======== بداية كود الحاسبة الكامل =========
+// ======== بداية كود الحاسبة الكامل المحدث =========
 const PriceCalculator = ({ onCopyToAmount }) => {
     const [calcType, setCalcType] = useState('تصوير');
     const [sheets, setSheets] = useState('');
@@ -70,10 +70,19 @@ const PriceCalculator = ({ onCopyToAmount }) => {
         setTotalPrice(calculatedTotalPrice);
     };
     
-    const handleCopyClick = () => {
+    const handleCopyTotalClick = () => {
         if (totalPrice > 0) {
             onCopyToAmount(totalPrice.toString());
-            toast.success(`تم نسخ المبلغ ${formatCurrency(totalPrice)}`);
+            toast.success(`تم نسخ المبلغ الإجمالي ${formatCurrency(totalPrice)}`);
+        } else {
+            toast.error("يرجى حساب السعر أولاً قبل النسخ");
+        }
+    };
+
+    const handleCopySingleClick = () => {
+        if (copyPrice > 0) {
+            onCopyToAmount(copyPrice.toString());
+            toast.success(`تم نسخ سعر النسخة الواحدة ${formatCurrency(copyPrice)}`);
         } else {
             toast.error("يرجى حساب السعر أولاً قبل النسخ");
         }
@@ -120,21 +129,31 @@ const PriceCalculator = ({ onCopyToAmount }) => {
                     <div className="text-center">
                         <label className="text-sm font-medium text-green-800">سعر النسخة</label>
                         <div className="text-2xl font-bold text-green-700 mt-1">{formatCurrency(copyPrice)}</div>
+                        <button 
+                            type="button" 
+                            onClick={handleCopySingleClick} 
+                            className="btn btn-success w-full mt-2 text-sm"
+                        >
+                            📋 نسخ سعر النسخة
+                        </button>
                     </div>
                     <div className="text-center mt-4">
                         <label className="text-sm font-medium text-green-800">السعر الإجمالي</label>
                         <div className="text-3xl font-bold text-green-700 mt-1">{formatCurrency(totalPrice)}</div>
+                        <button 
+                            type="button" 
+                            onClick={handleCopyTotalClick} 
+                            className="btn btn-success w-full mt-2"
+                        >
+                            📋 نسخ الإجمالي إلى مبلغ العملية
+                        </button>
                     </div>
-                    <button type="button" onClick={handleCopyClick} className="btn btn-success w-full mt-auto">
-                        نسخ الإجمالي إلى مبلغ العملية
-                    </button>
                 </div>
             </div>
         </div>
     );
 };
-// ======== نهاية كود الحاسبة =========
-
+// ======== نهاية كود الحاسبة المحدث =========
 const OperationForm = ({ 
   operation = null, 
   teacher = null,

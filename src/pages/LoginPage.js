@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import LoadingSpinner from '../components/Common/LoadingSpinner';
 import { isSmallScreen } from '../utils/helpers';
 import toast from 'react-hot-toast';
+import { FaFacebook } from "react-icons/fa";
 
 const LoginPage = () => {
   const { login, isLoading, error, clearError } = useAuth();
@@ -69,19 +70,45 @@ const LoginPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
       <div className="max-w-md w-full space-y-8">
-        
         {/* شعار وعنوان التطبيق */}
-        <div className="text-center">
-          <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-            <span className="text-white text-3xl">🖨️</span>
-          </div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
-            إدارة حسابات المدرسين
-          </h1>
-          <p className="text-gray-600">
-            يرجى تسجيل الدخول للمتابعة
-          </p>
-        </div>
+<div className="text-center">
+<div className="w-35 h-35  flex items-center justify-center mx-auto mb-4 overflow-hidden animate-pulse animate-fade-in-zoom">
+  <img 
+    src="/logo512.png" 
+    alt="شعار العميل" 
+  className="mx-auto mb-4 w-32 h-32 object-contain animate-logo"
+  />
+</div>
+  <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
+    إدارة حسابات المدرسين
+  </h1>
+  <p className="text-gray-600">
+    يرجى تسجيل الدخول للمتابعة
+  </p>
+</div>
+<style jsx>{`
+  @keyframes fadeInZoom {
+    0% {
+      opacity: 0;
+      transform: scale(0.8);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+  .animate-fade-in-zoom {
+    animation: fadeInZoom 0.8s ease-out forwards, pulse 2s infinite ease-in-out;
+  }
+  @keyframes pulse {
+    0%, 100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.05);
+    }
+  }
+`}</style>
 
         {/* نموذج تسجيل الدخول */}
         <div className="bg-white rounded-2xl shadow-xl p-6 md:p-8 border border-gray-100">
@@ -218,21 +245,67 @@ const LoginPage = () => {
             </div>
           </div>
 
-          {/* معلومات إضافية */}
-          <div className="mt-6 text-center text-xs text-gray-500">
-            <p>ادارة حسابات المدرسين</p>
-            <p className="mt-1">تم البرمجة والتطوير بواسطة شادى القاضى</p>
-          </div>
+{/* معلومات إضافية */}
+{/* معلومات إضافية */}
+<div className="mt-8 text-center animate-fade-in-up">
+  <p className="text-sm md:text-base font-semibold bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">
+    إدارة حسابات المدرسين
+  </p>
+  <p className="mt-2 text-sm md:text-base text-gray-700 flex items-center justify-center gap-2">
+    تم البرمجة والتطوير بواسطة 
+    <a 
+      href="https://www.facebook.com/shady.elkady8" 
+      target="_blank" 
+      rel="noopener noreferrer"
+      className="text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1"
+    >
+      شادى القاضى 
+      <FaFacebook className="text-lg" />
+    </a>
+  </p>
+</div>
         </div>
+<style jsx>{`
+@keyframes logoEntrance {
+  0% {
+    opacity: 0;
+    transform: scale(0.7) rotate(-10deg);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.05) rotate(3deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
+}
 
-        {/* تحسينات للهواتف المحمولة */}
-        {isMobile && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
-            <div className="text-blue-600 text-sm">
-              <span className="font-medium">💡 نصيحة:</span> استخدم الحسابات التجريبية أعلاه للوصول السريع
-            </div>
-          </div>
-        )}
+@keyframes logoFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes logoPulse {
+  0%, 100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.15);
+  }
+}
+
+.animate-logo {
+  animation: 
+    logoEntrance 1.2s ease-out forwards,
+    logoFloat 4s ease-in-out infinite,
+    logoPulse 6s ease-in-out infinite;
+}
+`}</style>
+
       </div>
     </div>
   );
