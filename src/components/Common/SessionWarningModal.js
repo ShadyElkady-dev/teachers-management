@@ -6,9 +6,8 @@ const SessionWarningModal = () => {
   const { 
     showSessionWarning, 
     sessionTimeLeft, 
-    extendSession, 
     logout,
-    formatTimeLeft 
+    hideSessionWarning // إضافة دالة إخفاء الإشعار
   } = useAuth();
   
   const [countdown, setCountdown] = useState(5 * 60); // 5 دقائق بالثواني
@@ -28,12 +27,12 @@ const SessionWarningModal = () => {
     }
   }, [showSessionWarning, sessionTimeLeft]);
 
-  const handleExtendSession = () => {
-    extendSession();
-  };
-
   const handleLogout = () => {
     logout();
+  };
+
+  const handleContinueSession = () => {
+    hideSessionWarning(); // إخفاء الإشعار والعودة للعمل
   };
 
   const formatCountdown = (seconds) => {
@@ -81,7 +80,7 @@ const SessionWarningModal = () => {
           </div>
           
           <p className="text-sm text-gray-500">
-            اختر إما تمديد الجلسة أو تسجيل الخروج الآن
+            اختر إما الاستمرار في العمل أو تسجيل الخروج الآن
           </p>
         </div>
 
@@ -96,11 +95,11 @@ const SessionWarningModal = () => {
           </button>
           
           <button
-            onClick={handleExtendSession}
-            className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-colors duration-200 shadow-lg"
+            onClick={handleContinueSession}
+            className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl transition-colors duration-200 shadow-lg"
           >
-            <span className="text-lg ml-2">🔄</span>
-            تمديد الجلسة (30 دقيقة)
+            <span className="text-lg ml-2">↩️</span>
+            العودة للعمل
           </button>
         </div>
 
@@ -109,10 +108,10 @@ const SessionWarningModal = () => {
           <div className="flex items-start gap-3">
             <span className="text-blue-500 text-lg">💡</span>
             <div className="text-sm text-blue-800">
-              <p className="font-medium mb-1">لماذا تنتهي الجلسة؟</p>
+              <p className="font-medium mb-1">لماذا يظهر هذا التحذير؟</p>
               <p className="text-blue-700">
-                لحماية بياناتك وضمان الأمان، تنتهي صلاحية الجلسة تلقائياً بعد 30 دقيقة من عدم النشاط.
-                يمكنك تمديد الجلسة لمدة 30 دقيقة إضافية.
+                لحماية بياناتك وضمان الأمان، ننبهك عند اقتراب انتهاء صلاحية الجلسة.
+                يمكنك الاستمرار في العمل أو تسجيل الخروج بأمان.
               </p>
             </div>
           </div>

@@ -362,9 +362,11 @@ export const AuthProvider = ({ children }) => {
       await new Promise(resolve => setTimeout(resolve, 1000));
       const user = PREDEFINED_USERS.find(u => u.username === username && u.password === password);
 
-      if (!user) {
-        throw new Error('اسم المستخدم أو كلمة المرور غير صحيحة');
-      }
+if (!user) {
+  dispatch({ type: ACTIONS.LOGIN_ERROR, payload: 'اسم المستخدم أو كلمة المرور غير صحيحة' });
+  return; // مهم عشان يوقف التنفيذ هنا
+}
+
 
       const userData = {
         id: user.id,

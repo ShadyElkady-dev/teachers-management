@@ -26,12 +26,11 @@ const LoginPage = () => {
   }, []);
 
   // مسح الأخطاء عند تغيير القيم
-  useEffect(() => {
-    if (error) {
-      clearError();
-    }
-  }, [formData.username, formData.password]);
-
+useEffect(() => {
+  if (error && (formData.username.trim() || formData.password.trim())) {
+    clearError();
+  }
+}, [formData.username, formData.password]);
   // معالجة تغيير القيم
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -42,21 +41,22 @@ const LoginPage = () => {
   };
 
   // معالجة إرسال النموذج
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    if (!formData.username.trim() || !formData.password.trim()) {
-      toast.error('يرجى إدخال اسم المستخدم وكلمة المرور');
-      return;
-    }
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  
+  if (!formData.username.trim() || !formData.password.trim()) {
+    return toast.error('يرجى إدخال اسم المستخدم وكلمة المرور');
+  }
 
-    try {
-      await login(formData.username, formData.password);
-      toast.success('تم تسجيل الدخول بنجاح');
-    } catch (error) {
-      toast.error(error.message);
-    }
-  };
+  try {
+    console.log('محاولة تسجيل الدخول...', { username: formData.username });
+    await login(formData.username, formData.password);
+  } catch (error) {
+    // مفيش toast هنا، هنسيب الـ AuthContext يتولى عرض الرسالة
+  }
+};
+
 
   // تعبئة سريعة للحسابات التجريبية
   const fillDemoAccount = (role) => {
@@ -71,48 +71,25 @@ const LoginPage = () => {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
       <div className="max-w-md w-full space-y-8">
         {/* شعار وعنوان التطبيق */}
-<div className="text-center">
-<div className="w-35 h-35  flex items-center justify-center mx-auto mb-4 overflow-hidden animate-pulse animate-fade-in-zoom">
-  <img 
-    src="/logo512.png" 
-    alt="شعار العميل" 
-  className="mx-auto mb-4 w-32 h-32 object-contain animate-logo"
-  />
-</div>
-  <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
-    إدارة حسابات المدرسين
-  </h1>
-  <p className="text-gray-600">
-    يرجى تسجيل الدخول للمتابعة
-  </p>
-</div>
-<style jsx>{`
-  @keyframes fadeInZoom {
-    0% {
-      opacity: 0;
-      transform: scale(0.8);
-    }
-    100% {
-      opacity: 1;
-      transform: scale(1);
-    }
-  }
-  .animate-fade-in-zoom {
-    animation: fadeInZoom 0.8s ease-out forwards, pulse 2s infinite ease-in-out;
-  }
-  @keyframes pulse {
-    0%, 100% {
-      transform: scale(1);
-    }
-    50% {
-      transform: scale(1.05);
-    }
-  }
-`}</style>
+        <div className="text-center">
+          <div className="w-35 h-35 flex items-center justify-center mx-auto mb-4 overflow-hidden animate-fade-in-zoom">
+            <img 
+              src="/logo512.png" 
+              alt="شعار العميل" 
+              className="mx-auto mb-4 w-32 h-32 object-contain animate-logo"
+            />
+          </div>
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
+            إدارة حسابات المدرسين
+          </h1>
+          <p className="text-gray-600">
+            يرجى تسجيل الدخول للمتابعة
+          </p>
+        </div>
 
         {/* نموذج تسجيل الدخول */}
         <div className="bg-white rounded-2xl shadow-xl p-6 md:p-8 border border-gray-100">
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6" noValidate>
             
             {/* اسم المستخدم */}
             <div>
@@ -130,6 +107,7 @@ const LoginPage = () => {
                   placeholder="أدخل اسم المستخدم"
                   required
                   autoComplete="username"
+                  disabled={isLoading}
                 />
                 <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
                   <span className="text-lg">👤</span>
@@ -153,11 +131,13 @@ const LoginPage = () => {
                   placeholder="أدخل كلمة المرور"
                   required
                   autoComplete="current-password"
+                  disabled={isLoading}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                  disabled={isLoading}
                 >
                   <span className="text-lg">{showPassword ? '🙈' : '👁️'}</span>
                 </button>
@@ -172,6 +152,7 @@ const LoginPage = () => {
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
                   className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  disabled={isLoading}
                 />
                 تذكرني
               </label>
@@ -179,7 +160,7 @@ const LoginPage = () => {
 
             {/* رسالة الخطأ */}
             {error && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-700 text-sm">
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-700 text-sm animate-fade-in">
                 <div className="flex items-center gap-2">
                   <span>❌</span>
                   {error}
@@ -190,8 +171,8 @@ const LoginPage = () => {
             {/* زر تسجيل الدخول */}
             <button
               type="submit"
-              disabled={isLoading}
-              className="btn-mobile btn-primary w-full"
+              disabled={isLoading || !formData.username.trim() || !formData.password.trim()}
+              className="btn-mobile btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? (
                 <div className="flex items-center justify-center gap-2">
@@ -207,67 +188,108 @@ const LoginPage = () => {
             </button>
           </form>
 
-{/* معلومات إضافية */}
-{/* معلومات إضافية */}
-<div className="mt-8 text-center animate-fade-in-up">
-  <p className="text-sm md:text-base font-semibold bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">
-    إدارة حسابات المدرسين
-  </p>
-  <p className="mt-2 text-sm md:text-base text-gray-700 flex items-center justify-center gap-2">
-    تم البرمجة والتطوير بواسطة 
-    <a 
-      href="https://www.facebook.com/shady.elkady8" 
-      target="_blank" 
-      rel="noopener noreferrer"
-      className="text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1"
-    >
-      شادى القاضى 
-      <FaFacebook className="text-lg" />
-    </a>
-  </p>
-</div>
+          {/* معلومات إضافية */}
+          <div className="mt-8 text-center animate-fade-in-up">
+            <p className="text-sm md:text-base font-semibold bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">
+              إدارة حسابات المدرسين
+            </p>
+            <p className="mt-2 text-sm md:text-base text-gray-700 flex items-center justify-center gap-2">
+              تم البرمجة والتطوير بواسطة 
+              <a 
+                href="https://www.facebook.com/shady.elkady8" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1"
+              >
+                شادى القاضى 
+                <FaFacebook className="text-lg" />
+              </a>
+            </p>
+          </div>
         </div>
-<style jsx>{`
-@keyframes logoEntrance {
-  0% {
-    opacity: 0;
-    transform: scale(0.7) rotate(-10deg);
-  }
-  60% {
-    opacity: 1;
-    transform: scale(1.05) rotate(3deg);
-  }
-  100% {
-    transform: scale(1) rotate(0deg);
-  }
-}
 
-@keyframes logoFloat {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-6px);
-  }
-}
+        {/* CSS Styles */}
+        <style dangerouslySetInnerHTML={{
+          __html: `
+            @keyframes fadeInZoom {
+              0% {
+                opacity: 0;
+                transform: scale(0.8);
+              }
+              100% {
+                opacity: 1;
+                transform: scale(1);
+              }
+            }
+            
+            .animate-fade-in-zoom {
+              animation: fadeInZoom 0.8s ease-out forwards, pulse 2s infinite ease-in-out;
+            }
+            
+            @keyframes pulse {
+              0%, 100% {
+                transform: scale(1);
+              }
+              50% {
+                transform: scale(1.05);
+              }
+            }
 
-@keyframes logoPulse {
-  0%, 100% {
-    filter: brightness(1);
-  }
-  50% {
-    filter: brightness(1.15);
-  }
-}
+            @keyframes logoEntrance {
+              0% {
+                opacity: 0;
+                transform: scale(0.7) rotate(-10deg);
+              }
+              60% {
+                opacity: 1;
+                transform: scale(1.05) rotate(3deg);
+              }
+              100% {
+                transform: scale(1) rotate(0deg);
+              }
+            }
 
-.animate-logo {
-  animation: 
-    logoEntrance 1.2s ease-out forwards,
-    logoFloat 4s ease-in-out infinite,
-    logoPulse 6s ease-in-out infinite;
-}
-`}</style>
+            @keyframes logoFloat {
+              0%, 100% {
+                transform: translateY(0);
+              }
+              50% {
+                transform: translateY(-6px);
+              }
+            }
 
+            @keyframes logoPulse {
+              0%, 100% {
+                filter: brightness(1);
+              }
+              50% {
+                filter: brightness(1.15);
+              }
+            }
+
+            .animate-logo {
+              animation: 
+                logoEntrance 1.2s ease-out forwards,
+                logoFloat 4s ease-in-out infinite,
+                logoPulse 6s ease-in-out infinite;
+            }
+
+            @keyframes fadeIn {
+              0% {
+                opacity: 0;
+                transform: translateY(-10px);
+              }
+              100% {
+                opacity: 1;
+                transform: translateY(0);
+              }
+            }
+
+            .animate-fade-in {
+              animation: fadeIn 0.3s ease-out forwards;
+            }
+          `
+        }} />
       </div>
     </div>
   );
