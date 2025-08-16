@@ -400,7 +400,7 @@ const ReportBuilder = ({
 
       {/* القسم الثالث: التنسيق */}
       <Section 
-        title="إعدادات العرض" 
+        title="إعدادات العرض والطباعة" 
         icon={<FiSettings />}
         isCollapsed={collapsedSections.formatting}
         onToggle={() => toggleSection('formatting')}
@@ -428,6 +428,30 @@ const ReportBuilder = ({
             <option value="debt">المديونية</option>
             <option value="operations_count">عدد العمليات</option>
           </select>
+        </div>
+
+        <div className="md:col-span-2">
+          <label className="font-medium text-gray-700 mb-2 block text-sm">تخطيط الطباعة</label>
+          <div className="space-y-3 p-3 bg-gray-50 rounded-lg">
+            <label className="flex items-start">
+              <input
+                type="checkbox"
+                checked={reportConfig.formatting?.separatePages !== false}
+                onChange={(e) => onFormattingUpdate('separatePages', e.target.checked)}
+                className="ml-2 mt-1"
+              />
+              <div>
+                <span className="text-sm font-medium">كل مدرس في صفحة منفصلة</span>
+                <p className="text-xs text-gray-500 mt-1">
+                  عند التفعيل، سيظهر كل مدرس في صفحة منفصلة عند الطباعة. مفيد للتقارير التي تحتوي على عدة مدرسين.
+                </p>
+              </div>
+            </label>
+            
+            <div className="text-xs text-blue-600 bg-blue-50 p-2 rounded border-l-4 border-blue-200">
+              💡 <strong>نصيحة:</strong> استخدم هذا الخيار عندما تريد طباعة تقرير منفصل لكل مدرس أو عند إرسال التقارير بشكل فردي.
+            </div>
+          </div>
         </div>
       </Section>
 
@@ -471,6 +495,16 @@ const ReportBuilder = ({
               </button>
             </div>
           )}
+        </div>
+        
+        {/* معلومات إضافية */}
+        <div className="mt-3 text-xs text-gray-500 border-t border-gray-100 pt-3">
+          <div className="flex flex-wrap gap-4">
+            <span>📄 المدرسين المختارين: {reportConfig.selectedTeachers?.length || 0}</span>
+            <span>📅 النطاق الزمني: {reportConfig.dateRange?.from && reportConfig.dateRange?.to ? 
+              `${reportConfig.dateRange.from} إلى ${reportConfig.dateRange.to}` : 'غير محدد'}</span>
+            <span>🖨️ تخطيط الطباعة: {reportConfig.formatting?.separatePages !== false ? 'صفحات منفصلة' : 'صفحة واحدة'}</span>
+          </div>
         </div>
       </div>
     </div>

@@ -243,23 +243,23 @@ const TeachersPage = () => {
     }
   };
 
-  const handleSavePayment = async (paymentData) => {
-    try {
-      if (editingPayment) {
-        await paymentActions.updatePayment(editingPayment.id, paymentData);
-        toast.success(MESSAGES.SUCCESS.PAYMENT_UPDATED);
-      } else {
-        await paymentActions.addPayment(selectedTeacher?.id, paymentData);
-        toast.success(MESSAGES.SUCCESS.PAYMENT_ADDED);
-      }
-      setShowPaymentForm(false);
-      setEditingPayment(null);
-      setSelectedTeacher(null);
-    } catch (error) {
-      toast.error(error.message || MESSAGES.ERROR.GENERAL);
+const handleSavePayment = async (paymentData) => {
+  try {
+    if (editingPayment) {
+      await paymentActions.updatePayment(editingPayment.id, paymentData);
+      toast.success(MESSAGES.SUCCESS.PAYMENT_UPDATED);
+    } else {
+      // 🔥 التعديل الرئيسي: إرسال paymentData مباشرة بدلاً من معاملين منفصلين
+      await paymentActions.addPayment(paymentData);
+      toast.success(MESSAGES.SUCCESS.PAYMENT_ADDED);
     }
-  };
-
+    setShowPaymentForm(false);
+    setEditingPayment(null);
+    setSelectedTeacher(null);
+  } catch (error) {
+    toast.error(error.message || MESSAGES.ERROR.GENERAL);
+  }
+};
   // عرض تفاصيل المدرس
   const handleViewDetails = (teacher) => {
     setSelectedTeacher(teacher);

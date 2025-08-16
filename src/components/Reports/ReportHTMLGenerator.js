@@ -62,6 +62,16 @@ const generateExpensesReportHTML = (config, data, stats) => {
           border-radius: 6px;
           cursor: pointer;
           font-weight: 500;
+          transition: background 0.2s;
+        }
+        
+        .toolbar-btn:hover {
+          background: rgba(255,255,255,0.3);
+        }
+        
+        .back-btn {
+          background: rgba(255,255,255,0.1);
+          border: 1px solid rgba(255,255,255,0.3);
         }
         
         .container {
@@ -186,11 +196,34 @@ const generateExpensesReportHTML = (config, data, stats) => {
             size: ${config.formatting?.pageSize || 'A4'};
           }
         }
+        
+        /* تحسينات للهواتف */
+        @media (max-width: 768px) {
+          .container {
+            padding: 80px 10px 20px;
+          }
+          
+          .print-toolbar {
+            padding: 15px 10px;
+          }
+          
+          .toolbar-btn {
+            padding: 10px 20px;
+            font-size: 14px;
+          }
+          
+          .back-btn {
+            margin-left: 10px;
+          }
+        }
       </style>
     </head>
     <body>
       <div class="print-toolbar">
-        <div>${config.title || 'تقرير المصروفات الخاصة'}</div>
+        <div class="toolbar-right">
+          <button class="toolbar-btn back-btn" onclick="window.close()">← رجوع</button>
+          <span style="margin-right: 10px;">${config.title || 'تقرير المصروفات الخاصة'}</span>
+        </div>
         <button class="toolbar-btn" onclick="window.print()">🖨️ طباعة</button>
       </div>
 
@@ -328,6 +361,16 @@ const generateTeachersReportHTML = (config, data, stats) => {
           border-radius: 6px;
           cursor: pointer;
           font-weight: 500;
+          transition: background 0.2s;
+        }
+        
+        .toolbar-btn:hover {
+          background: rgba(255,255,255,0.3);
+        }
+        
+        .back-btn {
+          background: rgba(255,255,255,0.1);
+          border: 1px solid rgba(255,255,255,0.3);
         }
         
         .container {
@@ -403,6 +446,14 @@ const generateTeachersReportHTML = (config, data, stats) => {
           border-radius: 8px;
           margin-bottom: 20px;
           page-break-inside: avoid;
+        }
+        
+        .teacher-card.separate-pages {
+          page-break-before: always;
+        }
+        
+        .teacher-card.separate-pages:first-child {
+          page-break-before: auto;
         }
         
         .teacher-header {
@@ -505,6 +556,19 @@ const generateTeachersReportHTML = (config, data, stats) => {
           
           .teacher-card {
             page-break-inside: avoid;
+            margin-bottom: 0;
+          }
+          
+          .teacher-card.separate-pages {
+            page-break-before: always;
+          }
+          
+          .teacher-card.separate-pages:first-child {
+            page-break-before: auto;
+          }
+          
+          .stats-grid {
+            ${config.formatting?.separatePages !== false ? 'page-break-after: always;' : ''}
           }
           
           @page {
@@ -512,11 +576,50 @@ const generateTeachersReportHTML = (config, data, stats) => {
             size: ${config.formatting?.pageSize || 'A4'};
           }
         }
+        
+        /* تحسينات للهواتف */
+        @media (max-width: 768px) {
+          .container {
+            padding: 80px 10px 20px;
+          }
+          
+          .print-toolbar {
+            padding: 15px 10px;
+          }
+          
+          .toolbar-btn {
+            padding: 10px 20px;
+            font-size: 14px;
+          }
+          
+          .back-btn {
+            margin-left: 10px;
+          }
+          
+          .stats-grid {
+            grid-template-columns: 1fr;
+            gap: 10px;
+          }
+          
+          .teacher-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+          }
+          
+          .summary-grid {
+            grid-template-columns: 1fr;
+            gap: 8px;
+          }
+        }
       </style>
     </head>
     <body>
       <div class="print-toolbar">
-        <div>${config.title}</div>
+        <div class="toolbar-right">
+          <button class="toolbar-btn back-btn" onclick="window.close()">← رجوع</button>
+          <span style="margin-right: 10px;">${config.title}</span>
+        </div>
         <button class="toolbar-btn" onclick="window.print()">🖨️ طباعة</button>
       </div>
 
@@ -550,9 +653,10 @@ const generateTeachersReportHTML = (config, data, stats) => {
 
         ${teachers.map((teacher, index) => {
           const teacherData = getTeacherData(teacher);
+          const separatePages = config.formatting?.separatePages !== false;
           
           return `
-            <div class="teacher-card">
+            <div class="teacher-card ${separatePages ? 'separate-pages' : ''}">
               <div class="teacher-header">
                 <div class="teacher-name">${index + 1}. ${teacher.name || 'غير محدد'}</div>
                 ${showBalance ? `

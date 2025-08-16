@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FiX, FiPrinter } from 'react-icons/fi';
+import { FiX, FiPrinter, FiArrowRight, FiChevronRight } from 'react-icons/fi';
 import { formatCurrency, formatDate } from '../../utils/helpers';
 import { generateReportHTML } from './ReportHTMLGenerator';
 import { translateOperationType, translatePaymentMethod, translateExpenseType, safeTranslate } from '../../utils/translations';
@@ -148,15 +148,35 @@ const ReportPreview = ({ reportData, onClose }) => {
 
     return (
       <div className="bg-white min-h-screen">
+        {/* شريط التنقل العلوي مع زر الرجوع */}
         <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-4 py-3 shadow-sm">
           <div className="flex items-center justify-between">
+            {/* زر الرجوع والعنوان */}
             <div className="flex items-center gap-3">
-              <h2 className="text-lg font-bold text-gray-900">معاينة تقرير المصروفات</h2>
-              <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                {stats.expensesCount} مصروف
-              </span>
+              <button
+                onClick={onClose}
+                className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors lg:hidden"
+                aria-label="رجوع"
+              >
+                <FiArrowRight size={18} />
+                <span className="text-sm font-medium">رجوع</span>
+              </button>
+              
+              <div className="hidden lg:block w-px h-6 bg-gray-300"></div>
+              
+              <div>
+                <h2 className="text-lg font-bold text-gray-900">معاينة تقرير المصروفات</h2>
+                <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
+                  <span className="bg-gray-100 px-2 py-1 rounded">
+                    {stats.expensesCount} مصروف
+                  </span>
+                  <span>•</span>
+                  <span>{formatDate(new Date())}</span>
+                </div>
+              </div>
             </div>
             
+            {/* أزرار الإجراءات */}
             <div className="flex items-center gap-2">
               <button
                 onClick={handlePrint}
@@ -164,12 +184,13 @@ const ReportPreview = ({ reportData, onClose }) => {
                 className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-all disabled:opacity-50"
               >
                 <FiPrinter size={16} />
-                <span>{isPrinting ? 'جاري...' : 'طباعة'}</span>
+                <span className="hidden sm:inline">{isPrinting ? 'جاري...' : 'طباعة'}</span>
               </button>
               
               <button
                 onClick={onClose}
-                className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                className="hidden lg:flex p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                aria-label="إغلاق"
               >
                 <FiX size={18} />
               </button>
@@ -206,36 +227,38 @@ const ReportPreview = ({ reportData, onClose }) => {
 
           {expenses.length > 0 ? (
             <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-              <table className="w-full text-xs">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-3 py-2 text-right">#</th>
-                    <th className="px-3 py-2 text-right">التاريخ</th>
-                    <th className="px-3 py-2 text-right">الوصف</th>
-                    <th className="px-3 py-2 text-right">المورد/الجهة</th>
-                    <th className="px-3 py-2 text-right">طريقة الدفع</th>
-                    <th className="px-3 py-2 text-left">المبلغ</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {expenses.map((expense, index) => (
-                    <tr key={index} className="border-t border-gray-100">
-                      <td className="px-3 py-2">{index + 1}</td>
-                      <td className="px-3 py-2">{formatDate(expense.date || expense.expenseDate || new Date())}</td>
-                      <td className="px-3 py-2">{expense.description || '-'}</td>
-                      <td className="px-3 py-2">{expense.vendor || expense.recipient || '-'}</td>
-                      <td className="px-3 py-2">{safeTranslate(expense.paymentMethod, translatePaymentMethod)}</td>
-                      <td className="px-3 py-2 font-semibold text-left">{formatCurrency(expense.amount)}</td>
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-3 py-2 text-right">#</th>
+                      <th className="px-3 py-2 text-right">التاريخ</th>
+                      <th className="px-3 py-2 text-right">الوصف</th>
+                      <th className="px-3 py-2 text-right">المورد/الجهة</th>
+                      <th className="px-3 py-2 text-right">طريقة الدفع</th>
+                      <th className="px-3 py-2 text-left">المبلغ</th>
                     </tr>
-                  ))}
-                </tbody>
-                <tfoot>
-                  <tr className="border-t-2 border-gray-200 bg-gray-50">
-                    <td colSpan="5" className="px-3 py-2 font-semibold">الإجمالي</td>
-                    <td className="px-3 py-2 font-bold text-left">{formatCurrency(stats.totalExpenses)}</td>
-                  </tr>
-                </tfoot>
-              </table>
+                  </thead>
+                  <tbody>
+                    {expenses.map((expense, index) => (
+                      <tr key={index} className="border-t border-gray-100">
+                        <td className="px-3 py-2">{index + 1}</td>
+                        <td className="px-3 py-2">{formatDate(expense.date || expense.expenseDate || new Date())}</td>
+                        <td className="px-3 py-2">{expense.description || '-'}</td>
+                        <td className="px-3 py-2">{expense.vendor || expense.recipient || '-'}</td>
+                        <td className="px-3 py-2">{safeTranslate(expense.paymentMethod, translatePaymentMethod)}</td>
+                        <td className="px-3 py-2 font-semibold text-left">{formatCurrency(expense.amount)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    <tr className="border-t-2 border-gray-200 bg-gray-50">
+                      <td colSpan="5" className="px-3 py-2 font-semibold">الإجمالي</td>
+                      <td className="px-3 py-2 font-bold text-left">{formatCurrency(stats.totalExpenses)}</td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
             </div>
           ) : (
             <div className="text-center py-12">
@@ -270,15 +293,35 @@ const ReportPreview = ({ reportData, onClose }) => {
 
   return (
     <div className="bg-white min-h-screen">
+      {/* شريط التنقل العلوي مع زر الرجوع */}
       <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-4 py-3 shadow-sm">
         <div className="flex items-center justify-between">
+          {/* زر الرجوع والعنوان */}
           <div className="flex items-center gap-3">
-            <h2 className="text-lg font-bold text-gray-900">معاينة التقرير</h2>
-            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-              {stats.teachersCount} مدرس • {stats.operationsCount} عملية • {stats.paymentsCount} دفعة
-            </span>
+            <button
+              onClick={onClose}
+              className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors lg:hidden"
+              aria-label="رجوع"
+            >
+              <FiArrowRight size={18} />
+              <span className="text-sm font-medium">رجوع</span>
+            </button>
+            
+            <div className="hidden lg:block w-px h-6 bg-gray-300"></div>
+            
+            <div>
+              <h2 className="text-lg font-bold text-gray-900">معاينة التقرير</h2>
+              <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
+                <span className="bg-gray-100 px-2 py-1 rounded">
+                  {stats.teachersCount} مدرس • {stats.operationsCount} عملية • {stats.paymentsCount} دفعة
+                </span>
+                <span>•</span>
+                <span>{formatDate(new Date())}</span>
+              </div>
+            </div>
           </div>
           
+          {/* أزرار الإجراءات */}
           <div className="flex items-center gap-2">
             <button
               onClick={handlePrint}
@@ -286,12 +329,13 @@ const ReportPreview = ({ reportData, onClose }) => {
               className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-all disabled:opacity-50"
             >
               <FiPrinter size={16} />
-              <span>{isPrinting ? 'جاري...' : 'طباعة'}</span>
+              <span className="hidden sm:inline">{isPrinting ? 'جاري...' : 'طباعة'}</span>
             </button>
             
             <button
               onClick={onClose}
-              className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              className="hidden lg:flex p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              aria-label="إغلاق"
             >
               <FiX size={18} />
             </button>
@@ -336,7 +380,7 @@ const ReportPreview = ({ reportData, onClose }) => {
             const showBalance = config.includedSections?.balance !== false;
 
             return (
-              <div key={teacher.id} className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+              <div key={teacher.id} className="bg-white border border-gray-200 rounded-lg overflow-hidden print:page-break-before-always print:first:page-break-before-auto">
                 <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
                   <div className="flex items-center justify-between">
                     <div>

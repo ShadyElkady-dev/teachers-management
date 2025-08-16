@@ -53,7 +53,8 @@ const ReportsPage = () => {
       includeFooter: true,
       includePageNumbers: true,
       includeLogo: true,
-      fontSize: 'medium'
+      fontSize: 'medium',
+      separatePages: true  // افتراضياً كل مدرس في صفحة منفصلة
     }
   });
 
@@ -132,11 +133,11 @@ const ReportsPage = () => {
         );
 
         // فلترة العمليات
-filteredOperations = state.operations.filter(operation => {
-  if (!reportConfig.selectedTeachers.includes(operation.teacherId)) return false;
+        filteredOperations = state.operations.filter(operation => {
+          if (!reportConfig.selectedTeachers.includes(operation.teacherId)) return false;
 
-  // تأكد من وجود البيانات الأساسية
-  if (!operation.description && !operation.type) return false;
+          // تأكد من وجود البيانات الأساسية
+          if (!operation.description && !operation.type) return false;
 
           // فلترة حسب التاريخ
           if (reportConfig.dateRange.from) {
@@ -501,8 +502,9 @@ filteredOperations = state.operations.filter(operation => {
         <Modal
           isOpen={showPreview}
           onClose={() => setShowPreview(false)}
-          title="📋 معاينة التقرير"
+          title=""
           size="full"
+          showCloseButton={false}
         >
           {currentReport && (
             <ReportPreview
