@@ -10,9 +10,10 @@ import { APP_CONFIG } from '../../utils/constants';
 
 const Header = ({ onMenuClick, isMobile }) => {
   const location = useLocation();
-  const { state, calculateTotalProfit } = useAppContext();
+  const { state, calculateTotalProfit, refreshData } = useAppContext();
   const { user, hasPermission } = useAuth();
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [refreshing, setRefreshing] = useState(false);
 
   // تحديث الوقت كل دقيقة
   useEffect(() => {
@@ -22,6 +23,40 @@ const Header = ({ onMenuClick, isMobile }) => {
 
     return () => clearInterval(timer);
   }, []);
+
+  // دالة الريفريش
+  const handleRefresh = async () => {
+    if (refreshing) return;
+    
+    setRefreshing(true);
+    
+    try {
+      // تشغيل الهزة في الهواتف
+      if (window.navigator?.vibrate) {
+        window.navigator.vibrate(50);
+      }
+      
+      // استدعاء دالة التحديث من السياق
+      if (refreshData) {
+        await refreshData();
+      }
+      
+      // محاكاة تحديث البيانات
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // هزة تأكيد
+      if (window.navigator?.vibrate) {
+        window.navigator.vibrate([100, 50, 100]);
+      }
+      
+      console.log('تم تحديث البيانات بنجاح!');
+      
+    } catch (error) {
+      console.error('فشل في التحديث:', error);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   // الحصول على عنوان الصفحة الحالية مع الأيقونة واللون
   const getPageInfo = () => {
@@ -63,17 +98,36 @@ const Header = ({ onMenuClick, isMobile }) => {
       <div className={`bg-gradient-to-r ${pageInfo.color} text-white`}>
         <div className="flex items-center justify-between h-16 px-4">
           
-          {/* الجهة اليمنى - العنوان والشعار */}
+          {/* الجهة اليمنى - العنوان والشعار مع زرار الريفريش */}
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 bg-white bg-opacity-20 rounded-2xl flex items-center justify-center shadow-lg backdrop-blur-sm overflow-hidden">
-                {/* Replace icon with image */}
                 <img
-                  src="https://i.postimg.cc/G3KMTwC4/logo.png" // Replace with your logo path
+                  src="https://i.postimg.cc/G3KMTwC4/logo.png"
                   alt="Logo"
                   className="w-8 h-8 object-contain"
                 />
               </div>
+
+              {/* زرار الريفريش الجديد */}
+              <button
+                onClick={handleRefresh}
+                disabled={refreshing}
+                className={`
+                  w-10 h-10 bg-white bg-opacity-20 rounded-xl flex items-center justify-center 
+                  shadow-lg backdrop-blur-sm transition-all duration-300 hover:bg-opacity-30
+                  ${refreshing ? 'cursor-not-allowed' : 'hover:scale-110 active:scale-95'}
+                `}
+                title="تحديث البيانات"
+              >
+                <span 
+                  className={`text-xl transition-transform duration-500 ${
+                    refreshing ? 'animate-spin' : 'hover:rotate-180'
+                  }`}
+                >
+                  {refreshing ? '⟳' : '🔄'}
+                </span>
+              </button>
 
               {!isMobile && (
                 <div>
@@ -156,7 +210,7 @@ const Header = ({ onMenuClick, isMobile }) => {
           </div>
         </div>
 
-        {/* شريط الإحصائيات للهواتف المحمولة */}
+        {/* شريط الإحصائيات للهواتف المحمولة مع زرار الريفريش */}
         {isMobile && (
           <div className="bg-black bg-opacity-20 backdrop-blur-sm px-4 py-3 border-t border-white border-opacity-20">
             <div className="flex justify-around items-center">
@@ -196,6 +250,28 @@ const Header = ({ onMenuClick, isMobile }) => {
                   <div className="text-xs text-white opacity-80">ديون</div>
                 </div>
               </PermissionGate>
+
+              {/* زرار الريفريش للموبايل */}
+              <button
+                onClick={handleRefresh}
+                disabled={refreshing}
+                className={`
+                  text-center p-2 rounded-lg transition-all duration-300
+                  ${refreshing 
+                    ? 'bg-white bg-opacity-10 cursor-not-allowed' 
+                    : 'hover:bg-white hover:bg-opacity-20 active:scale-95'
+                  }
+                `}
+              >
+                <div className={`text-sm font-bold text-white transition-transform duration-500 ${
+                  refreshing ? 'animate-spin' : ''
+                }`}>
+                  {refreshing ? '⟳' : '🔄'}
+                </div>
+                <div className="text-xs text-white opacity-80">
+                  {refreshing ? 'تحديث' : 'ريفريش'}
+                </div>
+              </button>
               
               <div className="text-center">
                 <div className="text-sm font-bold text-white">
@@ -220,6 +296,14 @@ const Header = ({ onMenuClick, isMobile }) => {
                 <span className="text-white opacity-70">
                   ({user?.role === 'admin' ? 'مدير النظام' : 'سكرتارية'})
                 </span>
+                
+                {/* إظهار حالة التحديث */}
+                {refreshing && (
+                  <span className="flex items-center gap-1 text-yellow-200 animate-pulse">
+                    <span className="animate-spin">⟳</span>
+                    جاري التحديث...
+                  </span>
+                )}
               </div>
               <div className="text-white opacity-80 font-medium">
                 {formatDate(currentTime, 'yyyy/MM/dd')}
@@ -227,7 +311,28 @@ const Header = ({ onMenuClick, isMobile }) => {
             </div>
           </div>
         )}
+
+        {/* مؤشر التحديث (شريط علوي) */}
+        {refreshing && (
+          <div className="absolute top-0 left-0 right-0 h-1 bg-white bg-opacity-30 overflow-hidden">
+            <div className="h-full bg-white bg-opacity-70 animate-pulse"></div>
+            <div 
+              className="absolute top-0 left-0 h-full bg-gradient-to-r from-transparent via-white to-transparent opacity-60"
+              style={{
+                width: '30%',
+                animation: 'shimmer 1.5s ease-in-out infinite'
+              }}
+            ></div>
+          </div>
+        )}
       </div>
+
+      <style jsx>{`
+        @keyframes shimmer {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(400%); }
+        }
+      `}</style>
     </header>
   );
 };
