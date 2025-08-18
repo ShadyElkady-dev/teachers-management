@@ -154,7 +154,12 @@ const LoginPage = () => {
   };
 
   return (
-    <div className={`min-h-screen h-full bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4 pt-safe relative overflow-hidden ${keyboardOpen ? 'pb-0' : ''}`} style={{ minHeight: '100vh', minHeight: '100dvh', paddingTop: 'env(safe-area-inset-top)' }}>
+    <div className={`min-h-screen h-full bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4 relative overflow-hidden ${keyboardOpen ? 'pb-0' : ''}`} style={{ 
+      minHeight: '100vh', 
+      minHeight: '100dvh',
+      marginTop: '-env(safe-area-inset-top)',
+      paddingTop: 'env(safe-area-inset-top)'
+    }}>
       {/* خلفية متحركة - مخفية على الموبايل لتحسين الأداء */}
       {!isMobile && (
         <div className="absolute inset-0 overflow-hidden">
@@ -427,14 +432,8 @@ const LoginPage = () => {
           }
         }
 
-        /* إصلاح مشكلة الكيبورد على iOS */
+        /* إصلاح مشكلة الكيبورد والـ safe areas على iOS */
         @supports (-webkit-touch-callout: none) {
-          body {
-            position: fixed;
-            width: 100%;
-            height: 100%;
-          }
-          
           .min-h-screen {
             min-height: -webkit-fill-available;
             min-height: 100vh;
@@ -442,7 +441,12 @@ const LoginPage = () => {
           }
         }
         
-        /* منع الفراغ الأبيض والتحكم في الـ status bar */
+        /* التأكد من عدم وجود فراغات */
+        #root > div:first-child {
+          margin-top: 0 !important;
+        }
+        
+        /* منع الفراغ الأبيض */
         html {
           background: linear-gradient(to bottom right, #0f172a, #581c87, #0f172a);
           min-height: 100%;
@@ -453,13 +457,6 @@ const LoginPage = () => {
           padding: 0;
           overflow-x: hidden;
           background: transparent;
-          padding-top: env(safe-area-inset-top);
-          padding-bottom: env(safe-area-inset-bottom);
-        }
-        
-        /* دعم الـ safe areas لأجهزة iOS */
-        .pt-safe {
-          padding-top: env(safe-area-inset-top);
         }
 
         /* تأثير الإضاءة الخلفية للديسكتوب فقط */
