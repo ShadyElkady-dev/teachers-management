@@ -3,112 +3,54 @@
   <head>
     <meta charset="utf-8" />
     <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
-    
-    <!-- Viewport بدون viewport-fit=cover لتجنب المشاكل -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    
-    <!-- لون الـ Status Bar -->
-    <meta name="theme-color" content="#1e1b4b" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+    <meta name="theme-color" content="#3b82f6" />
     
     <!-- إعدادات PWA -->
     <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
     
-    <!-- إعدادات iOS -->
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="إدارة المدرسين">
-    
-    <!-- إعدادات Android -->
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="application-name" content="إدارة المدرسين">
-    
-    <!-- منع التنسيق التلقائي -->
-    <meta name="format-detection" content="telephone=no">
-    
-    <!-- خطوط عربية -->
+    <!-- خطوط عربية من Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@200;300;400;500;600;700;800;900&family=Tajawal:wght@200;300;400;500;700;800;900&display=swap" rel="stylesheet">
     
-    <title>إدارة حسابات المدرسين</title>
+    <!-- إعدادات إضافية للهواتف المحمولة -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    
+    <!-- منع التكبير التلقائي في iOS -->
+    <meta name="format-detection" content="telephone=no">
+
+    <title>ادارة حسابات المدرسين</title>
 
     <style>
-      /* Reset أساسي */
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-        -webkit-tap-highlight-color: transparent;
-      }
-      
-      /* إعدادات HTML و Body */
-      html, body {
-        width: 100%;
-        height: 100%;
-        margin: 0;
-        padding: 0;
-        overflow-x: hidden;
-        background: #1e1b4b;
-        font-family: 'Cairo', 'Tajawal', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
-      }
-      
-      /* الـ root container */
-      #root {
-        width: 100%;
-        min-height: 100vh;
-        background: linear-gradient(to bottom right, #0f172a, #581c87, #0f172a);
-      }
-      
-      /* شاشة التحميل */
+      /* تحميل سريع */
       #loading {
         position: fixed;
         top: 0;
         left: 0;
         width: 100%;
         height: 100%;
-        background: linear-gradient(to bottom right, #0f172a, #581c87, #0f172a);
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         display: flex;
         align-items: center;
         justify-content: center;
         z-index: 9999;
+        font-family: 'Cairo', 'Tajawal', sans-serif;
       }
       
       .loading-content {
         text-align: center;
         color: white;
-        padding: 20px;
-      }
-      
-      .loading-logo {
-        width: 100px;
-        height: 100px;
-        margin: 0 auto 20px;
-        background: rgba(255, 255, 255, 0.1);
-        border-radius: 24px;
-        padding: 20px;
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        animation: pulse 2s ease-in-out infinite;
-      }
-      
-      .loading-logo img {
-        width: 100%;
-        height: 100%;
-        object-fit: contain;
       }
       
       .loading-spinner {
-        width: 60px;
-        height: 60px;
-        border: 3px solid rgba(255, 255, 255, 0.2);
-        border-top: 3px solid #a855f7;
-        border-right: 3px solid #ec4899;
+        width: 50px;
+        height: 50px;
+        border: 4px solid rgba(255, 255, 255, 0.3);
+        border-top: 4px solid white;
         border-radius: 50%;
         animation: spin 1s linear infinite;
         margin: 0 auto 20px;
@@ -119,144 +61,65 @@
         100% { transform: rotate(360deg); }
       }
       
-      @keyframes pulse {
-        0%, 100% { 
-          transform: scale(1);
-          opacity: 1;
-        }
-        50% { 
-          transform: scale(1.05);
-          opacity: 0.9;
-        }
-      }
-      
       .loading-text {
         font-size: 24px;
-        font-weight: 700;
+        font-weight: 600;
         margin-bottom: 10px;
-        background: linear-gradient(to right, #60a5fa, #a78bfa, #f472b6);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
       }
       
       .loading-subtitle {
         font-size: 16px;
-        opacity: 0.7;
-        color: #e2e8f0;
+        opacity: 0.8;
       }
       
-      .loading-dots::after {
-        content: '';
-        animation: dots 1.5s steps(4, end) infinite;
-      }
-      
-      @keyframes dots {
-        0%, 20% { content: ''; }
-        40% { content: '.'; }
-        60% { content: '..'; }
-        80%, 100% { content: '...'; }
-      }
-      
-      /* إخفاء شاشة التحميل */
+      /* إخفاء شاشة التحميل عند تجهز التطبيق */
       .app-loaded #loading {
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity 0.5s ease-out;
-      }
-      
-      /* منع التحديد */
-      .no-select {
-        -webkit-user-select: none;
-        -moz-user-select: none;
-        -ms-user-select: none;
-        user-select: none;
-      }
-      
-      /* تحسينات الأداء */
-      @media (prefers-reduced-motion: reduce) {
-        * {
-          animation-duration: 0.01ms !important;
-          animation-iteration-count: 1 !important;
-          transition-duration: 0.01ms !important;
-        }
+        display: none;
       }
     </style>
   </head>
   
-  <body class="no-select">
+  <body>
     <noscript>
-      <div style="text-align: center; padding: 50px; font-family: 'Cairo', sans-serif; color: white; background: linear-gradient(to bottom right, #0f172a, #581c87, #0f172a); min-height: 100vh; display: flex; align-items: center; justify-content: center;">
-        <div>
-          <h2 style="margin-bottom: 20px;">⚠️ يجب تفعيل JavaScript</h2>
-          <p style="opacity: 0.8;">يرجى تفعيل JavaScript في متصفحك ثم إعادة تحميل الصفحة.</p>
-        </div>
+      <div style="text-align: center; padding: 50px; font-family: Arial, sans-serif;">
+        <h2>يجب تفعيل JavaScript لتشغيل هذا التطبيق</h2>
+        <p>يرجى تفعيل JavaScript في متصفحك ثم إعادة تحميل الصفحة.</p>
       </div>
     </noscript>
     
     <!-- شاشة التحميل -->
     <div id="loading">
       <div class="loading-content">
-        <div class="loading-logo">
-          <img src="%PUBLIC_URL%/logo192.png" alt="Logo" onerror="this.style.display='none'" />
-        </div>
         <div class="loading-spinner"></div>
         <div class="loading-text">إدارة حسابات المدرسين</div>
-        <div class="loading-subtitle">
-          جاري التحميل<span class="loading-dots"></span>
-        </div>
+        <div class="loading-subtitle">جاري التحميل...</div>
       </div>
     </div>
     
     <!-- التطبيق الرئيسي -->
     <div id="root"></div>
     
+    <!-- إخفاء شاشة التحميل عند تجهز التطبيق -->
     <script>
-      // إخفاء شاشة التحميل
-      window.addEventListener('DOMContentLoaded', function() {
+      // إخفاء شاشة التحميل عند تحميل التطبيق
+      window.addEventListener('load', function() {
         setTimeout(function() {
           document.body.classList.add('app-loaded');
-          setTimeout(function() {
-            const loadingScreen = document.getElementById('loading');
-            if (loadingScreen) {
-              loadingScreen.remove();
-            }
-          }, 500);
-        }, 1500);
+        }, 1000);
       });
       
-      // تسجيل Service Worker
+      // تسجيل Service Worker للـ PWA
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', function() {
-          navigator.serviceWorker.register('%PUBLIC_URL%/sw.js')
+          navigator.serviceWorker.register('/sw.js')
             .then(function(registration) {
-              console.log('Service Worker registered successfully');
+              console.log('SW registered: ', registration);
             })
-            .catch(function(error) {
-              console.log('Service Worker registration failed:', error);
+            .catch(function(registrationError) {
+              console.log('SW registration failed: ', registrationError);
             });
         });
       }
-      
-      // منع السحب للتحديث على iOS
-      let lastTouchY = 0;
-      let preventPullToRefresh = false;
-      
-      document.addEventListener('touchstart', function(e) {
-        if (e.touches.length !== 1) return;
-        lastTouchY = e.touches[0].clientY;
-        preventPullToRefresh = window.pageYOffset === 0;
-      }, { passive: false });
-      
-      document.addEventListener('touchmove', function(e) {
-        if (!preventPullToRefresh) return;
-        const touchY = e.touches[0].clientY;
-        const touchDiff = touchY - lastTouchY;
-        if (touchDiff > 0 && window.pageYOffset === 0) {
-          e.preventDefault();
-        }
-        lastTouchY = touchY;
-      }, { passive: false });
     </script>
   </body>
 </html>
