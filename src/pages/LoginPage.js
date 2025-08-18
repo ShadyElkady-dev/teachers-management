@@ -20,6 +20,43 @@ const LoginPage = () => {
   const [loginAnimation, setLoginAnimation] = useState(false);
   const [keyboardOpen, setKeyboardOpen] = useState(false);
 
+  // إضافة meta tags للتحكم في الـ status bar
+  useEffect(() => {
+    // تغيير لون الـ status bar
+    const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+    if (metaThemeColor) {
+      metaThemeColor.content = '#1e1b4b'; // لون بنفسجي داكن
+    } else {
+      const meta = document.createElement('meta');
+      meta.name = 'theme-color';
+      meta.content = '#1e1b4b';
+      document.head.appendChild(meta);
+    }
+
+    // إضافة meta tags أخرى لـ iOS
+    const metaStatusBar = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
+    if (!metaStatusBar) {
+      const meta = document.createElement('meta');
+      meta.name = 'apple-mobile-web-app-status-bar-style';
+      meta.content = 'black-translucent';
+      document.head.appendChild(meta);
+    }
+
+    // إضافة meta tag للـ viewport
+    const metaViewport = document.querySelector('meta[name="viewport"]');
+    if (metaViewport) {
+      metaViewport.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover';
+    }
+
+    return () => {
+      // إعادة اللون الأصلي عند مغادرة الصفحة
+      const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+      if (metaThemeColor) {
+        metaThemeColor.content = '#ffffff';
+      }
+    };
+  }, []);
+
   // تحديث ارتفاع الشاشة الفعلي
   useEffect(() => {
     const updateVH = () => {
@@ -117,7 +154,7 @@ const LoginPage = () => {
   };
 
   return (
-    <div className={`min-h-screen h-full bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4 relative overflow-hidden ${keyboardOpen ? 'pb-0' : ''}`} style={{ minHeight: '100vh', minHeight: '100dvh' }}>
+    <div className={`min-h-screen h-full bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4 pt-safe relative overflow-hidden ${keyboardOpen ? 'pb-0' : ''}`} style={{ minHeight: '100vh', minHeight: '100dvh', paddingTop: 'env(safe-area-inset-top)' }}>
       {/* خلفية متحركة - مخفية على الموبايل لتحسين الأداء */}
       {!isMobile && (
         <div className="absolute inset-0 overflow-hidden">
@@ -405,12 +442,24 @@ const LoginPage = () => {
           }
         }
         
-        /* منع الفراغ الأبيض */
-        html, body {
+        /* منع الفراغ الأبيض والتحكم في الـ status bar */
+        html {
+          background: linear-gradient(to bottom right, #0f172a, #581c87, #0f172a);
+          min-height: 100%;
+        }
+        
+        body {
           margin: 0;
           padding: 0;
           overflow-x: hidden;
-          background: rgb(15, 23, 42);
+          background: transparent;
+          padding-top: env(safe-area-inset-top);
+          padding-bottom: env(safe-area-inset-bottom);
+        }
+        
+        /* دعم الـ safe areas لأجهزة iOS */
+        .pt-safe {
+          padding-top: env(safe-area-inset-top);
         }
 
         /* تأثير الإضاءة الخلفية للديسكتوب فقط */
