@@ -3,57 +3,144 @@
   <head>
     <meta charset="utf-8" />
     <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-    <meta name="theme-color" content="#3b82f6" />
     
-    <!-- إعدادات PWA -->
+    <!-- إعدادات الـ Viewport المحسنة -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    
+    <!-- لون الـ Status Bar - بنفسجي داكن ليتناسب مع التصميم -->
+    <meta name="theme-color" content="#1e1b4b" />
+    
+    <!-- إعدادات PWA محسنة -->
     <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+    
+    <!-- إعدادات iOS المحسنة -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="إدارة المدرسين">
+    
+    <!-- إعدادات Android -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="إدارة المدرسين">
+    
+    <!-- منع التكبير والتنسيق التلقائي -->
+    <meta name="format-detection" content="telephone=no">
+    <meta name="format-detection" content="date=no">
+    <meta name="format-detection" content="address=no">
+    <meta name="format-detection" content="email=no">
+    
+    <!-- إعدادات Microsoft -->
+    <meta name="msapplication-TileColor" content="#1e1b4b">
+    <meta name="msapplication-tap-highlight" content="no">
     
     <!-- خطوط عربية من Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@200;300;400;500;600;700;800;900&family=Tajawal:wght@200;300;400;500;700;800;900&display=swap" rel="stylesheet">
     
-    <!-- إعدادات إضافية للهواتف المحمولة -->
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    
-    <!-- منع التكبير التلقائي في iOS -->
-    <meta name="format-detection" content="telephone=no">
-
-    <title>ادارة حسابات المدرسين</title>
+    <title>إدارة حسابات المدرسين</title>
 
     <style>
-      /* تحميل سريع */
+      /* إعدادات أساسية */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
+      }
+      
+      /* خلفية HTML لمنع الفراغات البيضاء */
+      html {
+        background: linear-gradient(to bottom right, #0f172a, #581c87, #0f172a);
+        min-height: 100%;
+        min-height: 100vh;
+        min-height: 100dvh;
+        min-height: -webkit-fill-available;
+      }
+      
+      body {
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
+        min-height: 100dvh;
+        min-height: -webkit-fill-available;
+        background: transparent;
+        font-family: 'Cairo', 'Tajawal', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        overflow-x: hidden;
+        position: relative;
+        /* دعم Safe Areas */
+        padding-top: env(safe-area-inset-top);
+        padding-bottom: env(safe-area-inset-bottom);
+      }
+      
+      /* تطبيق الـ Safe Areas على الـ root */
+      #root {
+        min-height: 100vh;
+        min-height: 100dvh;
+        min-height: -webkit-fill-available;
+        position: relative;
+      }
+      
+      /* شاشة التحميل */
       #loading {
         position: fixed;
         top: 0;
         left: 0;
         width: 100%;
         height: 100%;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        height: 100vh;
+        height: 100dvh;
+        background: linear-gradient(to bottom right, #0f172a, #581c87, #0f172a);
         display: flex;
         align-items: center;
         justify-content: center;
         z-index: 9999;
         font-family: 'Cairo', 'Tajawal', sans-serif;
+        padding-top: env(safe-area-inset-top);
+        padding-bottom: env(safe-area-inset-bottom);
       }
       
       .loading-content {
         text-align: center;
         color: white;
+        padding: 20px;
       }
       
+      /* شعار التحميل */
+      .loading-logo {
+        width: 100px;
+        height: 100px;
+        margin: 0 auto 20px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 24px;
+        padding: 20px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        animation: pulse 2s ease-in-out infinite;
+      }
+      
+      .loading-logo img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+      
+      /* دائرة التحميل */
       .loading-spinner {
-        width: 50px;
-        height: 50px;
-        border: 4px solid rgba(255, 255, 255, 0.3);
-        border-top: 4px solid white;
+        width: 60px;
+        height: 60px;
+        border: 3px solid rgba(255, 255, 255, 0.2);
+        border-top: 3px solid #a855f7;
+        border-right: 3px solid #ec4899;
         border-radius: 50%;
         animation: spin 1s linear infinite;
         margin: 0 auto 20px;
+        box-shadow: 0 0 20px rgba(168, 85, 247, 0.5);
       }
       
       @keyframes spin {
@@ -61,65 +148,188 @@
         100% { transform: rotate(360deg); }
       }
       
+      @keyframes pulse {
+        0%, 100% { 
+          transform: scale(1);
+          box-shadow: 0 0 20px rgba(168, 85, 247, 0.3);
+        }
+        50% { 
+          transform: scale(1.05);
+          box-shadow: 0 0 40px rgba(168, 85, 247, 0.5);
+        }
+      }
+      
       .loading-text {
         font-size: 24px;
-        font-weight: 600;
+        font-weight: 700;
         margin-bottom: 10px;
+        background: linear-gradient(to right, #60a5fa, #a78bfa, #f472b6);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
       }
       
       .loading-subtitle {
         font-size: 16px;
-        opacity: 0.8;
+        opacity: 0.7;
+        color: #e2e8f0;
       }
       
-      /* إخفاء شاشة التحميل عند تجهز التطبيق */
+      /* نقاط التحميل المتحركة */
+      .loading-dots {
+        display: inline-block;
+      }
+      
+      .loading-dots::after {
+        content: '';
+        animation: dots 1.5s steps(4, end) infinite;
+      }
+      
+      @keyframes dots {
+        0%, 20% { content: ''; }
+        40% { content: '.'; }
+        60% { content: '..'; }
+        80%, 100% { content: '...'; }
+      }
+      
+      /* إخفاء شاشة التحميل */
       .app-loaded #loading {
-        display: none;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.5s ease-out;
+      }
+      
+      /* منع التحديد */
+      .no-select {
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+      }
+      
+      /* إصلاحات iOS */
+      @supports (-webkit-touch-callout: none) {
+        body {
+          position: fixed;
+          width: 100%;
+          height: 100%;
+        }
+      }
+      
+      /* تحسينات الأداء */
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+      
+      /* دعم الـ Dark Mode */
+      @media (prefers-color-scheme: dark) {
+        :root {
+          color-scheme: dark;
+        }
       }
     </style>
   </head>
   
-  <body>
+  <body class="no-select">
     <noscript>
-      <div style="text-align: center; padding: 50px; font-family: Arial, sans-serif;">
-        <h2>يجب تفعيل JavaScript لتشغيل هذا التطبيق</h2>
-        <p>يرجى تفعيل JavaScript في متصفحك ثم إعادة تحميل الصفحة.</p>
+      <div style="text-align: center; padding: 50px; font-family: 'Cairo', sans-serif; color: white; background: linear-gradient(to bottom right, #0f172a, #581c87, #0f172a); min-height: 100vh; display: flex; align-items: center; justify-content: center;">
+        <div>
+          <h2 style="margin-bottom: 20px;">⚠️ يجب تفعيل JavaScript</h2>
+          <p style="opacity: 0.8;">يرجى تفعيل JavaScript في متصفحك ثم إعادة تحميل الصفحة.</p>
+        </div>
       </div>
     </noscript>
     
-    <!-- شاشة التحميل -->
+    <!-- شاشة التحميل المحسنة -->
     <div id="loading">
       <div class="loading-content">
+        <div class="loading-logo">
+          <img src="%PUBLIC_URL%/logo192.png" alt="Logo" onerror="this.style.display='none'" />
+        </div>
         <div class="loading-spinner"></div>
         <div class="loading-text">إدارة حسابات المدرسين</div>
-        <div class="loading-subtitle">جاري التحميل...</div>
+        <div class="loading-subtitle">
+          جاري التحميل<span class="loading-dots"></span>
+        </div>
       </div>
     </div>
     
     <!-- التطبيق الرئيسي -->
     <div id="root"></div>
     
-    <!-- إخفاء شاشة التحميل عند تجهز التطبيق -->
     <script>
-      // إخفاء شاشة التحميل عند تحميل التطبيق
-      window.addEventListener('load', function() {
+      // تحديث ارتفاع الشاشة الحقيقي
+      function updateVH() {
+        let vh = window.innerHeight * 0.01;
+        document.documentElement.style.setProperty('--vh', `${vh}px`);
+      }
+      
+      updateVH();
+      window.addEventListener('resize', updateVH);
+      window.addEventListener('orientationchange', updateVH);
+      
+      // إخفاء شاشة التحميل بسلاسة
+      window.addEventListener('DOMContentLoaded', function() {
         setTimeout(function() {
           document.body.classList.add('app-loaded');
-        }, 1000);
+          // إزالة شاشة التحميل من DOM بعد الانتهاء من الـ fade out
+          setTimeout(function() {
+            const loadingScreen = document.getElementById('loading');
+            if (loadingScreen) {
+              loadingScreen.remove();
+            }
+          }, 500);
+        }, 1500);
       });
       
       // تسجيل Service Worker للـ PWA
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', function() {
-          navigator.serviceWorker.register('/sw.js')
+          navigator.serviceWorker.register('%PUBLIC_URL%/sw.js')
             .then(function(registration) {
-              console.log('SW registered: ', registration);
+              console.log('Service Worker registered successfully:', registration);
             })
-            .catch(function(registrationError) {
-              console.log('SW registration failed: ', registrationError);
+            .catch(function(error) {
+              console.log('Service Worker registration failed:', error);
             });
         });
       }
+      
+      // منع السحب للتحديث على iOS
+      let lastTouchY = 0;
+      let preventPullToRefresh = false;
+      
+      document.addEventListener('touchstart', function(e) {
+        if (e.touches.length !== 1) return;
+        lastTouchY = e.touches[0].clientY;
+        preventPullToRefresh = window.pageYOffset === 0;
+      }, { passive: false });
+      
+      document.addEventListener('touchmove', function(e) {
+        if (!preventPullToRefresh) return;
+        
+        const touchY = e.touches[0].clientY;
+        const touchDiff = touchY - lastTouchY;
+        
+        if (touchDiff > 0) {
+          e.preventDefault();
+        }
+        lastTouchY = touchY;
+      }, { passive: false });
+      
+      // تحديث لون الـ theme حسب الصفحة
+      document.addEventListener('visibilitychange', function() {
+        if (!document.hidden) {
+          const metaTheme = document.querySelector('meta[name="theme-color"]');
+          if (metaTheme) {
+            metaTheme.content = '#1e1b4b';
+          }
+        }
+      });
     </script>
   </body>
 </html>
