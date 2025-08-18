@@ -20,6 +20,23 @@ const LoginPage = () => {
   const [loginAnimation, setLoginAnimation] = useState(false);
   const [keyboardOpen, setKeyboardOpen] = useState(false);
 
+  // تحديث ارتفاع الشاشة الفعلي
+  useEffect(() => {
+    const updateVH = () => {
+      const vh = window.innerHeight * 0.01;
+      document.documentElement.style.setProperty('--vh', `${vh}px`);
+    };
+    
+    updateVH();
+    window.addEventListener('resize', updateVH);
+    window.addEventListener('orientationchange', updateVH);
+    
+    return () => {
+      window.removeEventListener('resize', updateVH);
+      window.removeEventListener('orientationchange', updateVH);
+    };
+  }, []);
+
   // مراقبة تغيير حجم الشاشة والكيبورد
   useEffect(() => {
     const handleResize = () => {
@@ -100,7 +117,7 @@ const LoginPage = () => {
   };
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4 relative overflow-hidden ${keyboardOpen ? 'pb-0' : ''}`}>
+    <div className={`min-h-screen h-full bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4 relative overflow-hidden ${keyboardOpen ? 'pb-0' : ''}`} style={{ minHeight: '100vh', minHeight: '100dvh' }}>
       {/* خلفية متحركة - مخفية على الموبايل لتحسين الأداء */}
       {!isMobile && (
         <div className="absolute inset-0 overflow-hidden">
@@ -279,6 +296,11 @@ const LoginPage = () => {
 
       {/* CSS Styles */}
       <style jsx>{`
+        /* إصلاح ارتفاع الشاشة على الموبايل */
+        :root {
+          --vh: 1vh;
+        }
+        
         @keyframes blob {
           0%, 100% {
             transform: translate(0px, 0px) scale(1);
@@ -370,9 +392,25 @@ const LoginPage = () => {
 
         /* إصلاح مشكلة الكيبورد على iOS */
         @supports (-webkit-touch-callout: none) {
+          body {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+          }
+          
           .min-h-screen {
             min-height: -webkit-fill-available;
+            min-height: 100vh;
+            min-height: 100dvh;
           }
+        }
+        
+        /* منع الفراغ الأبيض */
+        html, body {
+          margin: 0;
+          padding: 0;
+          overflow-x: hidden;
+          background: rgb(15, 23, 42);
         }
 
         /* تأثير الإضاءة الخلفية للديسكتوب فقط */
