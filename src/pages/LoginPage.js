@@ -154,12 +154,7 @@ const LoginPage = () => {
   };
 
   return (
-    <div className={`min-h-screen h-full bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4 relative overflow-hidden ${keyboardOpen ? 'pb-0' : ''}`} style={{ 
-      minHeight: '100vh', 
-      minHeight: '100dvh',
-      marginTop: '-env(safe-area-inset-top)',
-      paddingTop: 'env(safe-area-inset-top)'
-    }}>
+    <div className={`min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4 relative overflow-hidden ${keyboardOpen ? 'pb-0' : ''}`}>
       {/* خلفية متحركة - مخفية على الموبايل لتحسين الأداء */}
       {!isMobile && (
         <div className="absolute inset-0 overflow-hidden">
@@ -339,8 +334,8 @@ const LoginPage = () => {
       {/* CSS Styles */}
       <style jsx>{`
         /* إصلاح ارتفاع الشاشة على الموبايل */
-        :root {
-          --vh: 1vh;
+        .min-h-screen {
+          min-height: 100vh;
         }
         
         @keyframes blob {
