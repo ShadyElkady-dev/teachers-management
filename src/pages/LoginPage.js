@@ -20,6 +20,22 @@ const LoginPage = () => {
   const [loginAnimation, setLoginAnimation] = useState(false);
   const [keyboardOpen, setKeyboardOpen] = useState(false);
 
+  // إضافة meta tags للتحكم في الـ status bar
+  useEffect(() => {
+    // تغيير لون الـ status bar
+    const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+    if (metaThemeColor) {
+      metaThemeColor.content = '#1e1b4b'; // لون بنفسجي داكن
+    }
+
+    return () => {
+      // إعادة اللون الأصلي عند مغادرة الصفحة
+      if (metaThemeColor) {
+        metaThemeColor.content = '#3b82f6';
+      }
+    };
+  }, []);
+
   // تحديث ارتفاع الشاشة الفعلي
   useEffect(() => {
     const updateVH = () => {
@@ -117,10 +133,21 @@ const LoginPage = () => {
   };
 
   return (
-    <div className={`min-h-screen h-full bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4 relative overflow-hidden ${keyboardOpen ? 'pb-0' : ''}`} style={{ minHeight: '100vh', minHeight: '100dvh' }}>
+    <div 
+      className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center relative overflow-x-hidden"
+      style={{ 
+        minHeight: '100vh',
+        minHeight: '100dvh',
+        minHeight: 'calc(var(--vh, 1vh) * 100)',
+        paddingTop: isMobile ? 'env(safe-area-inset-top, 20px)' : '0',
+        paddingBottom: isMobile ? 'env(safe-area-inset-bottom, 20px)' : '0',
+        paddingLeft: '1rem',
+        paddingRight: '1rem'
+      }}
+    >
       {/* خلفية متحركة - مخفية على الموبايل لتحسين الأداء */}
       {!isMobile && (
-        <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
           <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-indigo-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000"></div>
           <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-pink-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-4000"></div>
@@ -301,6 +328,27 @@ const LoginPage = () => {
           --vh: 1vh;
         }
         
+        /* منع السكرول تحت الـ status bar */
+        html {
+          overflow-x: hidden;
+          background: #0f172a;
+        }
+        
+        body {
+          margin: 0;
+          padding: 0;
+          overflow-x: hidden;
+          overscroll-behavior-y: none;
+          background: #0f172a;
+        }
+        
+        /* للتأكد من عدم السكرول تحت الشريط */
+        .min-h-screen {
+          position: relative;
+          overflow-y: auto;
+          -webkit-overflow-scrolling: touch;
+        }
+        
         @keyframes blob {
           0%, 100% {
             transform: translate(0px, 0px) scale(1);
@@ -388,29 +436,16 @@ const LoginPage = () => {
           input {
             font-size: 16px !important;
           }
-        }
-
-        /* إصلاح مشكلة الكيبورد على iOS */
-        @supports (-webkit-touch-callout: none) {
+          
+          /* منع السكرول الزائد */
           body {
-            position: fixed;
-            width: 100%;
-            height: 100%;
+            position: relative;
+            overflow-y: hidden;
           }
           
           .min-h-screen {
-            min-height: -webkit-fill-available;
-            min-height: 100vh;
-            min-height: 100dvh;
+            overflow-y: visible;
           }
-        }
-        
-        /* منع الفراغ الأبيض */
-        html, body {
-          margin: 0;
-          padding: 0;
-          overflow-x: hidden;
-          background: rgb(15, 23, 42);
         }
 
         /* تأثير الإضاءة الخلفية للديسكتوب فقط */
@@ -441,6 +476,14 @@ const LoginPage = () => {
           -moz-user-select: none;
           -ms-user-select: none;
           user-select: none;
+        }
+        
+        /* دعم safe areas بشكل صحيح */
+        @supports (padding-top: env(safe-area-inset-top)) {
+          .min-h-screen {
+            padding-top: env(safe-area-inset-top, 20px);
+            padding-bottom: env(safe-area-inset-bottom, 20px);
+          }
         }
       `}</style>
     </div>
