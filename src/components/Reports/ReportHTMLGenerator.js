@@ -82,63 +82,74 @@ const generateExpensesReportHTML = (config, data, stats) => {
         
         .header {
           text-align: center;
-          border-bottom: 2px solid #e5e7eb;
-          padding-bottom: 20px;
-          margin-bottom: 20px;
+          border-bottom: 1px solid #e5e7eb;
+          padding-bottom: 15px;
+          margin-bottom: 15px;
           position: relative;
         }
         
         .logo-container {
           position: absolute;
-          top: 0;
+          top: -5px;
           left: 0;
         }
         
         .company-logo {
-          max-height: 80px;
-          max-width: 150px;
+          max-height: 60px;
+          max-width: 120px;
           object-fit: contain;
         }
-        
         .report-title {
-          font-size: 24px;
+          font-size: 18px;
           font-weight: 700;
           color: #1f2937;
-          margin-bottom: 10px;
+          margin-bottom: 8px;
         }
         
         .meta-info {
           display: flex;
           justify-content: center;
-          gap: 20px;
-          font-size: 11px;
+          gap: 15px;
+          font-size: 10px;
           color: #6b7280;
         }
         
         .stats-grid {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 15px;
-          margin-bottom: 25px;
-        }
-        
-        .stat-card {
           background: #f9fafb;
           border: 1px solid #e5e7eb;
-          border-radius: 8px;
-          padding: 15px;
+          border-radius: 6px;
+          padding: 10px;
+          margin-bottom: 15px;
+          max-width: 500px;
+          margin-left: auto;
+          margin-right: auto;
           text-align: center;
         }
         
+        .stats-inline {
+          display: flex;
+          justify-content: space-around;
+          align-items: center;
+          gap: 15px;
+          flex-wrap: wrap;
+        }
+        
+        .stat-item {
+          flex: 1;
+          min-width: 120px;
+        }
+        
         .stat-value {
-          font-size: 20px;
+          font-size: 12px;
           font-weight: 700;
-          margin-bottom: 5px;
+          margin-bottom: 1px;
+          line-height: 1.1;
         }
         
         .stat-label {
-          font-size: 11px;
+          font-size: 8px;
           color: #6b7280;
+          line-height: 1.1;
         }
         
         table {
@@ -195,6 +206,12 @@ const generateExpensesReportHTML = (config, data, stats) => {
             margin: 1cm;
             size: ${config.formatting?.pageSize || 'A4'};
           }
+          
+          /* تحسين عرض اللوجو في الطباعة */
+          .company-logo {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
         }
         
         /* تحسينات للهواتف */
@@ -241,17 +258,19 @@ const generateExpensesReportHTML = (config, data, stats) => {
         </div>
 
         <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-value" style="color: #dc2626;">${formatCurrency(totalExpenses)}</div>
-            <div class="stat-label">إجمالي المصروفات</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value" style="color: #2563eb;">${expenses.length}</div>
-            <div class="stat-label">عدد المصروفات</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value" style="color: #9333ea;">${formatCurrency(totalExpenses / (expenses.length || 1))}</div>
-            <div class="stat-label">متوسط المصروف</div>
+          <div class="stats-inline">
+            <div class="stat-item">
+              <div class="stat-value" style="color: #dc2626;">${formatCurrency(totalExpenses)}</div>
+              <div class="stat-label">إجمالي المصروفات</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value" style="color: #2563eb;">${expenses.length}</div>
+              <div class="stat-label">عدد المصروفات</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value" style="color: #9333ea;">${formatCurrency(totalExpenses / (expenses.length || 1))}</div>
+              <div class="stat-label">متوسط المصروف</div>
+            </div>
           </div>
         </div>
 
@@ -381,73 +400,106 @@ const generateTeachersReportHTML = (config, data, stats) => {
         
         .header {
           text-align: center;
-          border-bottom: 2px solid #e5e7eb;
-          padding-bottom: 20px;
-          margin-bottom: 20px;
+          border-bottom: 1px solid #e5e7eb;
+          padding-bottom: 15px;
+          margin-bottom: 15px;
           position: relative;
         }
         
         .logo-container {
           position: absolute;
-          top: 0;
+          top: -5px;
           left: 0;
         }
         
         .company-logo {
-          max-height: 80px;
-          max-width: 150px;
+          max-height: 60px;
+          max-width: 120px;
           object-fit: contain;
         }
         
         .report-title {
-          font-size: 24px;
+          font-size: 18px;
           font-weight: 700;
           color: #1f2937;
-          margin-bottom: 10px;
+          margin-bottom: 8px;
         }
         
         .meta-info {
           display: flex;
           justify-content: center;
-          gap: 20px;
-          font-size: 11px;
+          gap: 15px;
+          font-size: 10px;
           color: #6b7280;
         }
         
         .stats-grid {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 15px;
-          margin-bottom: 25px;
-        }
-        
-        .stat-card {
           background: #f9fafb;
           border: 1px solid #e5e7eb;
-          border-radius: 8px;
-          padding: 15px;
+          border-radius: 6px;
+          padding: 10px;
+          margin-bottom: 15px;
+          max-width: 500px;
+          margin-left: auto;
+          margin-right: auto;
           text-align: center;
         }
         
+        .stats-inline {
+          display: flex;
+          justify-content: space-around;
+          align-items: center;
+          gap: 15px;
+          flex-wrap: wrap;
+        }
+        
+        .stat-item {
+          flex: 1;
+          min-width: 120px;
+        }
+        
         .stat-value {
-          font-size: 20px;
+          font-size: 12px;
           font-weight: 700;
-          margin-bottom: 5px;
+          margin-bottom: 1px;
+          line-height: 1.1;
         }
         
         .stat-label {
-          font-size: 11px;
+          font-size: 8px;
           color: #6b7280;
+          line-height: 1.1;
         }
         
-        .teacher-card {
-          background: white;
-          border: 1px solid #e5e7eb;
-          border-radius: 8px;
-          margin-bottom: 20px;
-          page-break-inside: avoid;
-        }
-        
+.teacher-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  page-break-inside: avoid;
+  position: relative;
+}
+.teacher-card .logo {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  max-height: 50px;
+  max-width: 120px;
+  object-fit: contain;
+}
+        .teacher-logo {
+  max-height: 35px;
+  max-width: 70px;
+  object-fit: contain;
+}
+.teacher-header {
+  background: #f3f4f6; /* نفس الخلفية الرمادية */
+  padding: 10px 15px;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
         .teacher-card.separate-pages {
           page-break-before: always;
         }
@@ -571,6 +623,12 @@ const generateTeachersReportHTML = (config, data, stats) => {
             ${config.formatting?.separatePages !== false ? 'page-break-after: always;' : ''}
           }
           
+          /* تحسين عرض اللوجو في الطباعة */
+          .teacher-card.separate-pages img {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
+          
           @page {
             margin: 1cm;
             size: ${config.formatting?.pageSize || 'A4'};
@@ -597,8 +655,17 @@ const generateTeachersReportHTML = (config, data, stats) => {
           }
           
           .stats-grid {
-            grid-template-columns: 1fr;
-            gap: 10px;
+            max-width: 100%;
+            padding: 8px;
+          }
+          
+          .stats-inline {
+            flex-direction: column;
+            gap: 8px;
+          }
+          
+          .stat-item {
+            min-width: auto;
           }
           
           .teacher-header {
@@ -627,6 +694,7 @@ const generateTeachersReportHTML = (config, data, stats) => {
         <div class="header">
           <div class="logo-container">
             <img src="${config.logoUrl || 'https://i.postimg.cc/664vwM9j/logo.png'}" alt="Logo" class="company-logo">
+
           </div>
           <div class="report-title">${config.title}</div>
           <div class="meta-info">
@@ -637,17 +705,19 @@ const generateTeachersReportHTML = (config, data, stats) => {
         </div>
 
         <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-value" style="color: #2563eb;">${formatCurrency(stats.totalOperations)}</div>
-            <div class="stat-label">إجمالي العمليات</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value" style="color: #16a34a;">${formatCurrency(stats.totalPayments)}</div>
-            <div class="stat-label">إجمالي المدفوعات</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value ${stats.balance > 0 ? 'balance-positive' : ''}">${formatCurrency(Math.abs(stats.balance))}</div>
-            <div class="stat-label">${stats.balance > 0 ? 'إجمالي المستحق' : 'الرصيد'}</div>
+          <div class="stats-inline">
+            <div class="stat-item">
+              <div class="stat-value" style="color: #2563eb;">${formatCurrency(stats.totalOperations)}</div>
+              <div class="stat-label">إجمالي العمليات</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value" style="color: #16a34a;">${formatCurrency(stats.totalPayments)}</div>
+              <div class="stat-label">إجمالي المدفوعات</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value ${stats.balance > 0 ? 'balance-positive' : ''}">${formatCurrency(Math.abs(stats.balance))}</div>
+              <div class="stat-label">${stats.balance > 0 ? 'إجمالي المستحق' : 'الرصيد'}</div>
+            </div>
           </div>
         </div>
 
@@ -658,6 +728,7 @@ const generateTeachersReportHTML = (config, data, stats) => {
           return `
             <div class="teacher-card ${separatePages ? 'separate-pages' : ''}">
               <div class="teacher-header">
+              <img src="${config.logoUrl || 'https://i.postimg.cc/664vwM9j/logo.png'}" alt="Logo" class="logo">
                 <div class="teacher-name">${index + 1}. ${teacher.name || 'غير محدد'}</div>
                 ${showBalance ? `
                   <div class="teacher-balance ${teacherData.balance > 0 ? 'balance-positive' : 'balance-negative'}">
