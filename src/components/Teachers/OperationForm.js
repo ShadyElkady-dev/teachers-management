@@ -37,6 +37,23 @@ const timeToInputValue = (date) => {
   }
 };
 
+// دالة لنسخ النص إلى الكليب بورد
+const copyToClipboard = async (text) => {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch (err) {
+    // fallback للمتصفحات القديمة
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    document.body.appendChild(textArea);
+    textArea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textArea);
+    return true;
+  }
+};
+
 // ======== بداية كود الحاسبة الكامل المحدث =========
 const PriceCalculator = ({ onCopyToAmount }) => {
     const [calcType, setCalcType] = useState('تصوير');
@@ -66,23 +83,34 @@ const PriceCalculator = ({ onCopyToAmount }) => {
         }
 
         const calculatedTotalPrice = calculatedCopyPrice * numCopies;
-        setCopyPrice(calculatedCopyPrice);
-        setTotalPrice(calculatedTotalPrice);
+        
+        // تحديد الأرقام العشرية إلى رقمين فقط
+        setCopyPrice(parseFloat(calculatedCopyPrice.toFixed(2)));
+        setTotalPrice(parseFloat(calculatedTotalPrice.toFixed(2)));
     };
     
-    const handleCopyTotalClick = () => {
+    const handleCopyTotalClick = async () => {
         if (totalPrice > 0) {
-            onCopyToAmount(totalPrice.toString());
-            toast.success(`تم نسخ المبلغ الإجمالي ${formatCurrency(totalPrice)}`);
+            const totalPriceString = totalPrice.toFixed(2);
+            const success = await copyToClipboard(totalPriceString);
+            if (success) {
+                // نسخ إلى الكليب بورد أولاً ثم إلى حقل المبلغ
+                onCopyToAmount(totalPriceString);
+                toast.success(`تم نسخ المبلغ الإجمالي ${formatCurrency(totalPrice)} إلى الذاكرة وحقل المبلغ`);
+            }
         } else {
             toast.error("يرجى حساب السعر أولاً قبل النسخ");
         }
     };
 
-    const handleCopySingleClick = () => {
+    const handleCopySingleClick = async () => {
         if (copyPrice > 0) {
-            onCopyToAmount(copyPrice.toString());
-            toast.success(`تم نسخ سعر النسخة الواحدة ${formatCurrency(copyPrice)}`);
+            const copyPriceString = copyPrice.toFixed(2);
+            const success = await copyToClipboard(copyPriceString);
+            if (success) {
+                // نسخ إلى الكليب بورد فقط (بدون تحديث حقل المبلغ)
+                toast.success(`تم نسخ سعر النسخة الواحدة ${formatCurrency(copyPrice)} إلى الذاكرة`);
+            }
         } else {
             toast.error("يرجى حساب السعر أولاً قبل النسخ");
         }
@@ -108,13 +136,13 @@ const PriceCalculator = ({ onCopyToAmount }) => {
                         </div>
                         <div>
                             <label className="text-sm font-medium">سعر الورقة</label>
-                            <input type="number" placeholder="0.0" value={sheetPrice} onChange={(e) => setSheetPrice(e.target.value)} className="input mt-1" />
+                            <input type="number" step="0.01" placeholder="0.00" value={sheetPrice} onChange={(e) => setSheetPrice(e.target.value)} className="input mt-1" />
                         </div>
                     </div>
                     {calcType === 'بشر' && (
                         <div>
                             <label className="text-sm font-medium">سعر البشر</label>
-                            <input type="number" placeholder="0.0" value={bshrPrice} onChange={(e) => setBshrPrice(e.target.value)} className="input mt-1" />
+                            <input type="number" step="0.01" placeholder="0.00" value={bshrPrice} onChange={(e) => setBshrPrice(e.target.value)} className="input mt-1" />
                         </div>
                     )}
                     <div>
@@ -154,6 +182,7 @@ const PriceCalculator = ({ onCopyToAmount }) => {
     );
 };
 // ======== نهاية كود الحاسبة المحدث =========
+
 const OperationForm = ({ 
   operation = null, 
   teacher = null,
@@ -194,7 +223,7 @@ const OperationForm = ({
           type: operation.type || 'printing',
           customType: OPERATION_TYPES.find(t => t.value === operation.type) ? '' : operation.type,
           description: operation.description || '',
-          amount: operation.amount?.toString() || '',
+          amount: operation.amount?.toFixed(2) || '', // تحديد رقمين عشريين
           operationDate: dateToInputValue(validDate),
           operationTime: timeToInputValue(validDate), // استخراج الوقت من التاريخ المحفوظ
           notes: operation.notes || ''
@@ -208,7 +237,7 @@ const OperationForm = ({
           type: operation.type || 'printing',
           customType: OPERATION_TYPES.find(t => t.value === operation.type) ? '' : operation.type,
           description: operation.description || '',
-          amount: operation.amount?.toString() || '',
+          amount: operation.amount?.toFixed(2) || '',
           operationDate: dateToInputValue(now),
           operationTime: timeToInputValue(now),
           notes: operation.notes || ''
@@ -280,9 +309,22 @@ const OperationForm = ({
   const handleChange = (e) => {
     const { name, value } = e.target;
     
-    // الأرقام فقط للمبلغ
+    // الأرقام فقط للمبلغ مع تحديد رقمين عشريين
     if (name === 'amount') {
-        setFormData(prev => ({ ...prev, [name]: value.replace(/[^0-9.]/g, '') }));
+        let cleanValue = value.replace(/[^0-9.]/g, '');
+        
+        // التأكد من وجود نقطة عشرية واحدة فقط
+        const parts = cleanValue.split('.');
+        if (parts.length > 2) {
+            cleanValue = parts[0] + '.' + parts[1];
+        }
+        
+        // تحديد الأرقام العشرية إلى رقمين فقط
+        if (parts.length === 2 && parts[1].length > 2) {
+            cleanValue = parts[0] + '.' + parts[1].substring(0, 2);
+        }
+        
+        setFormData(prev => ({ ...prev, [name]: cleanValue }));
     } else {
         setFormData(prev => ({ ...prev, [name]: value }));
     }
@@ -294,7 +336,7 @@ const OperationForm = ({
 
   // معالجة التركيز على الحقل
   const handleBlur = (e) => {
-    const { name } = e.target;
+    const { name, value } = e.target;
     setTouched(prev => ({ ...prev, [name]: true }));
 
     // تنظيف النص عند الخروج من الحقل فقط
@@ -303,6 +345,17 @@ const OperationForm = ({
             ...prev,
             [name]: sanitizeText(prev[name])
         }));
+    }
+    
+    // تنسيق المبلغ عند الخروج من الحقل
+    if (name === 'amount' && value) {
+        const numValue = parseFloat(value);
+        if (!isNaN(numValue)) {
+            setFormData(prev => ({
+                ...prev,
+                [name]: numValue.toFixed(2)
+            }));
+        }
     }
   };
 
@@ -337,8 +390,9 @@ const OperationForm = ({
         };
 
         if (canViewPrices) {
-            dataToSave.amount = parseFloat(formData.amount);
-            dataToSave.unitPrice = parseFloat(formData.amount);
+            const amount = parseFloat(formData.amount);
+            dataToSave.amount = parseFloat(amount.toFixed(2)); // تحديد رقمين عشريين
+            dataToSave.unitPrice = parseFloat(amount.toFixed(2));
         } else {
             dataToSave.amount = 1;
             dataToSave.unitPrice = 1;
