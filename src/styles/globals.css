@@ -1327,33 +1327,6 @@ a:hover {
   100% { background-position: 0% 50%; }
 }
 
-
-/* تأثير خط التحميل - يتحرك بـ transform */
-@keyframes loading-center {
-  0% { 
-    transform: translateX(-30px);
-  }
-  50% { 
-    transform: translateX(calc(100% + 30px));
-  }
-  100% { 
-    transform: translateX(-30px);
-  }
-}
-
-.animate-loading-center {
-  animation: loading-center 2s ease-in-out infinite;
-}
-.animate-loading-center {
-  animation: loading-center 2s ease-in-out infinite;
-}
-.animate-loading-center {
-  animation: loading-center 1.5s ease-in-out infinite;
-}
-.animate-loading-line {
-  animation: loading-line 2s ease-in-out infinite;
-}
-
 /* تحسينات إضافية */
 .refresh-button-enhanced {
   backdrop-filter: blur(10px);
